@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Lan-Search",
-  "version": "1.3.0",
+  "version": "1.3.5",
   "description": "Добавляет поиск по глобальному меню @qsoulmain",
   "author": "GlobalSearch Team",
   "homepage_url": "https://github.com/c1osed1/LanSearch",
-  "permissions": ["scripting", "activeTab", "storage"],
+  "permissions": ["scripting", "activeTab", "storage", "notifications"],
   "host_permissions": ["<all_urls>", "https://api.github.com/*"],
   "action": {
     "default_title": "Добавить поиск по меню",
