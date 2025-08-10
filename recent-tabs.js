@@ -1,0 +1,878 @@
+// Управление последними использованными вкладками
+class RecentTabsManager {
+  constructor() {
+    this.storageKey = 'lanSearchRecentTabs';
+    this.favoritesKey = 'lanSearchFavoriteTabs';
+    this.maxTabs = 10;
+    this.maxFavorites = 5;
+  }
+
+  // Функция для определения подходящих доменов
+  isSuitableDomain(hostname) {
+    if (!hostname) return false;
+    const domain = hostname.toLowerCase();
+    return domain.includes('langame') || domain.includes('cls');
+  }
+
+  // Получение текущего домена
+  getCurrentDomain() {
+    return window.location.hostname.toLowerCase();
+  }
+
+  // Проверка, подходит ли текущий домен
+  isCurrentDomainSuitable() {
+    return this.isSuitableDomain(this.getCurrentDomain());
+  }
+
+  // Получение списка всех подходящих доменов
+  getSuitableDomains() {
+    return ['langame', 'cls'];
+  }
+
+  // Проверка, содержит ли домен любой из подходящих поддоменов
+  isSuitableDomainWithSubdomains(hostname) {
+    if (!hostname) return false;
+    const domain = hostname.toLowerCase();
+    const suitableDomains = this.getSuitableDomains();
+    return suitableDomains.some(suitable => domain.includes(suitable));
+  }
+
+  // Сохранение вкладки в историю
+  saveTab(tabInfo) {
+    try {
+      this.getRecentTabs().then(recentTabs => {
+        // Проверяем, находится ли вкладка в избранном
+        this.isFavorite(tabInfo.id).then(isFavorite => {
+          // Удаляем дубликаты
+          const filteredTabs = recentTabs.filter(tab => tab.id !== tabInfo.id);
+          
+          // Добавляем новую вкладку в начало с правильным статусом избранного
+          const updatedTabInfo = { ...tabInfo, isFavorite };
+          filteredTabs.unshift(updatedTabInfo);
+          
+          // Ограничиваем до максимального количества
+          const limitedTabs = filteredTabs.slice(0, this.maxTabs);
+          
+          chrome.storage.local.set({ [this.storageKey]: limitedTabs });
+        });
+      });
+      return true;
+    } catch (error) {
+      console.error('Ошибка сохранения вкладки:', error);
+      return false;
+    }
+  }
+
+  // Получение списка последних вкладок
+  getRecentTabs() {
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get([this.storageKey], (result) => {
+          const tabs = result[this.storageKey] || [];
+          resolve(tabs);
+        });
+      } catch (error) {
+        console.error('Ошибка получения истории вкладок:', error);
+        resolve([]);
+      }
+    });
+  }
+
+  // Очистка истории
+  clearHistory() {
+    try {
+      chrome.storage.local.remove([this.storageKey]);
+      return true;
+    } catch (error) {
+      console.error('Ошибка очистки истории:', error);
+      return false;
+    }
+  }
+
+  // Удаление конкретной вкладки
+  removeTab(tabId) {
+    try {
+      this.getRecentTabs().then(recentTabs => {
+        const filteredTabs = recentTabs.filter(tab => tab.id !== tabId);
+        chrome.storage.local.set({ [this.storageKey]: filteredTabs });
+      });
+      return true;
+    } catch (error) {
+      console.error('Ошибка удаления вкладки:', error);
+      return false;
+    }
+  }
+
+  // Получение списка избранных вкладок
+  getFavoriteTabs() {
+    return new Promise((resolve) => {
+      try {
+        chrome.storage.local.get([this.favoritesKey], (result) => {
+          const tabs = result[this.favoritesKey] || [];
+          resolve(tabs);
+        });
+      } catch (error) {
+        console.error('Ошибка получения избранных вкладок:', error);
+        resolve([]);
+      }
+    });
+  }
+
+  // Добавление в избранное
+  addToFavorites(tabInfo) {
+    return new Promise((resolve) => {
+      try {
+        this.getFavoriteTabs().then(favorites => {
+          // Проверяем, не превышен ли лимит
+          if (favorites.length >= this.maxFavorites) {
+            resolve({ success: false, message: 'Достигнут лимит избранных вкладок (5)' });
+            return;
+          }
+          
+          // Проверяем, не добавлена ли уже
+          const exists = favorites.find(tab => tab.id === tabInfo.id);
+          if (exists) {
+            resolve({ success: false, message: 'Вкладка уже в избранном' });
+            return;
+          }
+          
+          // Добавляем в избранное
+          favorites.push({ ...tabInfo, isFavorite: true });
+          chrome.storage.local.set({ [this.favoritesKey]: favorites });
+          
+          // Обновляем статус в недавних вкладках
+          this.getRecentTabs().then(recentTabs => {
+            const updatedRecentTabs = recentTabs.map(tab => 
+              tab.id === tabInfo.id ? { ...tab, isFavorite: true } : tab
+            );
+            chrome.storage.local.set({ [this.storageKey]: updatedRecentTabs });
+          });
+          
+          resolve({ success: true, message: 'Добавлено в избранное' });
+        });
+      } catch (error) {
+        console.error('Ошибка добавления в избранное:', error);
+        resolve({ success: false, message: 'Ошибка добавления в избранное' });
+      }
+    });
+  }
+
+  // Удаление из избранного
+  removeFromFavorites(tabId) {
+    return new Promise((resolve) => {
+      try {
+        this.getFavoriteTabs().then(favorites => {
+          const filteredFavorites = favorites.filter(tab => tab.id !== tabId);
+          chrome.storage.local.set({ [this.favoritesKey]: filteredFavorites });
+          
+          // Обновляем статус в недавних вкладках
+          this.getRecentTabs().then(recentTabs => {
+            const updatedRecentTabs = recentTabs.map(tab => 
+              tab.id === tabId ? { ...tab, isFavorite: false } : tab
+            );
+            chrome.storage.local.set({ [this.storageKey]: updatedRecentTabs });
+          });
+          
+          resolve(true);
+        });
+      } catch (error) {
+        console.error('Ошибка удаления из избранного:', error);
+        resolve(false);
+      }
+    });
+  }
+
+  // Проверка, находится ли вкладка в избранном
+  isFavorite(tabId) {
+    return new Promise((resolve) => {
+      this.getFavoriteTabs().then(favorites => {
+        const isFavorite = favorites.some(tab => tab.id === tabId);
+        resolve(isFavorite);
+      });
+    });
+  }
+
+  // Получение информации о вкладке из DOM элемента
+  extractTabInfo(linkElement) {
+    const href = linkElement.getAttribute('href');
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
+      return null;
+    }
+
+    const title = linkElement.getAttribute('title') || linkElement.textContent.trim();
+    const id = linkElement.getAttribute('id') || href;
+    
+    // Получаем data-icon атрибут для определения иконки
+    let dataIcon = linkElement.getAttribute('data-icon');
+    
+    // Если у ссылки нет data-icon, ищем у родительской категории
+    if (!dataIcon) {
+      let parent = linkElement.parentElement;
+      while (parent && parent.tagName === 'LI') {
+        const categoryLink = parent.querySelector('a[data-icon]');
+        if (categoryLink) {
+          dataIcon = categoryLink.getAttribute('data-icon');
+          if (dataIcon) break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+
+    // Получаем стили иконки из CSS
+    let iconStyles = this.getIconStyles(dataIcon);
+
+    return {
+      id: id,
+      title: title,
+      href: href,
+      icon: dataIcon,
+      iconStyles: iconStyles,
+      timestamp: Date.now(),
+      isFavorite: false
+    };
+  }
+
+  // Получение CSS стилей для иконки на основе data-icon
+  getIconStyles(dataIcon) {
+    if (!dataIcon) return null;
+
+    // Получаем все стили из document
+    const styles = Array.from(document.styleSheets);
+    let iconStyles = null;
+
+    // Ищем CSS правила для данного data-icon
+    for (const sheet of styles) {
+      try {
+        const rules = Array.from(sheet.cssRules || sheet.rules || []);
+        for (const rule of rules) {
+          if (rule.selectorText && rule.selectorText.includes(`[data-icon="${dataIcon}"]`)) {
+            // Находим правило с :before
+            if (rule.selectorText.includes(':before')) {
+              iconStyles = {
+                backgroundImage: rule.style.backgroundImage,
+                backgroundSize: rule.style.backgroundSize,
+                backgroundPosition: rule.style.backgroundPosition,
+                backgroundRepeat: rule.style.backgroundRepeat,
+                width: rule.style.width,
+                height: rule.style.height,
+                display: rule.style.display || 'inline-block'
+              };
+              break;
+            }
+          }
+        }
+        if (iconStyles) break;
+      } catch (e) {
+        // Пропускаем CORS ошибки
+        continue;
+      }
+    }
+
+    return iconStyles;
+  }
+
+  // Fallback функция для получения эмодзи иконки
+  getFallbackIcon(dataIcon) {
+    if (!dataIcon) return '📄';
+
+    // Маппинг data-icon на эмодзи
+    const iconMap = {
+      'dashboard': '📊',
+      'partners': '🤝',
+      'help': '❓',
+      'cat_global_settings': '⚙️',
+      'cat_deal_with_staff': '👥',
+      'cat_deal_with_guests': '👤',
+      'cat_games_accounts': '🎮',
+      'cat_process_control': '🔧',
+      'cat_advertising': '📢',
+      'cat_boss_tools': '👑',
+      'cat_products': '🛍️',
+      'cat_mails': '📧',
+      'cat_more_modals': '🔌',
+      'cat_analytics': '📈',
+      'cat_domain_teh_stat': '📊',
+      'all_clubs_pc': '💻',
+      'cat_guests': '👥',
+      'cat_documents': '📋',
+      'cat_statistics': '📊',
+      'cat_lockers': '🔒',
+      'reservation': '📅',
+      'messages': '💬',
+      'ticked_control': '🎫',
+      'global_config': '⚙️',
+      'list_clubs': '🏢',
+      'packets_type_PC': '💻',
+      'client_is_version': '🔗',
+      'tariff': '💰',
+      'payments_config': '💳',
+      'list_expenses_income_param_dir': '📊',
+      'list_working_shift_expenses_income': '💰',
+      'certificates_config': '🎁',
+      'config_temperature': '🌡️',
+      'deleting_at_startup': '🗑️',
+      'freeze_exclude_registry': '🔒',
+      'freeze_exclude': '❄️',
+      'freeze_config': '❄️',
+      'subscription': '💳',
+      'connection_sbp': '🏦',
+      'terminals': '🏧',
+      'hosts_overrides': '🌐',
+      'tablets': '📱',
+      'administrators': '👨‍💼',
+      'global_menu': '🔐',
+      'messages_control': '🔔',
+      'alert4admins': '📢',
+      'ticked_config': '🎫',
+      'working_shift_calc_zp': '💰',
+      'guests_groups': '👥',
+      'autobonuses_rules': '🎁',
+      'guests_search': '🔍',
+      'guests_visits_history': '📋',
+      'temp_guests_log': '📝',
+      'guests': '👤',
+      'guests_log_balance': '💰',
+      'guests_log_food_sale': '🍔',
+      'guests_log_to_admin': '🔗',
+      'anketa_config': '📋',
+      'refunds_log': '↩️',
+      'black_list_phone': '🚫',
+      'guests_lost_item': '🔍',
+      'cert_creator': '🎁',
+      'guests_notifications': '📢',
+      'loyality_report': '💎',
+      'sound_notifs': '🔊',
+      'mlm_config': '🌐',
+      'mlm_activation_log': '🔗',
+      'mlm_reward_log': '💰',
+      'black_list_log': '🚫',
+      'guests_log_import': '📥',
+      'acc_games': '🎮',
+      'acc_steam': '🎮',
+      'games_accounts_config': '⚙️',
+      'acc_email_steam_guard': '📧',
+      'logs_game_acc_request': '📋',
+      'lack_of_accounts': '⚠️',
+      'launchers_accounts_unbound': '🔗',
+      'session_games_chart': '📊',
+      'process_groups': '🔧',
+      'process_monitor': '👁️',
+      'process_exclude': '✅',
+      'process_kill': '❌',
+      'advertising': '📢',
+      'langame_news': '📰',
+      'advertising_mfu': '📱',
+      'advertising_terminal': '🏧',
+      'shop_banners': '🛍️',
+      'cashbox_director': '💰',
+      'reports_working_shift_week': '📊',
+      'cashbox_analytics': '📈',
+      'reports_working_shift': '📊',
+      'report_food_expense': '🍔',
+      'refunds_requests': '↩️',
+      'terminals_encashments': '🏧',
+      'bonus_operations_log': '💰',
+      'all_operations_log': '📋',
+      'products': '🛍️',
+      'products_groups': '📁',
+      'products_suppliers': '🚚',
+      'products_list': '📋',
+      'products_orders': '📦',
+      'products_arrival': '📥',
+      'products_invent': '📊',
+      'products_invent_list': '📋',
+      'products_writeoffs': '🗑️',
+      'products_adjusted': '📋',
+      'products_sales_by_stock_price': '💰',
+      'products_vending_filling': '🏪',
+      'products_auto_order': '🤖',
+      'products_auto_order_requisites': '📋',
+      'products_stock_logs': '📋',
+      'products_settings': '⚙️',
+      'email': '📧',
+      'telegram': '📱',
+      'monitor_ignore': '🖥️',
+      'pc_energy_saving_ignore': '💡',
+      'club_schema': '🗺️',
+      'club_schema_admin': '🗺️',
+      'guests_phone_codes': '📞',
+      'freenas_wrap': '💾',
+      'nicehash': '⛏️',
+      'computers_rent': '💻',
+      'booking_calc': '🧮',
+      'logs': '📋',
+      'service_stop_analytic': '⏹️',
+      'teh_PC': '🔧',
+      'tehstatus_analytic': '📊',
+      'pc_block_analytic': '🔓',
+      'reservation_analytics': '📅',
+      'log_balance_by_card': '💳',
+      'guests_log_report_problems': '⚠️',
+      'pc_conf_change_log': '🔧',
+      'loading': '📊',
+      'temperature_control': '🌡️',
+      'guests_visits': '📊',
+      'bad_words': '🚫',
+      'admin_events': '👨‍💼',
+      'analytics_average_session_duration': '⏱️',
+      'analytics_sticky_factor': '📈',
+      'analytics_rolling_retention': '📊',
+      'analytics_new_guests': '👤',
+      'analytics_balance_up': '💰',
+      'analitycs_profit': '💰',
+      'analytics_sessions_reg_to_sessions_full': '📊',
+      'analytics_sessions_sum': '📊',
+      'analytics_uniq_session_guests': '👥',
+      'analytics_avg_balance_up': '💰',
+      'analytics_packet_used': '📦',
+      'analytics_average_session_duration_by_type': '⏱️',
+      'analytics_balance_up_percent': '📊',
+      'analytics_rezerv_type_percent': '📅',
+      'analytics_depth_rezerv_time': '⏰',
+      'analytics_arpu': '💰',
+      'analytics_frequency_of_visits': '📊',
+      'analytics_qr_auth': '📱',
+      'analytics_average_session_duration_visit': '⏱️',
+      'analytics_change_pwd_before_session': '🔐',
+      'analytics_avg_output_pc': '💻',
+      'analitycs_profit_refills': '💰',
+      'tariff_purchases': '💰',
+      'analytics_mlm_activations': '🔗',
+      'analytics_mlm_revenue': '💰',
+      'analytics_mlm_dashboard': '📊',
+      'remote_access_log': '🔗',
+      'analytics_device_temperatures': '🌡️',
+      'logs_map_club_auth': '🔐',
+      'call_services_analytics': '📞',
+      'cp_transactions_info': '💳',
+      'refunds': '↩️',
+      'use_rights': '📋',
+      'book_rights': '📋',
+      'public_offer': '📄',
+      'gpo_info': 'ℹ️',
+      'gpo_vacancies': '💼',
+      'gpo_help': '❓',
+      'gpo_privacy': '🔒',
+      'gpo_faq': '❓',
+      'gpo_price_list': '💰',
+      'loading_channel': '📊',
+      'lockers_settings': '🔒',
+      'lockers_history': '📋'
+    };
+
+    return iconMap[dataIcon] || '📄';
+  }
+
+  // отслеживание кликов по навигации на сайте хз, может и не нужно
+  startTracking(menuRoot) {
+    if (!menuRoot) return;
+
+    const handleNavClick = (event) => {
+      const link = event.target.closest('a[href]');
+      if (!link) return;
+
+      const tabInfo = this.extractTabInfo(link);
+      if (tabInfo) {
+        this.saveTab(tabInfo);
+      }
+    };
+
+    menuRoot.addEventListener('click', handleNavClick);
+  }
+
+    // Отображение последних вкладок на главной странице для удобства или кому либо лишнее будет не ебу
+        displayOnMainPage() {
+          // Проверяем, что мы на подходящем домене
+          if (!this.isCurrentDomainSuitable()) {
+            return;
+          }
+
+    if (window.location.pathname !== '/' && window.location.pathname !== '/dashboard/') {
+      return;
+    }
+
+    Promise.all([this.getRecentTabs(), this.getFavoriteTabs()]).then(([recentTabs, favoriteTabs]) => {
+      if (recentTabs.length === 0 && favoriteTabs.length === 0) return;
+
+    const langameSubscriptionWrapper = document.getElementById('langameSubscriptionWrapper');
+    if (!langameSubscriptionWrapper) return;
+
+    if (document.getElementById('recentTabsContainer')) return;
+
+    const container = this.createTabsContainer(recentTabs, favoriteTabs);
+    langameSubscriptionWrapper.parentNode.insertBefore(container, langameSubscriptionWrapper.nextSibling);
+  });
+  }
+
+  createTabsContainer(recentTabs, favoriteTabs) {
+    const container = document.createElement('div');
+    container.id = 'recentTabsContainer';
+    container.style.cssText = `
+      margin: 20px 0;
+      padding: 0 10px;
+    `;
+
+    if (favoriteTabs.length > 0) {
+      const favoritesSection = document.createElement('div');
+      favoritesSection.style.cssText = `
+        margin-bottom: 30px;
+      `;
+
+      const favoritesTitle = document.createElement('h3');
+      favoritesTitle.textContent = '⭐ Избранные вкладки';
+      favoritesTitle.style.cssText = `
+        margin: 10px 0;
+        color: #333;
+        font-size: 18px;
+        font-weight: 600;
+      `;
+
+      const favoritesGrid = document.createElement('div');
+      favoritesGrid.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      `;
+
+      favoriteTabs.forEach(tab => {
+        const card = this.createTabCard(tab, true);
+        favoritesGrid.appendChild(card);
+      });
+
+      favoritesSection.appendChild(favoritesTitle);
+      favoritesSection.appendChild(favoritesGrid);
+      container.appendChild(favoritesSection);
+    }
+
+    // Секция недавних вкладок
+    if (recentTabs.length > 0) {
+      const recentSection = document.createElement('div');
+
+      const recentTitle = document.createElement('h3');
+      recentTitle.textContent = 'Последние используемые вкладки';
+      recentTitle.style.cssText = `
+        margin: 10px 0;
+        color: #333;
+        font-size: 18px;
+        font-weight: 600;
+      `;
+
+      const recentGrid = document.createElement('div');
+      recentGrid.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      `;
+
+      recentTabs.forEach(tab => {
+        const card = this.createTabCard(tab, false);
+        recentGrid.appendChild(card);
+      });
+
+      recentSection.appendChild(recentTitle);
+      recentSection.appendChild(recentGrid);
+      container.appendChild(recentSection);
+    }
+
+    return container;
+  }
+
+  // Создание карточки вкладки
+  createTabCard(tab, isFavorite = false) {
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background: rgba(151, 151, 151, 0.5);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(36, 36, 36, 0.57);
+      border-radius: 10px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    `;
+
+    // Эффекты при наведении
+    card.addEventListener('mouseenter', () => {
+      card.style.background = 'rgba(255,255,255,0.1)';
+      card.style.transform = 'translateY(-2px)';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.background = 'rgba(151, 151, 151, 0.5)';
+      card.style.transform = 'translateY(0)';
+    });
+
+    // Переход по клику
+    card.addEventListener('click', () => {
+      window.location.href = tab.href;
+    });
+
+    // Иконка
+    if (tab.iconStyles) {
+      const icon = document.createElement('span');
+      icon.style.cssText = `
+        min-width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-image: ${tab.iconStyles.backgroundImage || 'none'};
+        background-size: ${tab.iconStyles.backgroundSize || 'contain'};
+        background-position: ${tab.iconStyles.backgroundPosition || 'center'};
+        background-repeat: ${tab.iconStyles.backgroundRepeat || 'no-repeat'};
+        width: ${tab.iconStyles.width || '24px'};
+        height: ${tab.iconStyles.height || '24px'};
+      `;
+      card.appendChild(icon);
+    } else if (tab.icon) {
+      // Fallback - создаем эмодзи на основе data-icon
+      const icon = document.createElement('span');
+      icon.textContent = this.getFallbackIcon(tab.icon);
+      icon.style.cssText = `
+        font-size: 20px;
+        min-width: 24px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      `;
+      card.appendChild(icon);
+    }
+
+    // Информация о вкладке
+    const info = document.createElement('div');
+    info.style.cssText = `
+      flex: 1;
+      min-width: 0;
+    `;
+
+    const title = document.createElement('div');
+    title.textContent = tab.title;
+    title.style.cssText = `
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    `;
+
+    const path = document.createElement('div');
+    path.textContent = tab.href;
+    path.style.cssText = `
+      font-size: 12px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    `;
+
+    info.appendChild(title);
+    info.appendChild(path);
+    card.appendChild(info);
+
+    // Кнопки управления
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.cssText = `
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: none;
+      gap: 4px;
+    `;
+
+    // Кнопка избранного
+    const favoriteBtn = document.createElement('button');
+    favoriteBtn.textContent = isFavorite ? '⭐' : '☆';
+    favoriteBtn.style.cssText = `
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: rgba(255, 193, 7, 0.1);
+      color: #ffc107;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    `;
+
+    favoriteBtn.addEventListener('mouseenter', () => {
+      favoriteBtn.style.background = 'rgba(255, 193, 7, 0.2)';
+    });
+
+    favoriteBtn.addEventListener('mouseleave', () => {
+      favoriteBtn.style.background = 'rgba(255, 193, 7, 0.1)';
+    });
+
+    favoriteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      if (isFavorite) {
+        // Удаляем из избранного
+        this.removeFromFavorites(tab.id).then(success => {
+          if (success) {
+            favoriteBtn.textContent = '☆';
+            isFavorite = false;
+            // Обновляем отображение
+            this.refreshDisplay();
+          }
+        });
+      } else {
+        // Добавляем в избранное
+        this.addToFavorites(tab).then(result => {
+          if (result.success) {
+            favoriteBtn.textContent = '⭐';
+            isFavorite = true;
+            // Показываем уведомление
+            this.showNotification(result.message, 'success');
+            // Обновляем отображение
+            this.refreshDisplay();
+          } else {
+            this.showNotification(result.message, 'error');
+          }
+        });
+      }
+    });
+
+    // Кнопка удаления (только для недавних вкладок)
+    if (!isFavorite) {
+      const removeBtn = document.createElement('button');
+      removeBtn.innerHTML = '×';
+      removeBtn.style.cssText = `
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      `;
+
+      removeBtn.addEventListener('mouseenter', () => {
+        removeBtn.style.background = 'rgba(220, 53, 69, 0.2)';
+      });
+
+      removeBtn.addEventListener('mouseleave', () => {
+        removeBtn.style.background = 'rgba(220, 53, 69, 0.1)';
+      });
+
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.removeTab(tab.id)) {
+          card.remove();
+          // Обновляем отображение, если карточек не осталось
+          Promise.all([this.getRecentTabs(), this.getFavoriteTabs()]).then(([recentTabs, favoriteTabs]) => {
+            const container = document.getElementById('recentTabsContainer');
+            if (container && recentTabs.length === 0 && favoriteTabs.length === 0) {
+              container.remove();
+            }
+          });
+        }
+      });
+
+      buttonsContainer.appendChild(removeBtn);
+    }
+
+    buttonsContainer.appendChild(favoriteBtn);
+    card.appendChild(buttonsContainer);
+
+    // Показываем кнопки при наведении
+    card.addEventListener('mouseenter', () => {
+      buttonsContainer.style.display = 'flex';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      buttonsContainer.style.display = 'none';
+    });
+
+    return card;
+  }
+
+  // Обновление отображения
+  refreshDisplay() {
+    const container = document.getElementById('recentTabsContainer');
+    if (container) {
+      container.remove();
+      this.displayOnMainPage();
+    }
+  }
+
+  // Показ уведомлений
+  showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 10000;
+      max-width: 300px;
+      word-wrap: break-word;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    `;
+
+    if (type === 'success') {
+      notification.style.background = '#28a745';
+    } else if (type === 'error') {
+      notification.style.background = '#dc3545';
+    } else {
+      notification.style.background = '#17a2b8';
+    }
+
+    document.body.appendChild(notification);
+
+    // Анимация появления
+    setTimeout(() => {
+      notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Автоматическое удаление
+    setTimeout(() => {
+      notification.style.transform = 'translateX(100%)';
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 300);
+    }, 3000);
+  }
+}
+
+// Создаем глобальный экземпляр
+window.recentTabsManager = new RecentTabsManager();
+
+// Экспортируем функции для совместимости
+window.lanSearchSaveTab = (tabInfo) => window.recentTabsManager.saveTab(tabInfo);
+window.lanSearchGetRecentTabs = () => window.recentTabsManager.getRecentTabs();
+window.lanSearchDisplayRecentTabs = () => window.recentTabsManager.displayOnMainPage();
+window.lanSearchGetFavoriteTabs = () => window.recentTabsManager.getFavoriteTabs();
+window.lanSearchAddToFavorites = (tabInfo) => window.recentTabsManager.addToFavorites(tabInfo);
+window.lanSearchRemoveFromFavorites = (tabId) => window.recentTabsManager.removeFromFavorites(tabId);
+
+// Экспортируем функции для определения подходящих доменов
+window.lanSearchIsSuitableDomain = (hostname) => window.recentTabsManager.isSuitableDomain(hostname);
+window.lanSearchGetCurrentDomain = () => window.recentTabsManager.getCurrentDomain();
+window.lanSearchIsCurrentDomainSuitable = () => window.recentTabsManager.isCurrentDomainSuitable();
+window.lanSearchGetSuitableDomains = () => window.recentTabsManager.getSuitableDomains();
+window.lanSearchIsSuitableDomainWithSubdomains = (hostname) => window.recentTabsManager.isSuitableDomainWithSubdomains(hostname);

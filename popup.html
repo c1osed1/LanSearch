@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .icon {
+      width: 32px;
+      height: 32px;
+      margin-right: 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon img {
+      width: 100%;
+      height: 100%;
+      border-radius: 6px;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin: 0;
+    }
+    .description {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .button {
+      width: 100%;
+      padding: 10px 16px;
+      background: #4c8bf5;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .button:hover {
+      background: #3b7de9;
+    }
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .shortcuts {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #666;
+    }
+    .shortcuts h4 {
+      margin: 0 0 8px 0;
+      font-size: 13px;
+      color: #333;
+    }
+    .shortcut {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .key {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+    .status {
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .status.auto {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.manual {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="icon">
+      <img src="icons/logo32.png" alt="Lan-Search">
+    </div>
+    <h1 class="title">Lan-Search</h1>
+  </div>
+  
+  <p class="description">
+    Добавляет поиск по глобальному меню-аккордеону на веб-страницах. 
+    Автоматически активируется на доменах с "langame".
+  </p>
+  
+  <button id="activateBtn" class="button">Активировать поиск</button>
+  
+  <div id="status" class="status" style="display: none;"></div>
+  
+  <div class="shortcuts">
+    <h4>Горячие клавиши:</h4>
+    <div class="shortcut">
+      <span>Фокус на поиск</span>
+      <span class="key">/</span>
+    </div>
+    <div class="shortcut">
+      <span>Очистить поиск</span>
+      <span class="key">Esc</span>
+    </div>
+    <div class="shortcut">
+      <span>Перейти по результату</span>
+      <span class="key">Enter</span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html> 
