@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
   const activateBtn = document.getElementById('activateBtn');
   const statusDiv = document.getElementById('status');
+  const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+  const updateStatus = document.getElementById('updateStatus');
   
   // Проверяем текущую вкладку
   async function checkCurrentTab() {
@@ -510,9 +512,123 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
+  // Функция проверки обновлений
+  async function checkForUpdates() {
+    try {
+      checkUpdateBtn.disabled = true;
+      checkUpdateBtn.textContent = 'Проверяю...';
+      updateStatus.textContent = 'Проверяем наличие обновлений...';
+      
+      // Получаем информацию о текущей версии расширения
+      const manifest = chrome.runtime.getManifest();
+      const currentVersion = manifest.version;
+      
+      // Получаем последний коммит с GitHub
+      const response = await fetch('https://api.github.com/repos/c1osed1/LanSearch/commits?per_page=1');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const commits = await response.json();
+      
+      if (commits.length === 0) {
+        updateStatus.textContent = 'Не удалось получить информацию о коммитах';
+        return;
+      }
+      
+      const latestCommit = commits[0];
+      const latestCommitSha = latestCommit.sha.substring(0, 7); // Короткий SHA
+      const commitDate = new Date(latestCommit.commit.author.date);
+      const commitMessage = latestCommit.commit.message.split('\n')[0]; // Первая строка сообщения
+      
+      // Сохраняем информацию о последнем коммите в storage
+      await chrome.storage.local.set({
+        'lastKnownCommit': {
+          sha: latestCommitSha,
+          date: commitDate.toISOString(),
+          message: commitMessage
+        }
+      });
+      
+      // Проверяем, есть ли новая версия (сравниваем с сохраненной)
+      const stored = await chrome.storage.local.get(['lastKnownCommit', 'currentVersion']);
+      
+      if (!stored.lastKnownCommit || stored.currentVersion !== currentVersion) {
+        // Первый запуск или обновление версии
+        updateStatus.innerHTML = `
+          <div style="margin-bottom: 8px;">
+            <strong>Последний коммит:</strong> ${latestCommitSha}<br>
+            <strong>Дата:</strong> ${commitDate.toLocaleDateString('ru-RU')}<br>
+            <strong>Сообщение:</strong> ${commitMessage}
+          </div>
+          <button id="downloadUpdateBtn" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;">
+            Скачать обновление
+          </button>
+        `;
+        
+        // Добавляем обработчик для кнопки скачивания
+        setTimeout(() => {
+          const downloadBtn = document.getElementById('downloadUpdateBtn');
+          if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+              chrome.tabs.create({ url: 'https://github.com/c1osed1/LanSearch/archive/refs/heads/main.zip' });
+            });
+          }
+        }, 100);
+        
+        // Сохраняем текущую версию
+        await chrome.storage.local.set({ 'currentVersion': currentVersion });
+        
+      } else {
+        // Проверяем, есть ли новые коммиты
+        const lastKnownDate = new Date(stored.lastKnownCommit.date);
+        
+        if (commitDate > lastKnownDate) {
+          updateStatus.innerHTML = `
+            <div style="margin-bottom: 8px;">
+              <strong>Доступно обновление!</strong><br>
+              <strong>Новый коммит:</strong> ${latestCommitSha}<br>
+              <strong>Дата:</strong> ${commitDate.toLocaleDateString('ru-RU')}<br>
+              <strong>Сообщение:</strong> ${commitMessage}
+            </div>
+            <button id="downloadUpdateBtn" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;">
+              Скачать обновление
+            </button>
+          `;
+          
+          setTimeout(() => {
+            const downloadBtn = document.getElementById('downloadUpdateBtn');
+            if (downloadBtn) {
+              downloadBtn.addEventListener('click', () => {
+                chrome.tabs.create({ url: 'https://github.com/c1osed1/LanSearch/archive/refs/heads/main.zip' });
+              });
+            }
+          }, 100);
+          
+        } else {
+          updateStatus.textContent = 'У вас последняя версия. Последний коммит: ' + latestCommitSha;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Ошибка проверки обновлений:', error);
+      updateStatus.textContent = 'Ошибка проверки обновлений: ' + error.message;
+    } finally {
+      checkUpdateBtn.disabled = false;
+      checkUpdateBtn.textContent = 'Проверить';
+    }
+  }
+  
+  // Обработчик кнопки проверки обновлений
+  checkUpdateBtn.addEventListener('click', checkForUpdates);
+  
   // Проверяем статус при загрузке
   checkCurrentTab();
   
   // Отображаем последние вкладки
   displayRecentTabs();
+  
+  // Автоматически проверяем обновления при загрузке
+  checkForUpdates();
 }); 
