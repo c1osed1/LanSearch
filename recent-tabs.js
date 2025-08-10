@@ -745,7 +745,7 @@ class RecentTabsManager {
     // Кнопка удаления (только для недавних вкладок)
     if (!isFavorite) {
       const removeBtn = document.createElement('button');
-      removeBtn.innerHTML = '×';
+      removeBtn.textContent = '×';
       removeBtn.style.cssText = `
         width: 24px;
         height: 24px;

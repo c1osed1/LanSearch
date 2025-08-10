@@ -2,8 +2,6 @@
   const MENU_ID = "globalMenuAccordion";
   const SEARCH_ID = "globalMenuSearchInput";
   const STYLE_ID = "globalMenuSearchStyles";
-  const HEADER_CONTAINER_SELECTOR = "#navbarResponsive .header-controls";
-  const HEADER_LI_ID = "globalMenuSearchHeaderLi";
 
   function $(sel, root = document) {
     return root.querySelector(sel);
@@ -21,64 +19,45 @@
         position: sticky; top: 0; z-index: 100; padding: 8px; 
         background: rgba(255,255,255,0.03); backdrop-filter: blur(6px);
         border-bottom: 1px solid rgba(0,0,0,0.08);
+        margin-bottom: 8px;
       }
       .gms-input { 
         width: 100%; padding: 8px 12px; border-radius: 10px; 
         border: 1px solid rgba(0,0,0,0.2); outline: none;
         font-size: 14px; line-height: 20px;
         background: rgba(255,255,255,0.9);
-      }
-      .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
-      .gms-no-results { padding: 8px 12px; color: #888; font-size: 13px; }
-      .gms-hidden { display: none !important; }
-
-      /* Header placement */
-      #${HEADER_LI_ID} { display: flex; align-items: center; }
-      #${HEADER_LI_ID} .gms-input { 
-        width: 260px; max-width: 32vw; margin: 0 8px 0 0; border-radius: 8px;
         padding-left: 32px; /* room for icon */
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>");
         background-repeat: no-repeat; background-position: 10px center; background-size: 16px;
       }
-      @media (max-width: 992px) {
-        #${HEADER_LI_ID} .gms-input { width: 52vw; max-width: none; }
-      }
+      .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
+      .gms-no-results { padding: 8px 12px; color: #888; font-size: 13px; }
+      .gms-hidden { display: none !important; }
     `;
     document.head.appendChild(style);
   }
 
   function createSearchBar(menuRoot) {
-    const headerControls = document.querySelector(HEADER_CONTAINER_SELECTOR);
-    if (headerControls && !document.getElementById(HEADER_LI_ID)) {
-      const li = document.createElement("li");
-      li.id = HEADER_LI_ID;
-      const input = document.createElement("input");
-      input.type = "search";
-      input.placeholder = "Поиск по меню... /";
-      input.id = SEARCH_ID;
-      input.className = "gms-input";
-      input.autocomplete = "off";
-      input.setAttribute("aria-label", "Поиск по меню");
-      li.appendChild(input);
-      headerControls.insertBefore(li, headerControls.firstChild);
-      return input;
-    }
-
+    // Проверяем, не создан ли уже поисковик
     if (document.getElementById(SEARCH_ID)) return document.getElementById(SEARCH_ID);
 
+    // Создаем контейнер для поисковика
     const container = document.createElement("div");
     container.className = "gms-container";
 
     const input = document.createElement("input");
     input.type = "search";
-    input.placeholder = "Поиск по меню...";
+    input.placeholder = "Поиск по меню... /";
     input.id = SEARCH_ID;
     input.className = "gms-input";
     input.autocomplete = "off";
     input.setAttribute("aria-label", "Поиск по меню");
 
     container.appendChild(input);
-    menuRoot.parentElement?.insertBefore(container, menuRoot);
+    
+    // Вставляем поисковик в самое начало аккордеонного меню
+    menuRoot.insertBefore(container, menuRoot.firstChild);
+    
     return input;
   }
 
