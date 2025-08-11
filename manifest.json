@@ -5,7 +5,7 @@
   "description": "Добавляет поиск по глобальному меню @qsoulmain",
   "author": "GlobalSearch Team",
   "homepage_url": "https://github.com/c1osed1/LanSearch",
-  "permissions": ["scripting", "activeTab", "storage", "notifications"],
+  "permissions": ["scripting", "activeTab", "storage", "notifications", "tabs"],
   "host_permissions": ["<all_urls>", "https://api.github.com/*"],
   "action": {
     "default_title": "Добавить поиск по меню",

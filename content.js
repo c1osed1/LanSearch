@@ -282,7 +282,74 @@
     }
   }
 
-  // Инициализируем отслеживание вкладок
+  // Функция для изменения заголовка вкладки на URL
+  function setTabTitleToUrl() {
+    const currentUrl = window.location.href;
+    const hostname = window.location.hostname;
+    
+    // Проверяем, что это подходящий домен
+    if (hostname.includes('langame') || hostname.includes('cls')) {
+      // Извлекаем только домен (без протокола и пути)
+      const domain = window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+      
+      // Изменяем заголовок страницы напрямую в HTML
+      document.title = domain;
+      
+      // Также отправляем сообщение в background script для изменения заголовка вкладки
+      if (chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: 'setTabTitle',
+          url: domain
+        });
+      }
+    }
+  }
+
+  // Функция для инициализации отслеживания изменений URL
+  function initUrlTracking() {
+    let currentUrl = window.location.href;
+    
+    // Функция для проверки и обновления заголовка
+    const checkAndUpdateTitle = () => {
+      const newUrl = window.location.href;
+      if (newUrl !== currentUrl) {
+        currentUrl = newUrl;
+        setTabTitleToUrl();
+      }
+    };
+
+    // Отслеживаем изменения URL через History API
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      setTimeout(checkAndUpdateTitle, 100);
+    };
+    
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      setTimeout(checkAndUpdateTitle, 100);
+    };
+
+    // Отслеживаем событие popstate (навигация назад/вперед)
+    window.addEventListener('popstate', () => {
+      setTimeout(checkAndUpdateTitle, 100);
+    });
+
+    // Периодическая проверка (на случай если другие методы не сработают)
+    setInterval(checkAndUpdateTitle, 1000);
+
+    // Принудительно устанавливаем заголовок каждые 500мс
+    setInterval(() => {
+      const domain = window.location.hostname + (window.location.port ? ':' + window.location.port : '');
+      if (document.title !== domain) {
+        document.title = domain;
+      }
+    }, 500);
+  }
+
+      // Инициализируем отслеживание вкладок
   if (shouldAutoActivate()) {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
@@ -290,12 +357,16 @@
         if (window.recentTabsManager) {
           window.recentTabsManager.displayOnMainPage();
         }
+        setTabTitleToUrl();
+        initUrlTracking();
       });
     } else {
       initRecentTabsTracking();
       if (window.recentTabsManager) {
         window.recentTabsManager.displayOnMainPage();
       }
+      setTabTitleToUrl();
+      initUrlTracking();
     }
   }
 

@@ -1,6 +1,11 @@
 # Changelog - LanSearch Extension (Chrome)
 
 
+## Version 1.3.6 - 10-08-2025
+
+### Исправление
+
+- У вкладки теперь домен вместо текста
 
 ## Version 1.3.5 - 10-08-2025
 

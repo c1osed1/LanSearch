@@ -120,7 +120,17 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
   chrome.notifications.clear(notificationId);
 });
 
-// Проверяем обновления при запуске расширения
+// Обработчик сообщений от content script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'setTabTitle' && sender.tab?.id) {
+    // Изменяем заголовок вкладки на URL
+    chrome.tabs.update(sender.tab.id, {
+      title: message.url
+    });
+  }
+});
+
+// Проверяем обновления при запуске расширения 
 checkForUpdates();
 
 // Проверяем обновления каждые 6 часов
