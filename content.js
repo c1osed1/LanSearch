@@ -294,14 +294,6 @@
       
       // Изменяем заголовок страницы напрямую в HTML
       document.title = domain;
-      
-      // Также отправляем сообщение в background script для изменения заголовка вкладки
-      if (chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage({
-          action: 'setTabTitle',
-          url: domain
-        });
-      }
     }
   }
 

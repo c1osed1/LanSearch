@@ -277,7 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Функция создания элемента вкладки
   function createTabItem(tab, isFavorite = false) {
     const tabItem = document.createElement('div');
-    tabItem.style.cssText = `
+    
+    // Применяем цвет если он установлен для избранной вкладки
+    let tabStyle = `
       padding: 8px 12px;
       margin: 4px 0;
       background: ${isFavorite ? '#fff3cd' : '#f8f9fa'};
@@ -290,13 +292,86 @@ document.addEventListener('DOMContentLoaded', function() {
       align-items: center;
       gap: 8px;
     `;
+    
+    if (isFavorite && tab.color) {
+      // Находим конфигурацию цвета
+      const availableColors = [
+        { name: 'Красный', value: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)', border: 'rgba(255, 107, 107, 0.3)' },
+        { name: 'Оранжевый', value: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)', border: 'rgba(255, 167, 38, 0.3)' },
+        { name: 'Желтый', value: '#ffd54f', bg: 'rgba(255, 213, 79, 0.1)', border: 'rgba(255, 213, 79, 0.3)' },
+        { name: 'Зеленый', value: '#66bb6a', bg: 'rgba(102, 187, 106, 0.1)', border: 'rgba(102, 187, 106, 0.3)' },
+        { name: 'Голубой', value: '#4fc3f7', bg: 'rgba(79, 195, 247, 0.1)', border: 'rgba(79, 195, 247, 0.3)' },
+        { name: 'Синий', value: '#42a5f5', bg: 'rgba(66, 165, 245, 0.1)', border: 'rgba(66, 165, 245, 0.3)' },
+        { name: 'Фиолетовый', value: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)', border: 'rgba(171, 71, 188, 0.3)' },
+        { name: 'Розовый', value: '#ec407a', bg: 'rgba(236, 64, 122, 0.1)', border: 'rgba(236, 64, 122, 0.3)' }
+      ];
+      
+      const colorConfig = availableColors.find(c => c.value === tab.color);
+      if (colorConfig) {
+        tabStyle = `
+          padding: 8px 12px;
+          margin: 4px 0;
+          background: ${colorConfig.bg};
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 12px;
+          border: 1px solid ${colorConfig.border};
+          transition: background-color 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        `;
+      }
+    }
+    
+    tabItem.style.cssText = tabStyle;
 
     tabItem.addEventListener('mouseenter', () => {
-      tabItem.style.background = isFavorite ? '#ffeaa7' : '#e9ecef';
+      if (isFavorite && tab.color) {
+        const availableColors = [
+          { name: 'Красный', value: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)', border: 'rgba(255, 107, 107, 0.3)' },
+          { name: 'Оранжевый', value: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)', border: 'rgba(255, 167, 38, 0.3)' },
+          { name: 'Желтый', value: '#ffd54f', bg: 'rgba(255, 213, 79, 0.1)', border: 'rgba(255, 213, 79, 0.3)' },
+          { name: 'Зеленый', value: '#66bb6a', bg: 'rgba(102, 187, 106, 0.1)', border: 'rgba(102, 187, 106, 0.3)' },
+          { name: 'Голубой', value: '#4fc3f7', bg: 'rgba(79, 195, 247, 0.1)', border: 'rgba(79, 195, 247, 0.3)' },
+          { name: 'Синий', value: '#42a5f5', bg: 'rgba(66, 165, 245, 0.1)', border: 'rgba(66, 165, 245, 0.3)' },
+          { name: 'Фиолетовый', value: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)', border: 'rgba(171, 71, 188, 0.3)' },
+          { name: 'Розовый', value: '#ec407a', bg: 'rgba(236, 64, 122, 0.1)', border: 'rgba(236, 64, 122, 0.3)' }
+        ];
+        
+        const colorConfig = availableColors.find(c => c.value === tab.color);
+        if (colorConfig) {
+          tabItem.style.background = colorConfig.bg.replace('0.1', '0.2');
+        } else {
+          tabItem.style.background = '#ffeaa7';
+        }
+      } else {
+        tabItem.style.background = isFavorite ? '#ffeaa7' : '#e9ecef';
+      }
     });
 
     tabItem.addEventListener('mouseleave', () => {
-      tabItem.style.background = isFavorite ? '#fff3cd' : '#f8f9fa';
+      if (isFavorite && tab.color) {
+        const availableColors = [
+          { name: 'Красный', value: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)', border: 'rgba(255, 107, 107, 0.3)' },
+          { name: 'Оранжевый', value: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)', border: 'rgba(255, 167, 38, 0.3)' },
+          { name: 'Желтый', value: '#ffd54f', bg: 'rgba(255, 213, 79, 0.1)', border: 'rgba(255, 213, 79, 0.3)' },
+          { name: 'Зеленый', value: '#66bb6a', bg: 'rgba(102, 187, 106, 0.1)', border: 'rgba(102, 187, 106, 0.3)' },
+          { name: 'Голубой', value: '#4fc3f7', bg: 'rgba(79, 195, 247, 0.1)', border: 'rgba(79, 195, 247, 0.3)' },
+          { name: 'Синий', value: '#42a5f5', bg: 'rgba(66, 165, 245, 0.1)', border: 'rgba(66, 165, 245, 0.3)' },
+          { name: 'Фиолетовый', value: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)', border: 'rgba(171, 71, 188, 0.3)' },
+          { name: 'Розовый', value: '#ec407a', bg: 'rgba(236, 64, 122, 0.1)', border: 'rgba(236, 64, 122, 0.3)' }
+        ];
+        
+        const colorConfig = availableColors.find(c => c.value === tab.color);
+        if (colorConfig) {
+          tabItem.style.background = colorConfig.bg;
+        } else {
+          tabItem.style.background = '#fff3cd';
+        }
+      } else {
+        tabItem.style.background = isFavorite ? '#fff3cd' : '#f8f9fa';
+      }
     });
 
     tabItem.addEventListener('click', async () => {

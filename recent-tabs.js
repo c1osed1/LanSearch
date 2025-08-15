@@ -5,6 +5,23 @@ class RecentTabsManager {
     this.favoritesKey = 'lanSearchFavoriteTabs';
     this.maxTabs = 10;
     this.maxFavorites = 5;
+    
+    // Проверяем доступность chrome.storage
+    if (!chrome.storage || !chrome.storage.local) {
+      console.warn('Lan-Search: chrome.storage.local недоступен');
+    }
+    
+    // Доступные цвета для избранных
+    this.availableColors = [
+      { name: 'Красный', value: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)', border: 'rgba(255, 107, 107, 1)' },
+      { name: 'Оранжевый', value: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)', border: 'rgba(255, 167, 38, 1)' },
+      { name: 'Желтый', value: '#ffd54f', bg: 'rgba(255, 213, 79, 0.1)', border: 'rgba(255, 213, 79, 1)' },
+      { name: 'Зеленый', value: '#66bb6a', bg: 'rgba(102, 187, 106, 0.1)', border: 'rgba(102, 187, 106, 1)' },
+      { name: 'Голубой', value: '#4fc3f7', bg: 'rgba(79, 195, 247, 0.1)', border: 'rgba(79, 195, 247, 1)' },
+      { name: 'Синий', value: '#42a5f5', bg: 'rgba(66, 165, 245, 0.1)', border: 'rgba(66, 165, 245, 1)' },
+      { name: 'Фиолетовый', value: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)', border: 'rgba(171, 71, 188, 1 )' },
+      { name: 'Розовый', value: '#ec407a', bg: 'rgba(236, 64, 122, 0.1)', border: 'rgba(236, 64, 122, 1)' }
+    ];
   }
 
   // Функция для определения подходящих доменов
@@ -53,7 +70,11 @@ class RecentTabsManager {
           // Ограничиваем до максимального количества
           const limitedTabs = filteredTabs.slice(0, this.maxTabs);
           
-          chrome.storage.local.set({ [this.storageKey]: limitedTabs });
+          chrome.storage.local.set({ [this.storageKey]: limitedTabs }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Ошибка сохранения в recent tabs:', chrome.runtime.lastError);
+            }
+          });
         });
       });
       return true;
@@ -67,7 +88,19 @@ class RecentTabsManager {
   getRecentTabs() {
     return new Promise((resolve) => {
       try {
+        // Проверяем, доступен ли chrome.storage
+        if (!chrome.storage || !chrome.storage.local) {
+          console.warn('chrome.storage.local недоступен');
+          resolve([]);
+          return;
+        }
+        
         chrome.storage.local.get([this.storageKey], (result) => {
+          if (chrome.runtime.lastError) {
+            console.error('Ошибка chrome.storage.local.get:', chrome.runtime.lastError);
+            resolve([]);
+            return;
+          }
           const tabs = result[this.storageKey] || [];
           resolve(tabs);
         });
@@ -94,7 +127,11 @@ class RecentTabsManager {
     try {
       this.getRecentTabs().then(recentTabs => {
         const filteredTabs = recentTabs.filter(tab => tab.id !== tabId);
-        chrome.storage.local.set({ [this.storageKey]: filteredTabs });
+                  chrome.storage.local.set({ [this.storageKey]: filteredTabs }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Ошибка сохранения в recent tabs (removeTab):', chrome.runtime.lastError);
+            }
+          });
       });
       return true;
     } catch (error) {
@@ -107,7 +144,19 @@ class RecentTabsManager {
   getFavoriteTabs() {
     return new Promise((resolve) => {
       try {
+        // Проверяем, доступен ли chrome.storage
+        if (!chrome.storage || !chrome.storage.local) {
+          console.warn('chrome.storage.local недоступен');
+          resolve([]);
+          return;
+        }
+        
         chrome.storage.local.get([this.favoritesKey], (result) => {
+          if (chrome.runtime.lastError) {
+            console.error('Ошибка chrome.storage.local.get:', chrome.runtime.lastError);
+            resolve([]);
+            return;
+          }
           const tabs = result[this.favoritesKey] || [];
           resolve(tabs);
         });
@@ -138,15 +187,23 @@ class RecentTabsManager {
           
           // Добавляем в избранное
           favorites.push({ ...tabInfo, isFavorite: true });
-          chrome.storage.local.set({ [this.favoritesKey]: favorites });
-          
-          // Обновляем статус в недавних вкладках
-          this.getRecentTabs().then(recentTabs => {
-            const updatedRecentTabs = recentTabs.map(tab => 
-              tab.id === tabInfo.id ? { ...tab, isFavorite: true } : tab
-            );
-            chrome.storage.local.set({ [this.storageKey]: updatedRecentTabs });
+          chrome.storage.local.set({ [this.favoritesKey]: favorites }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Ошибка сохранения в favorites (addToFavorites):', chrome.runtime.lastError);
+            }
           });
+          
+                      // Обновляем статус в недавних вкладках
+            this.getRecentTabs().then(recentTabs => {
+              const updatedRecentTabs = recentTabs.map(tab => 
+                tab.id === tabInfo.id ? { ...tab, isFavorite: true } : tab
+              );
+              chrome.storage.local.set({ [this.storageKey]: updatedRecentTabs }, () => {
+                if (chrome.runtime.lastError) {
+                  console.error('Ошибка обновления recent tabs (addToFavorites):', chrome.runtime.lastError);
+                }
+              });
+            });
           
           resolve({ success: true, message: 'Добавлено в избранное' });
         });
@@ -163,15 +220,23 @@ class RecentTabsManager {
       try {
         this.getFavoriteTabs().then(favorites => {
           const filteredFavorites = favorites.filter(tab => tab.id !== tabId);
-          chrome.storage.local.set({ [this.favoritesKey]: filteredFavorites });
-          
-          // Обновляем статус в недавних вкладках
-          this.getRecentTabs().then(recentTabs => {
-            const updatedRecentTabs = recentTabs.map(tab => 
-              tab.id === tabId ? { ...tab, isFavorite: false } : tab
-            );
-            chrome.storage.local.set({ [this.storageKey]: updatedRecentTabs });
+          chrome.storage.local.set({ [this.favoritesKey]: filteredFavorites }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Ошибка сохранения в favorites (removeFromFavorites):', chrome.runtime.lastError);
+            }
           });
+          
+                      // Обновляем статус в недавних вкладках
+            this.getRecentTabs().then(recentTabs => {
+              const updatedRecentTabs = recentTabs.map(tab => 
+                tab.id === tabId ? { ...tab, isFavorite: false } : tab
+              );
+              chrome.storage.local.set({ [this.storageKey]: updatedRecentTabs }, () => {
+                if (chrome.runtime.lastError) {
+                  console.error('Ошибка обновления recent tabs (removeFromFavorites):', chrome.runtime.lastError);
+                }
+              });
+            });
           
           resolve(true);
         });
@@ -189,6 +254,54 @@ class RecentTabsManager {
         const isFavorite = favorites.some(tab => tab.id === tabId);
         resolve(isFavorite);
       });
+    });
+  }
+
+  // Установка цвета для избранной вкладки
+  setFavoriteColor(tabId, colorValue) {
+    return new Promise((resolve) => {
+      try {
+        this.getFavoriteTabs().then(favorites => {
+          const updatedFavorites = favorites.map(tab => 
+            tab.id === tabId ? { ...tab, color: colorValue } : tab
+          );
+          chrome.storage.local.set({ [this.favoritesKey]: updatedFavorites }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Ошибка сохранения цвета (setFavoriteColor):', chrome.runtime.lastError);
+            }
+          });
+          resolve({ success: true, message: 'Цвет установлен' });
+        });
+      } catch (error) {
+        console.error('Ошибка установки цвета:', error);
+        resolve({ success: false, message: 'Ошибка установки цвета' });
+      }
+    });
+  }
+
+  // Удаление цвета из избранной вкладки
+  removeFavoriteColor(tabId) {
+    return new Promise((resolve) => {
+      try {
+        this.getFavoriteTabs().then(favorites => {
+          const updatedFavorites = favorites.map(tab => {
+            if (tab.id === tabId) {
+              const { color, ...tabWithoutColor } = tab;
+              return tabWithoutColor;
+            }
+            return tab;
+          });
+          chrome.storage.local.set({ [this.favoritesKey]: updatedFavorites }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Ошибка удаления цвета (removeFavoriteColor):', chrome.runtime.lastError);
+            }
+          });
+          resolve({ success: true, message: 'Цвет удален' });
+        });
+      } catch (error) {
+        console.error('Ошибка удаления цвета:', error);
+        resolve({ success: false, message: 'Ошибка удаления цвета' });
+      }
     });
   }
 
@@ -582,7 +695,9 @@ class RecentTabsManager {
   // Создание карточки вкладки
   createTabCard(tab, isFavorite = false) {
     const card = document.createElement('div');
-    card.style.cssText = `
+    
+    // Применяем цвет если он установлен для избранной вкладки
+    let cardStyle = `
       background: rgba(151, 151, 151, 0.5);
       backdrop-filter: blur(6px);
       border: 1px solid rgba(36, 36, 36, 0.57);
@@ -595,15 +710,54 @@ class RecentTabsManager {
       gap: 12px;
       position: relative;
     `;
+    
+    if (isFavorite && tab.color) {
+      const colorConfig = this.availableColors.find(c => c.value === tab.color);
+      if (colorConfig) {
+        cardStyle = `
+          background: ${colorConfig.bg};
+          backdrop-filter: blur(6px);
+          border: 1px solid ${colorConfig.border};
+          border-radius: 10px;
+          padding: 15px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          position: relative;
+        `;
+      }
+    }
+    
+    card.style.cssText = cardStyle;
 
     // Эффекты при наведении
     card.addEventListener('mouseenter', () => {
-      card.style.background = 'rgba(255,255,255,0.1)';
+      if (isFavorite && tab.color) {
+        const colorConfig = this.availableColors.find(c => c.value === tab.color);
+        if (colorConfig) {
+          card.style.background = colorConfig.bg.replace('0.1', '0.2');
+        } else {
+          card.style.background = 'rgba(255,255,255,0.1)';
+        }
+      } else {
+        card.style.background = 'rgba(255,255,255,0.1)';
+      }
       card.style.transform = 'translateY(-2px)';
     });
 
     card.addEventListener('mouseleave', () => {
-      card.style.background = 'rgba(151, 151, 151, 0.5)';
+      if (isFavorite && tab.color) {
+        const colorConfig = this.availableColors.find(c => c.value === tab.color);
+        if (colorConfig) {
+          card.style.background = colorConfig.bg;
+        } else {
+          card.style.background = 'rgba(151, 151, 151, 0.5)';
+        }
+      } else {
+        card.style.background = 'rgba(151, 151, 151, 0.5)';
+      }
       card.style.transform = 'translateY(0)';
     });
 
@@ -742,6 +896,41 @@ class RecentTabsManager {
       }
     });
 
+    // Кнопка выбора цвета (только для избранных вкладок)
+    if (isFavorite) {
+      const colorBtn = document.createElement('button');
+      colorBtn.textContent = '🎨';
+      colorBtn.style.cssText = `
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+      `;
+
+      colorBtn.addEventListener('mouseenter', () => {
+        colorBtn.style.background = 'rgba(108, 117, 125, 0.2)';
+      });
+
+      colorBtn.addEventListener('mouseleave', () => {
+        colorBtn.style.background = 'rgba(108, 117, 125, 0.1)';
+      });
+
+      colorBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.showColorPicker(tab, card);
+      });
+
+      buttonsContainer.appendChild(colorBtn);
+    }
+
     // Кнопка удаления (только для недавних вкладок)
     if (!isFavorite) {
       const removeBtn = document.createElement('button');
@@ -811,6 +1000,203 @@ class RecentTabsManager {
     }
   }
 
+  // Функция для показа палитры цветов
+  showColorPicker(tab, card) {
+    // Удаляем существующие палитры
+    const existingPickers = document.querySelectorAll('.lan-search-color-picker');
+    existingPickers.forEach(picker => picker.remove());
+
+    const picker = document.createElement('div');
+    picker.className = 'lan-search-color-picker';
+    picker.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 20px;
+      z-index: 10001;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      min-width: 300px;
+    `;
+
+    const title = document.createElement('h3');
+    title.textContent = 'Выберите цвет для избранной вкладки';
+    title.style.cssText = `
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      color: #333;
+      text-align: center;
+    `;
+    picker.appendChild(title);
+
+    const colorsGrid = document.createElement('div');
+    colorsGrid.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    `;
+
+    // Добавляем опцию "Без цвета"
+    const noColorBtn = document.createElement('button');
+    noColorBtn.textContent = 'Без цвета';
+    noColorBtn.style.cssText = `
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      background: #f8f9fa;
+      color: #666;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    `;
+
+    noColorBtn.addEventListener('mouseenter', () => {
+      noColorBtn.style.background = '#e9ecef';
+    });
+
+    noColorBtn.addEventListener('mouseleave', () => {
+      noColorBtn.style.background = '#f8f9fa';
+    });
+
+    noColorBtn.addEventListener('click', () => {
+      this.removeFavoriteColor(tab.id).then(result => {
+        if (result.success) {
+          this.showNotification(result.message, 'success');
+          this.refreshDisplay();
+        } else {
+          this.showNotification(result.message, 'error');
+        }
+        picker.remove();
+        overlay.remove();
+      });
+    });
+
+    colorsGrid.appendChild(noColorBtn);
+
+    // Добавляем цветовые опции
+    this.availableColors.forEach(color => {
+      const colorBtn = document.createElement('button');
+      colorBtn.style.cssText = `
+        width: 50px;
+        height: 50px;
+        border: 2px solid ${color.value};
+        background: ${color.bg};
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+      `;
+
+      colorBtn.addEventListener('mouseenter', () => {
+        colorBtn.style.transform = 'scale(1.1)';
+      });
+
+      colorBtn.addEventListener('mouseleave', () => {
+        colorBtn.style.transform = 'scale(1)';
+      });
+
+      colorBtn.addEventListener('click', () => {
+        this.setFavoriteColor(tab.id, color.value).then(result => {
+          if (result.success) {
+            this.showNotification(result.message, 'success');
+            this.refreshDisplay();
+          } else {
+            this.showNotification(result.message, 'error');
+          }
+          picker.remove();
+          overlay.remove();
+        });
+      });
+
+      // Добавляем название цвета при наведении
+      const tooltip = document.createElement('div');
+      tooltip.textContent = color.name;
+      tooltip.style.cssText = `
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+      `;
+
+      colorBtn.addEventListener('mouseenter', () => {
+        tooltip.style.opacity = '1';
+      });
+
+      colorBtn.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = '0';
+      });
+
+      colorBtn.appendChild(tooltip);
+      colorsGrid.appendChild(colorBtn);
+    });
+
+    picker.appendChild(colorsGrid);
+
+    // Кнопка закрытия
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Закрыть';
+    closeBtn.style.cssText = `
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background: #6c757d;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    `;
+
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.background = '#5a6268';
+    });
+
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.background = '#6c757d';
+    });
+
+    closeBtn.addEventListener('click', () => {
+      picker.remove();
+      overlay.remove();
+    });
+
+    picker.appendChild(closeBtn);
+
+    // Закрытие при клике вне палитры
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 10000;
+    `;
+
+    overlay.addEventListener('click', () => {
+      picker.remove();
+      overlay.remove();
+    });
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(picker);
+  }
+
   // Показ уведомлений
   showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -876,3 +1262,7 @@ window.lanSearchGetCurrentDomain = () => window.recentTabsManager.getCurrentDoma
 window.lanSearchIsCurrentDomainSuitable = () => window.recentTabsManager.isCurrentDomainSuitable();
 window.lanSearchGetSuitableDomains = () => window.recentTabsManager.getSuitableDomains();
 window.lanSearchIsSuitableDomainWithSubdomains = (hostname) => window.recentTabsManager.isSuitableDomainWithSubdomains(hostname);
+
+// Экспортируем функции для работы с цветами избранных
+window.lanSearchSetFavoriteColor = (tabId, colorValue) => window.recentTabsManager.setFavoriteColor(tabId, colorValue);
+window.lanSearchRemoveFavoriteColor = (tabId) => window.recentTabsManager.removeFavoriteColor(tabId);

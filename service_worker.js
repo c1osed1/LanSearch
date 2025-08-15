@@ -122,12 +122,8 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 
 // Обработчик сообщений от content script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'setTabTitle' && sender.tab?.id) {
-    // Изменяем заголовок вкладки на URL
-    chrome.tabs.update(sender.tab.id, {
-      title: message.url
-    });
-  }
+  // Убираем попытку изменения заголовка вкладки, так как это не поддерживается в Chrome Extensions API
+  // Заголовок вкладки изменяется только в content script через document.title
 });
 
 // Проверяем обновления при запуске расширения 
