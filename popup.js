@@ -3,6 +3,101 @@ document.addEventListener('DOMContentLoaded', function() {
   const statusDiv = document.getElementById('status');
   const checkUpdateBtn = document.getElementById('checkUpdateBtn');
   const updateStatus = document.getElementById('updateStatus');
+  const themeToggle = document.getElementById('themeToggle');
+  
+  // Глобальная переменная для кэширования темы
+  let currentTheme = 'light';
+  let themeApplied = false;
+  
+  // Функции для работы с темной темой
+  function initTheme() {
+    if (themeApplied) {
+      setTheme(currentTheme);
+      return;
+    }
+    
+    try {
+      // Сначала проверяем localStorage для быстрого доступа
+      const localTheme = localStorage.getItem('lanSearchTheme');
+      if (localTheme) {
+        currentTheme = localTheme;
+        themeApplied = true;
+        setTheme(localTheme);
+        return;
+      }
+      
+      // Затем проверяем chrome.storage
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['theme'], function(result) {
+          try {
+            currentTheme = result.theme || 'light';
+            themeApplied = true;
+            setTheme(currentTheme);
+            // Сохраняем в localStorage для быстрого доступа
+            try {
+              localStorage.setItem('lanSearchTheme', currentTheme);
+            } catch (e) {
+              // Игнорируем ошибки localStorage
+            }
+          } catch (e) {
+            // Fallback при ошибке
+            currentTheme = 'light';
+            themeApplied = true;
+            setTheme('light');
+          }
+        });
+      } else {
+        // Fallback если chrome.storage недоступен
+        currentTheme = 'light';
+        themeApplied = true;
+        setTheme('light');
+      }
+    } catch (e) {
+      // Fallback при любой ошибке
+      currentTheme = 'light';
+      themeApplied = true;
+      setTheme('light');
+    }
+  }
+  
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    themeToggle.title = theme === 'dark' ? 'Переключить на светлую тему' : 'Переключить на темную тему';
+  }
+  
+  function toggleTheme() {
+    const currentThemeAttr = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentThemeAttr === 'light' ? 'dark' : 'light';
+    
+    // Обновляем кэш
+    currentTheme = newTheme;
+    
+    setTheme(newTheme);
+    
+    // Сохраняем в localStorage для быстрого доступа
+    try {
+      localStorage.setItem('lanSearchTheme', newTheme);
+    } catch (e) {
+      // Игнорируем ошибки localStorage
+    }
+    
+    // Сохраняем в chrome.storage с обработкой ошибок
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.set({ theme: newTheme });
+      }
+    } catch (e) {
+      // Игнорируем ошибки chrome.storage
+      console.log('Chrome storage not available, using localStorage only');
+    }
+  }
+  
+  // Инициализация темы
+  initTheme();
+  
+  // Обработчик переключения темы
+  themeToggle.addEventListener('click', toggleTheme);
   
   // Проверяем текущую вкладку
   async function checkCurrentTab() {

@@ -10,8 +10,45 @@
     return Array.from(root.querySelectorAll(sel));
   }
 
+  // Функция для проверки подходящего домена
+  function isSuitableDomain() {
+    const hostname = window.location.hostname.toLowerCase();
+    return hostname.includes('langame') || hostname.includes('cls');
+  }
+
+  // Устанавливаем атрибут домена для CSS селекторов
+  function setDomainAttribute() {
+    if (isSuitableDomain()) {
+      document.documentElement.setAttribute('data-lansearch-domain', 'true');
+    } else {
+      document.documentElement.setAttribute('data-lansearch-domain', 'false');
+    }
+  }
+
+  // Вызываем сразу при загрузке скрипта
+  setDomainAttribute();
+
+
+
   function injectStylesOnce() {
     if (document.getElementById(STYLE_ID)) return;
+    
+    // Подключаем файл с темной темой только на подходящих доменах
+    if (isSuitableDomain()) {
+      const themeLink = document.createElement("link");
+      themeLink.rel = "stylesheet";
+      themeLink.href = chrome.runtime.getURL("theme.css");
+      document.head.appendChild(themeLink);
+      
+      // Применяем тему сразу при загрузке скрипта
+      try {
+        const savedTheme = localStorage.getItem('lanSearchTheme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    }
+    
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
@@ -26,6 +63,7 @@
         border: 1px solid rgba(0,0,0,0.2); outline: none;
         font-size: 14px; line-height: 20px;
         background: rgba(255,255,255,0.9);
+        color: #333;
         padding-left: 32px; /* room for icon */
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>");
         background-repeat: no-repeat; background-position: 10px center; background-size: 16px;
@@ -33,8 +71,276 @@
       .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
       .gms-no-results { padding: 8px 12px; color: #888; font-size: 13px; }
       .gms-hidden { display: none !important; }
+      
+      /* Темная тема */
+      [data-theme="dark"] .gms-container {
+        background: rgba(45,45,45,0.95); backdrop-filter: blur(6px);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      [data-theme="dark"] .gms-input {
+        background: rgba(45,45,45,0.9);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #ffffff;
+      }
+      [data-theme="dark"] .gms-input:focus {
+        border-color: #4c8bf5;
+        box-shadow: 0 0 0 3px rgba(76,139,245,0.3);
+      }
+      [data-theme="dark"] .gms-input::placeholder {
+        color: rgba(255,255,255,0.6);
+      }
+      [data-theme="dark"] .gms-no-results {
+        color: rgba(255,255,255,0.6);
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  // Функция для создания оверлея загрузки
+  function createLoadingOverlay() {
+    // Удаляем существующий оверлей если есть
+    const existingOverlay = document.getElementById('lansearch-loading-overlay');
+    if (existingOverlay) {
+      existingOverlay.remove();
+    }
+
+    // Ищем .content-wrapper
+    const contentWrapper = document.querySelector('.content-wrapper');
+    if (!contentWrapper) {
+      return null; // Если нет .content-wrapper, не показываем оверлей
+    }
+
+    // Создаем оверлей
+    const overlay = document.createElement('div');
+    overlay.id = 'lansearch-loading-overlay';
+    overlay.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #2d2d2d;
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+    `;
+
+    // Убеждаемся, что .content-wrapper имеет position: relative
+    if (getComputedStyle(contentWrapper).position === 'static') {
+      contentWrapper.style.position = 'relative';
+    }
+
+    // Создаем контейнер для спиннера и текста
+    const content = document.createElement('div');
+    content.style.cssText = `
+      text-align: center;
+      color: #ffffff;
+    `;
+
+    // Создаем спиннер
+    const spinner = document.createElement('div');
+    spinner.style.cssText = `
+      width: 50px;
+      height: 50px;
+      border: 4px solid #444444;
+      border-top: 4px solid #4c8bf5;
+      border-radius: 50%;
+      animation: lansearch-spin 1s linear infinite;
+      margin: 0 auto 20px;
+    `;
+
+    // Создаем текст загрузки
+    const text = document.createElement('div');
+    text.textContent = 'Загрузка...';
+    text.style.cssText = `
+      font-size: 16px;
+      color: #cccccc;
+    `;
+
+    // Добавляем CSS анимацию
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes lansearch-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+
+    // Собираем оверлей
+    content.appendChild(spinner);
+    content.appendChild(text);
+    overlay.appendChild(content);
+    document.head.appendChild(style);
+    contentWrapper.appendChild(overlay);
+
+
+    return overlay;
+  }
+
+  // Функция для скрытия оверлея загрузки
+  function hideLoadingOverlay() {
+    const overlay = document.getElementById('lansearch-loading-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 300);
+    }
+  }
+
+  // Функция для применения темы к странице
+  function applyThemeToPage() {
+    // Создаем оверлей загрузки сразу
+    const loadingOverlay = createLoadingOverlay();
+    
+    // Сначала применяем тему синхронно для предотвращения FOUC
+    try {
+      const theme = localStorage.getItem('lanSearchTheme') || 'light';
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {
+      // Fallback если localStorage недоступен
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    
+    // Затем получаем актуальную тему из chrome.storage
+    getCurrentTheme((theme) => {
+      document.documentElement.setAttribute('data-theme', theme);
+      // Сохраняем в localStorage для быстрого доступа
+      try {
+        localStorage.setItem('lanSearchTheme', theme);
+      } catch (e) {
+        // Игнорируем ошибки localStorage
+      }
+      
+      // Применяем стили к существующим элементам
+      applyThemeToNewElements();
+
+      // Скрываем оверлей загрузки после применения темы
+      setTimeout(() => {
+        hideLoadingOverlay();
+      }, 500);
+    });
+  }
+
+
+
+
+
+  // Глобальная переменная для хранения текущей темы
+  let currentTheme = 'light';
+  let themeApplied = false;
+
+  // Функция для получения темы из storage
+  function getCurrentTheme(callback) {
+    if (themeApplied) {
+      callback(currentTheme);
+      return;
+    }
+    
+    try {
+      // Проверяем доступность chrome.storage
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['theme'], function(result) {
+          try {
+            currentTheme = result.theme || 'light';
+            themeApplied = true;
+            callback(currentTheme);
+          } catch (e) {
+            // Fallback при ошибке в callback
+            try {
+              currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+            } catch (e2) {
+              currentTheme = 'light';
+            }
+            themeApplied = true;
+            callback(currentTheme);
+          }
+        });
+      } else {
+        // Fallback если chrome.storage недоступен
+        try {
+          currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+        } catch (e2) {
+          currentTheme = 'light';
+        }
+        themeApplied = true;
+        callback(currentTheme);
+      }
+    } catch (e) {
+      // Fallback на localStorage
+      try {
+        currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+      } catch (e2) {
+        currentTheme = 'light';
+      }
+      themeApplied = true;
+      callback(currentTheme);
+    }
+  }
+
+  // Функция для применения темы к новым элементам
+  function applyThemeToNewElements() {
+    // Просто устанавливаем атрибут data-theme, остальное делает CSS
+    getCurrentTheme((theme) => {
+      document.documentElement.setAttribute('data-theme', theme);
+    });
+  }
+
+  // Функция для наблюдения за изменениями DOM
+  function observeDOMChanges() {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          // Применяем тему к новым элементам
+          setTimeout(applyThemeToNewElements, 100);
+        }
+      });
+    });
+
+    // Начинаем наблюдение за изменениями в DOM
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  // Функция для наблюдения за изменениями атрибута data-theme
+  function observeThemeAttribute() {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+          const htmlElement = document.documentElement;
+          const currentTheme = htmlElement.getAttribute('data-theme');
+          const oldTheme = mutation.oldValue;
+          
+          // Если атрибут data-theme пропал или изменился с dark на что-то другое
+          if ((oldTheme === 'dark' && currentTheme !== 'dark') || 
+              (oldTheme === 'dark' && !currentTheme)) {
+            
+            // Показываем оверлей загрузки
+            createLoadingOverlay();
+            
+            // Применяем тему заново
+            setTimeout(() => {
+              applyThemeToNewElements();
+              hideLoadingOverlay();
+            }, 200);
+          }
+        }
+      });
+    });
+
+    // Начинаем наблюдение за изменениями атрибута data-theme на html элементе
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+      attributeOldValue: true
+    });
   }
 
   function createSearchBar(menuRoot) {
@@ -190,9 +496,8 @@
     if (window.lanSearchIsCurrentDomainSuitable) {
       return window.lanSearchIsCurrentDomainSuitable();
     }
-    // Fallback если функция недоступна
-    const hostname = window.location.hostname.toLowerCase();
-    return hostname.includes('langame') || hostname.includes('cls');
+    // Используем нашу функцию проверки домена
+    return isSuitableDomain();
   }
 
   function init() {
@@ -307,6 +612,15 @@
       if (newUrl !== currentUrl) {
         currentUrl = newUrl;
         setTabTitleToUrl();
+        
+        // Показываем оверлей загрузки при изменении URL
+        if (currentTheme === 'dark') {
+          createLoadingOverlay();
+          // Скрываем через небольшую задержку
+          setTimeout(() => {
+            hideLoadingOverlay();
+          }, 300);
+        }
       }
     };
 
@@ -343,23 +657,170 @@
 
       // Инициализируем отслеживание вкладок
   if (shouldAutoActivate()) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
+    // Показываем оверлей загрузки только если есть .content-wrapper
+    if (document.querySelector('.content-wrapper')) {
+      createLoadingOverlay();
+    }
+    
+          if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          applyThemeToPage();
+          observeDOMChanges();
+          observeThemeAttribute();
+          initRecentTabsTracking();
+          if (window.recentTabsManager) {
+            window.recentTabsManager.displayOnMainPage();
+          }
+          setTabTitleToUrl();
+          initUrlTracking();
+        });
+      } else {
+        applyThemeToPage();
+        observeDOMChanges();
+        observeThemeAttribute();
         initRecentTabsTracking();
         if (window.recentTabsManager) {
           window.recentTabsManager.displayOnMainPage();
         }
         setTabTitleToUrl();
         initUrlTracking();
-      });
-    } else {
-      initRecentTabsTracking();
-      if (window.recentTabsManager) {
-        window.recentTabsManager.displayOnMainPage();
       }
-      setTabTitleToUrl();
-      initUrlTracking();
-    }
   }
+
+  // Слушатель изменений темы
+  try {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(function(changes, namespace) {
+        if (namespace === 'sync' && changes.theme) {
+          const newTheme = changes.theme.newValue || 'light';
+          currentTheme = newTheme; // Обновляем глобальную переменную
+          document.documentElement.setAttribute('data-theme', newTheme);
+          // Применяем тему к новым элементам при изменении темы
+          setTimeout(() => {
+            applyThemeToNewElements();
+          }, 100);
+        }
+      });
+    }
+  } catch (e) {
+    // Игнорируем ошибки если chrome.storage недоступен
+    console.log('Chrome storage not available, using localStorage fallback');
+  }
+
+  // Периодическая проверка атрибута data-theme (дополнительная защита)
+  setInterval(function() {
+    const htmlElement = document.documentElement;
+    const currentThemeAttr = htmlElement.getAttribute('data-theme');
+    
+    // Если тема должна быть dark, но атрибут отсутствует или неправильный
+    if (currentTheme === 'dark' && currentThemeAttr !== 'dark') {
+      // Показываем оверлей загрузки
+      createLoadingOverlay();
+      
+      // Восстанавливаем атрибут
+      htmlElement.setAttribute('data-theme', 'dark');
+      
+      // Скрываем оверлей
+      setTimeout(() => {
+        hideLoadingOverlay();
+      }, 200);
+    }
+  }, 1000); // Проверяем каждую секунду
+
+  // Слушатель для событий навигации (для SPA)
+  window.addEventListener('popstate', function() {
+    // Показываем оверлей загрузки сразу при навигации
+    if (currentTheme === 'dark') {
+      createLoadingOverlay();
+    }
+    
+    // Применяем тему сразу
+    applyThemeToNewElements();
+    
+    // Скрываем оверлей загрузки через небольшую задержку
+    setTimeout(() => {
+      hideLoadingOverlay();
+    }, 200);
+  });
+
+  // Перехватываем pushState и replaceState для SPA
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function(...args) {
+    originalPushState.apply(history, args);
+    
+    // Показываем оверлей загрузки сразу при навигации
+    if (currentTheme === 'dark') {
+      createLoadingOverlay();
+    }
+    
+    // Применяем тему сразу
+    applyThemeToNewElements();
+    
+    // Скрываем оверлей загрузки через небольшую задержку
+    setTimeout(() => {
+      hideLoadingOverlay();
+    }, 200);
+  };
+
+  history.replaceState = function(...args) {
+    originalReplaceState.apply(history, args);
+    
+    // Показываем оверлей загрузки сразу при навигации
+    if (currentTheme === 'dark') {
+      createLoadingOverlay();
+    }
+    
+    // Применяем тему сразу
+    applyThemeToNewElements();
+    
+    // Скрываем оверлей загрузки через небольшую задержку
+    setTimeout(() => {
+      hideLoadingOverlay();
+    }, 200);
+  };
+
+  // Слушатель для AJAX запросов (если используется XMLHttpRequest)
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(...args) {
+    // Показываем оверлей загрузки при AJAX запросах
+    if (currentTheme === 'dark') {
+      createLoadingOverlay();
+    }
+    
+    this.addEventListener('load', function() {
+      setTimeout(() => {
+        applyThemeToNewElements();
+        
+        // Скрываем оверлей загрузки
+        setTimeout(() => {
+          hideLoadingOverlay();
+        }, 200);
+      }, 100);
+    });
+    originalXHROpen.apply(this, args);
+  };
+
+  // Слушатель для fetch запросов
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    // Показываем оверлей загрузки при fetch запросах
+    if (currentTheme === 'dark') {
+      createLoadingOverlay();
+    }
+    
+    return originalFetch.apply(this, args).then(response => {
+      setTimeout(() => {
+        applyThemeToNewElements();
+        
+        // Скрываем оверлей загрузки
+        setTimeout(() => {
+          hideLoadingOverlay();
+        }, 200);
+      }, 100);
+      return response;
+    });
+  };
 
 })(); 

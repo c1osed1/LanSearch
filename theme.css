@@ -1,0 +1,734 @@
+/* CSS переменные для темной темы */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333;
+  --text-secondary: #666;
+  --border-color: #e9ecef;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #e9ecef;
+  --button-bg: #f54c4c;
+  --button-hover: rgb(233, 59, 59);
+  --button-disabled: #ccc;
+  --status-auto-bg: #d4edda;
+  --status-auto-color: #155724;
+  --status-auto-border: #c3e6cb;
+  --status-manual-bg: #fff3cd;
+  --status-manual-color: #856404;
+  --status-manual-border: #ffeaa7;
+}
+
+/* Дополнительная защита - отключаем все стили темной темы на неподходящих доменах */
+html:not([data-lansearch-domain="true"]) [data-theme="dark"] {
+  /* Принудительно сбрасываем все переменные на светлые значения */
+  --bg-color: #ffffff !important;
+  --text-color: #333 !important;
+  --text-secondary: #666 !important;
+  --border-color: #e9ecef !important;
+  --bg-secondary: #f8f9fa !important;
+  --bg-tertiary: #e9ecef !important;
+  --button-bg: #f54c4c !important;
+  --button-hover: rgb(233, 59, 59) !important;
+  --button-disabled: #ccc !important;
+  --status-auto-bg: #d4edda !important;
+  --status-auto-color: #155724 !important;
+  --status-auto-border: #c3e6cb !important;
+  --status-manual-bg: #fff3cd !important;
+  --status-manual-color: #856404 !important;
+  --status-manual-border: #ffeaa7 !important;
+}
+
+/* Принудительно отключаем темную тему на всех элементах для неподходящих доменов */
+html:not([data-lansearch-domain="true"]) [data-theme="dark"] * {
+  background-color: inherit !important;
+  background: inherit !important;
+  color: inherit !important;
+  border-color: inherit !important;
+}
+
+
+
+/* Предотвращение FOUC - скрываем контент до определения темы */
+html:not([data-theme]) {
+  visibility: hidden;
+}
+
+html[data-theme] {
+  visibility: visible;
+}
+
+/* Быстрое применение темной темы без анимаций */
+html[data-theme="dark"] {
+  --bg-color: #2d2d2d;
+  --text-color: #ffffff;
+  --text-secondary: #cccccc;
+  --border-color: #444444;
+  --bg-secondary: #3a3a3a;
+  --bg-tertiary: #444444;
+  --button-bg: #f54c4c;
+  --button-hover: rgb(233, 59, 59);
+  --button-disabled: #666666;
+  --status-auto-bg: #1e4a1e;
+  --status-auto-color: #90ee90;
+  --status-auto-border: #2d5a2d;
+  --status-manual-bg: #4a4a1e;
+  --status-manual-color: #ffff90;
+  --status-manual-border: #5a5a2d;
+}
+
+/* Только основные элементы страницы - убираем агрессивные переопределения */
+html[data-theme="dark"] body,
+html[data-theme="dark"] html {
+  background-color: #2d2d2d !important;
+  color: #ffffff !important;
+}
+
+/* Только для основного контента - убираем агрессивные селекторы */
+html[data-theme="dark"] .content-wrapper {
+  background-color: #2d2d2d !important;
+  background: #2d2d2d !important;
+}
+
+/* Убираем агрессивные переопределения для всех дочерних элементов */
+/* Оставляем только базовые стили для текста */
+html[data-theme="dark"] .content-wrapper p,
+html[data-theme="dark"] .content-wrapper span,
+html[data-theme="dark"] .content-wrapper div,
+html[data-theme="dark"] .content-wrapper h1,
+html[data-theme="dark"] .content-wrapper h2,
+html[data-theme="dark"] .content-wrapper h3,
+html[data-theme="dark"] .content-wrapper h4,
+html[data-theme="dark"] .content-wrapper h5,
+html[data-theme="dark"] .content-wrapper h6 {
+  color: #ffffff !important;
+}
+
+/* Убираем все агрессивные переопределения для кнопок и других элементов */
+/* Оставляем только базовые стили для основных контейнеров */
+html[data-theme="dark"] .main-content,
+html[data-theme="dark"] .container-fluid,
+html[data-theme="dark"] .container,
+html[data-theme="dark"] .wrapper,
+html[data-theme="dark"] .page-wrapper,
+html[data-theme="dark"] .app-wrapper,
+html[data-theme="dark"] .main,
+html[data-theme="dark"] .content,
+html[data-theme="dark"] .section {
+  background-color: #2d2d2d !important;
+  background: #2d2d2d !important;
+}
+
+/* Убираем агрессивные переопределения для всех текстовых элементов */
+/* Оставляем только базовые стили */
+html[data-theme="dark"] .content-wrapper h1,
+html[data-theme="dark"] .content-wrapper h2,
+html[data-theme="dark"] .content-wrapper h3,
+html[data-theme="dark"] .content-wrapper h4,
+html[data-theme="dark"] .content-wrapper h5,
+html[data-theme="dark"] .content-wrapper h6,
+html[data-theme="dark"] .content-wrapper .h1,
+html[data-theme="dark"] .content-wrapper .h2,
+html[data-theme="dark"] .content-wrapper .h3,
+html[data-theme="dark"] .content-wrapper .h4,
+html[data-theme="dark"] .content-wrapper .h5,
+html[data-theme="dark"] .content-wrapper .h6,
+html[data-theme="dark"] .content-wrapper p,
+html[data-theme="dark"] .content-wrapper span,
+html[data-theme="dark"] .content-wrapper div,
+html[data-theme="dark"] .content-wrapper a {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] {
+  --bg-color: #2d2d2d;
+  --text-color: #ffffff;
+  --text-secondary: #cccccc;
+  --border-color: #444444;
+  --bg-secondary: #3a3a3a;
+  --bg-tertiary: #444444;
+  --button-bg: #4c8bf5;
+  --button-hover: #3b7de9;
+  --button-disabled: #666666;
+  --status-auto-bg: #1e4a1e;
+  --status-auto-color: #90ee90;
+  --status-auto-border: #2d5a2d;
+  --status-manual-bg: #4a4a1e;
+  --status-manual-color: #ffff90;
+  --status-manual-border: #5a5a2d;
+}
+
+/* Общие стили для темной темы - только для основного контента */
+[data-theme="dark"] {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Стили только для текстовых элементов в основном контенте */
+[data-theme="dark"] .content-wrapper h1,
+[data-theme="dark"] .content-wrapper h2,
+[data-theme="dark"] .content-wrapper h3,
+[data-theme="dark"] .content-wrapper h4,
+[data-theme="dark"] .content-wrapper h5,
+[data-theme="dark"] .content-wrapper h6,
+[data-theme="dark"] .content-wrapper .h1,
+[data-theme="dark"] .content-wrapper .h2,
+[data-theme="dark"] .content-wrapper .h3,
+[data-theme="dark"] .content-wrapper .h4,
+[data-theme="dark"] .content-wrapper .h5,
+[data-theme="dark"] .content-wrapper .h6 {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper p,
+[data-theme="dark"] .content-wrapper span,
+[data-theme="dark"] .content-wrapper div,
+[data-theme="dark"] .content-wrapper a {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper a:hover {
+  color: var(--button-hover);
+}
+
+/* Стили для элементов с темным фоном - только в основном контенте */
+[data-theme="dark"] .content-wrapper .bg-light,
+[data-theme="dark"] .content-wrapper .bg-white {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .text-dark {
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .text-muted {
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .border {
+  border-color: var(--border-color) !important;
+}
+
+/* Убираем агрессивные стили для кнопок - оставляем только базовые */
+/* Стили для кнопок primary в темной теме - только если они в основном контенте */
+[data-theme="dark"] .content-wrapper .btn-primary {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+  color: white;
+}
+
+[data-theme="dark"] .content-wrapper .btn-primary:hover {
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
+  color: white;
+}
+
+[data-theme="dark"] .content-wrapper .btn-primary:focus {
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(76, 139, 245, 0.25);
+}
+
+/* Стили для всех кнопок в темной теме - только в основном контенте */
+[data-theme="dark"] .content-wrapper .btn {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .btn:not(.btn-primary):not(.btn-secondary):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info):not(.btn-light):not(.btn-dark) {
+  background-color: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .btn:not(.btn-primary):not(.btn-secondary):not(.btn-success):not(.btn-danger):not(.btn-warning):not(.btn-info):not(.btn-light):not(.btn-dark):hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-color);
+}
+
+/* Стили для карточек - только в основном контенте */
+[data-theme="dark"] .content-wrapper .card {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .card-header {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+/* Стили для форм - только в основном контенте */
+[data-theme="dark"] .content-wrapper .form-control {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .form-control:focus {
+  background-color: var(--bg-secondary);
+  border-color: var(--button-bg);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .form-control::placeholder {
+  color: var(--text-secondary);
+}
+
+/* Стили для таблиц - только в основном контенте */
+[data-theme="dark"] .content-wrapper .table {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .table th,
+[data-theme="dark"] .content-wrapper .table td {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-tertiary);
+}
+
+/* Стили для модальных окон - только в основном контенте */
+[data-theme="dark"] .content-wrapper .modal-content {
+  background-color: var(--bg-color);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .modal-header {
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .modal-footer {
+  border-color: var(--border-color);
+}
+
+/* Стили для навигации - только в основном контенте */
+[data-theme="dark"] .content-wrapper .navbar {
+  background-color: var(--bg-secondary);
+}
+
+[data-theme="dark"] .content-wrapper .navbar-light .navbar-brand,
+[data-theme="dark"] .content-wrapper .navbar-light .navbar-nav .nav-link {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .navbar-light .navbar-nav .nav-link:hover {
+  color: var(--button-hover);
+}
+
+/* Стили для сайдбара - только в основном контенте */
+[data-theme="dark"] .content-wrapper .sidebar {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+/* Стили для дропдаунов - только в основном контенте */
+[data-theme="dark"] .content-wrapper .dropdown-menu {
+  background-color: var(--bg-color);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .dropdown-item {
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .dropdown-item:hover {
+  background-color: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+/* Стили для алертов - только в основном контенте */
+[data-theme="dark"] .content-wrapper .alert-light {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+/* Стили для бейджей - только в основном контенте */
+[data-theme="dark"] .content-wrapper .badge-light {
+  background-color: var(--bg-tertiary);
+  color: var(--text-color);
+}
+
+/* Стили для прогресс-баров - только в основном контенте */
+[data-theme="dark"] .content-wrapper .progress {
+  background-color: var(--bg-tertiary);
+}
+
+/* Стили для списков - только в основном контенте */
+[data-theme="dark"] .content-wrapper .list-group-item {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .list-group-item-action:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-color);
+}
+
+/* Стили для пагинации - только в основном контенте */
+[data-theme="dark"] .content-wrapper .page-link {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .page-link:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .page-item.active .page-link {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+}
+
+/* Стили для тултипов - только в основном контенте */
+[data-theme="dark"] .content-wrapper .tooltip-inner {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .tooltip.bs-tooltip-top .arrow::before {
+  border-top-color: var(--bg-color);
+}
+
+[data-theme="dark"] .content-wrapper .tooltip.bs-tooltip-bottom .arrow::before {
+  border-bottom-color: var(--bg-color);
+}
+
+[data-theme="dark"] .content-wrapper .tooltip.bs-tooltip-left .arrow::before {
+  border-left-color: var(--bg-color);
+}
+
+[data-theme="dark"] .content-wrapper .tooltip.bs-tooltip-right .arrow::before {
+  border-right-color: var(--bg-color);
+}
+
+/* Стили для поповеров - только в основном контенте */
+[data-theme="dark"] .content-wrapper .popover {
+  background-color: var(--bg-color);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .popover-header {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper .popover-body {
+  color: var(--text-color);
+}
+
+/* Стили для селектов - только в основном контенте */
+[data-theme="dark"] .content-wrapper select.form-control {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+[data-theme="dark"] .content-wrapper select.form-control option {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Стили для чекбоксов и радио - только в основном контенте */
+[data-theme="dark"] .content-wrapper .form-check-input {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .content-wrapper .form-check-input:checked {
+  background-color: var(--button-bg);
+  border-color: var(--button-bg);
+}
+
+/* Стили для текстовых областей - только в основном контенте */
+[data-theme="dark"] .content-wrapper textarea.form-control {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
+/* Стили для инпутов с автозаполнением - только в основном контенте */
+[data-theme="dark"] .content-wrapper input:-webkit-autofill,
+[data-theme="dark"] .content-wrapper input:-webkit-autofill:hover,
+[data-theme="dark"] .content-wrapper input:-webkit-autofill:focus,
+[data-theme="dark"] .content-wrapper input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--bg-secondary) inset !important;
+  -webkit-text-fill-color: var(--text-color) !important;
+}
+
+/* Стили для скроллбаров - только в основном контенте */
+[data-theme="dark"] .content-wrapper ::-webkit-scrollbar {
+  width: 12px;
+}
+
+[data-theme="dark"] .content-wrapper ::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .content-wrapper ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 6px;
+}
+
+[data-theme="dark"] .content-wrapper ::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Стили для выделения текста - только в основном контенте */
+[data-theme="dark"] .content-wrapper ::selection {
+  background-color: var(--button-bg);
+  color: white;
+}
+
+[data-theme="dark"] .content-wrapper ::-moz-selection {
+  background-color: var(--button-bg);
+  color: white;
+}
+
+/* Стили для основных контейнеров страницы */
+[data-theme="dark"] .content-wrapper {
+  background-color: var(--bg-color) !important;
+  background: var(--bg-color) !important;
+}
+
+/* Убираем агрессивные селекторы - оставляем только базовые */
+[data-theme="dark"] .main-content {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .container-fluid {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .container {
+  background-color: var(--bg-color) !important;
+}
+
+/* Стили для body и html */
+[data-theme="dark"] body {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] html {
+  background-color: var(--bg-color) !important;
+}
+
+/* Стили для wrapper элементов */
+[data-theme="dark"] .wrapper {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .page-wrapper {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .app-wrapper {
+  background-color: var(--bg-color) !important;
+}
+
+/* Стили для основных секций */
+[data-theme="dark"] .main {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .content {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .section {
+  background-color: var(--bg-color) !important;
+}
+
+/* Стили для панелей и блоков - только в основном контенте */
+[data-theme="dark"] .content-wrapper .panel {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .block {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .box {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* Стили для сайдбаров и навигации - только в основном контенте */
+[data-theme="dark"] .content-wrapper .sidebar-wrapper {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .nav-wrapper {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .menu-wrapper {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Стили для футера - только в основном контенте */
+[data-theme="dark"] .content-wrapper .footer {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .footer-wrapper {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Стили для хедера - только в основном контенте */
+[data-theme="dark"] .content-wrapper .header {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .header-wrapper {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Стили для модальных окон и оверлеев - только в основном контенте */
+[data-theme="dark"] .content-wrapper .modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .content-wrapper .overlay {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Стили для специфичных элементов langame - только в основном контенте */
+[data-theme="dark"] .content-wrapper .langame-content {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .langame-wrapper {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .cls-content {
+  background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .cls-wrapper {
+  background-color: var(--bg-color) !important;
+}
+
+/* Стили для заголовков таблиц - только в основном контенте */
+[data-theme="dark"] .content-wrapper #dataTable thead tr th>div,
+[data-theme="dark"] .content-wrapper table.table thead tr th>div,
+[data-theme="dark"] .content-wrapper table.dataTable thead tr th>div {
+  background: var(--bg-secondary) !important;
+  padding: 13px 5px;
+}
+
+/* Дополнительные стили для таблиц - только в основном контенте */
+[data-theme="dark"] .content-wrapper #dataTable thead tr th,
+[data-theme="dark"] .content-wrapper table.table thead tr th,
+[data-theme="dark"] .content-wrapper table.dataTable thead tr th {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper #dataTable tbody tr td,
+[data-theme="dark"] .content-wrapper table.table tbody tr td,
+[data-theme="dark"] .content-wrapper table.dataTable tbody tr td {
+  background: var(--bg-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper #dataTable tbody tr:hover td,
+[data-theme="dark"] .content-wrapper table.table tbody tr:hover td,
+[data-theme="dark"] .content-wrapper table.dataTable tbody tr:hover td {
+  background: var(--bg-tertiary) !important;
+}
+
+/* Стили для строковых таблиц - только в основном контенте */
+[data-theme="dark"] .content-wrapper .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-tertiary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .table-striped tbody tr:nth-of-type(even) {
+  background-color: var(--bg-color) !important;
+}
+
+/* Стили для таблиц с границами - только в основном контенте */
+[data-theme="dark"] .content-wrapper .table-bordered {
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .table-bordered th,
+[data-theme="dark"] .content-wrapper .table-bordered td {
+  border-color: var(--border-color) !important;
+}
+
+/* Стили для таблиц с hover эффектом - только в основном контенте */
+[data-theme="dark"] .content-wrapper .table-hover tbody tr:hover {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+/* Стили для таблиц с конденсированным видом - только в основном контенте */
+[data-theme="dark"] .content-wrapper .table-condensed th,
+[data-theme="dark"] .content-wrapper .table-condensed td {
+  padding: 5px !important;
+}
+
+/* Стили для таблиц с маленьким размером - только в основном контенте */
+[data-theme="dark"] .content-wrapper .table-sm th,
+[data-theme="dark"] .content-wrapper .table-sm td {
+  padding: 0.3rem !important;
+}
+[data-theme="dark"] .content-wrapper .filter-option-inner-inner{
+    background-color: var(--bg-secondary) !important;
+}
+/* Убираем агрессивные переопределения для конкретных цветов */
+/* Оставляем только для элементов в основном контенте */
+[data-theme="dark"] .content-wrapper [style*="background-color: #EAEAEA"],
+[data-theme="dark"] .content-wrapper [style*="background-color: rgb(234, 234, 234)"],
+[data-theme="dark"] .content-wrapper [style*="background: #EAEAEA"],
+[data-theme="dark"] .content-wrapper [style*="background: rgb(234, 234, 234)"] {
+  background-color: #2d2d2d !important;
+  background: #2d2d2d !important;
+}
+
+/* Переопределение для всех элементов с белым/светлым фоном - только в основном контенте */
+[data-theme="dark"] .content-wrapper [style*="background-color: #ffffff"],
+[data-theme="dark"] .content-wrapper [style*="background-color: white"],
+[data-theme="dark"] .content-wrapper [style*="background: #fff"],
+[data-theme="dark"] .content-wrapper [style*="background: #ffffff"],
+[data-theme="dark"] .content-wrapper [style*="background: white"] {
+  background-color: #2d2d2d !important;
+  background: #2d2d2d !important;
+}
+
+/* Стили для оверлея загрузки */
+#lansearch-loading-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: #2d2d2d !important;
+  z-index: 999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: Arial, sans-serif !important;
+  transition: opacity 0.3s ease !important;
+}
+
+/* Убеждаемся, что .content-wrapper имеет правильное позиционирование для оверлея */
+.content-wrapper {
+  position: relative !important;
+}
+
+@keyframes lansearch-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

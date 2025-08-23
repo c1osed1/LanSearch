@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Lan-Search",
-  "version": "1.3.7",
+  "version": "1.3.10",
   "description": "Добавляет поиск по глобальному меню @qsoulmain",
   "author": "GlobalSearch Team",
   "homepage_url": "https://github.com/c1osed1/LanSearch",
@@ -22,15 +22,37 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "*://*.langame.com/*",
+        "*://*.langame.ru/*",
+        "*://*.langame.net/*",
+        "*://*.langame.org/*",
+        "*://*.cls.com/*",
+        "*://*.cls.ru/*",
+        "*://*.cls.net/*",
+        "*://*.cls.org/*",
+        "*://*.langamesoft.ru/*",
+        "*://*.langamesoftware.ru/*"
+      ],
       "js": ["recent-tabs.js", "content.js"],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
-      "matches": ["<all_urls>"]
+      "resources": ["icons/*", "theme.css"],
+      "matches": [
+        "*://*.langame.com/*",
+        "*://*.langame.ru/*",
+        "*://*.langame.net/*",
+        "*://*.langame.org/*",
+        "*://*.cls.com/*",
+        "*://*.cls.ru/*",
+        "*://*.cls.net/*",
+        "*://*.cls.org/*",
+        "*://*.langamesoft.ru/*",
+        "*://*.langamesoftware.ru/*"
+      ]
     }
   ]
 } 

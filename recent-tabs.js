@@ -635,7 +635,7 @@ class RecentTabsManager {
       favoritesTitle.textContent = '⭐ Избранные вкладки';
       favoritesTitle.style.cssText = `
         margin: 10px 0;
-        color: #333;
+        color: var(--text-color, #333);
         font-size: 18px;
         font-weight: 600;
       `;
@@ -666,7 +666,7 @@ class RecentTabsManager {
       recentTitle.textContent = 'Последние используемые вкладки';
       recentTitle.style.cssText = `
         margin: 10px 0;
-        color: #333;
+        color: var(--text-color, #333);
         font-size: 18px;
         font-weight: 600;
       `;
@@ -698,9 +698,9 @@ class RecentTabsManager {
     
     // Применяем цвет если он установлен для избранной вкладки
     let cardStyle = `
-      background: rgba(151, 151, 151, 0.5);
+      background: var(--bg-secondary, rgba(151, 151, 151, 0.5));
       backdrop-filter: blur(6px);
-      border: 1px solid rgba(36, 36, 36, 0.57);
+      border: 1px solid var(--border-color, rgba(36, 36, 36, 0.57));
       border-radius: 10px;
       padding: 15px;
       cursor: pointer;
@@ -809,7 +809,7 @@ class RecentTabsManager {
     title.textContent = tab.title;
     title.style.cssText = `
       font-weight: 600;
-      color: #333;
+      color: var(--text-color, #333);
       margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
@@ -820,7 +820,7 @@ class RecentTabsManager {
     path.textContent = tab.href;
     path.style.cssText = `
       font-size: 12px;
-      color: #666;
+      color: var(--text-secondary, #666);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -1245,8 +1245,283 @@ class RecentTabsManager {
   }
 }
 
+// Функция для подключения темы
+function injectThemeCSS() {
+  if (!document.getElementById('lan-search-theme-css')) {
+    const themeLink = document.createElement("link");
+    themeLink.id = 'lan-search-theme-css';
+    themeLink.rel = "stylesheet";
+    themeLink.href = chrome.runtime.getURL("theme.css");
+    document.head.appendChild(themeLink);
+  }
+}
+
 // Создаем глобальный экземпляр
 window.recentTabsManager = new RecentTabsManager();
+
+// Глобальные переменные для кэширования темы
+let currentTheme = 'light';
+let themeApplied = false;
+
+// Функция для получения темы из storage
+function getCurrentTheme(callback) {
+  if (themeApplied) {
+    callback(currentTheme);
+    return;
+  }
+  
+  try {
+    // Проверяем доступность chrome.storage
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+      chrome.storage.sync.get(['theme'], function(result) {
+        try {
+          currentTheme = result.theme || 'light';
+          themeApplied = true;
+          callback(currentTheme);
+        } catch (e) {
+          // Fallback при ошибке в callback
+          try {
+            currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+          } catch (e2) {
+            currentTheme = 'light';
+          }
+          themeApplied = true;
+          callback(currentTheme);
+        }
+      });
+    } else {
+      // Fallback если chrome.storage недоступен
+      try {
+        currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+      } catch (e2) {
+        currentTheme = 'light';
+      }
+      themeApplied = true;
+      callback(currentTheme);
+    }
+  } catch (e) {
+    // Fallback на localStorage
+    try {
+      currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+    } catch (e2) {
+      currentTheme = 'light';
+    }
+    themeApplied = true;
+    callback(currentTheme);
+  }
+}
+
+// Функция для применения темы к странице
+function applyThemeToPage() {
+  // Сначала применяем тему синхронно для предотвращения FOUC
+  try {
+    const theme = localStorage.getItem('lanSearchTheme') || 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {
+    // Fallback если localStorage недоступен
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+  
+  // Затем получаем актуальную тему из chrome.storage
+  getCurrentTheme((theme) => {
+    document.documentElement.setAttribute('data-theme', theme);
+    // Сохраняем в localStorage для быстрого доступа
+    try {
+      localStorage.setItem('lanSearchTheme', theme);
+    } catch (e) {
+      // Игнорируем ошибки localStorage
+    }
+  });
+}
+
+// Функция для применения темы к новым элементам
+function applyThemeToNewElements() {
+  getCurrentTheme((theme) => {
+    if (theme === 'dark') {
+      // Применяем темную тему ко всем элементам, которые могут быть добавлены динамически
+      const elementsToStyle = document.querySelectorAll(`
+        .content-wrapper, .main-content, .container-fluid, .container,
+        .wrapper, .page-wrapper, .app-wrapper, .main, .content, .section,
+        .panel, .block, .box, .sidebar-wrapper, .nav-wrapper, .menu-wrapper,
+        .footer, .footer-wrapper, .header, .header-wrapper,
+        .card, .card-header, .form-control, .btn-light,
+        .navbar, .dropdown-menu, .modal-content, .modal-header, .modal-footer,
+        .table, .list-group-item, .alert-light, .badge-light,
+        .progress, .page-link, .tooltip-inner, .popover, .popover-header,
+        .popover-body, select.form-control, .form-check-input,
+        textarea.form-control, .bg-light, .bg-white, .text-dark, .text-muted,
+        .border, .langame-content, .langame-wrapper, .cls-content, .cls-wrapper,
+        .px-1, .p-lg-3, .container-fluid.px-1, .container-fluid.p-lg-3, .container-fluid.px-1.p-lg-3,
+        #dataTable thead tr th>div, table.table thead tr th>div, table.dataTable thead tr th>div,
+        #dataTable thead tr th, table.table thead tr th, table.dataTable thead tr th,
+        #dataTable tbody tr td, table.table tbody tr td, table.dataTable tbody tr td
+      `);
+      
+              elementsToStyle.forEach(element => {
+          // Применяем базовые стили темной темы
+          if (element.classList.contains('content-wrapper') || 
+              element.classList.contains('main-content') ||
+              element.classList.contains('container-fluid') ||
+              element.classList.contains('container') ||
+              element.classList.contains('wrapper') ||
+              element.classList.contains('page-wrapper') ||
+              element.classList.contains('app-wrapper') ||
+              element.classList.contains('main') ||
+              element.classList.contains('content') ||
+              element.classList.contains('section') ||
+              element.classList.contains('px-1') ||
+              element.classList.contains('p-lg-3')) {
+            element.style.backgroundColor = 'var(--bg-color)';
+          }
+        
+        if (element.classList.contains('panel') ||
+            element.classList.contains('block') ||
+            element.classList.contains('box') ||
+            element.classList.contains('sidebar-wrapper') ||
+            element.classList.contains('nav-wrapper') ||
+            element.classList.contains('menu-wrapper') ||
+            element.classList.contains('footer') ||
+            element.classList.contains('footer-wrapper') ||
+            element.classList.contains('header') ||
+            element.classList.contains('header-wrapper')) {
+          element.style.backgroundColor = 'var(--bg-secondary)';
+          element.style.borderColor = 'var(--border-color)';
+        }
+        
+        if (element.classList.contains('card')) {
+          element.style.backgroundColor = 'var(--bg-secondary)';
+          element.style.borderColor = 'var(--border-color)';
+        }
+        
+        if (element.classList.contains('form-control')) {
+          element.style.backgroundColor = 'var(--bg-secondary)';
+          element.style.borderColor = 'var(--border-color)';
+          element.style.color = 'var(--text-color)';
+        }
+        
+                  if (element.classList.contains('btn-light')) {
+            element.style.backgroundColor = 'var(--bg-secondary)';
+            element.style.borderColor = 'var(--border-color)';
+            element.style.color = 'var(--text-color)';
+          }
+
+          // Стили для заголовков таблиц
+          if (element.tagName === 'DIV' && 
+              (element.closest('#dataTable thead tr th') || 
+               element.closest('table.table thead tr th') || 
+               element.closest('table.dataTable thead tr th'))) {
+            element.style.backgroundColor = 'var(--bg-secondary)';
+            element.style.padding = '13px 5px';
+          }
+
+          // Стили для заголовков таблиц (th)
+          if (element.tagName === 'TH' && 
+              (element.closest('#dataTable thead tr') || 
+               element.closest('table.table thead tr') || 
+               element.closest('table.dataTable thead tr'))) {
+            element.style.backgroundColor = 'var(--bg-secondary)';
+            element.style.borderColor = 'var(--border-color)';
+            element.style.color = 'var(--text-color)';
+          }
+
+          // Стили для ячеек таблиц (td)
+          if (element.tagName === 'TD' && 
+              (element.closest('#dataTable tbody tr') || 
+               element.closest('table.table tbody tr') || 
+               element.closest('table.dataTable tbody tr'))) {
+            element.style.backgroundColor = 'var(--bg-color)';
+            element.style.borderColor = 'var(--border-color)';
+            element.style.color = 'var(--text-color)';
+          }
+      });
+    }
+  });
+}
+
+// Функция для наблюдения за изменениями DOM
+function observeDOMChanges() {
+  const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        // Применяем тему к новым элементам
+        setTimeout(applyThemeToNewElements, 100);
+      }
+    });
+  });
+
+  // Начинаем наблюдение за изменениями в DOM
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+// Подключаем CSS темы и применяем тему при загрузке
+injectThemeCSS();
+applyThemeToPage();
+observeDOMChanges();
+
+// Слушатель изменений темы
+try {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+      if (namespace === 'sync' && changes.theme) {
+        const newTheme = changes.theme.newValue || 'light';
+        currentTheme = newTheme; // Обновляем глобальную переменную
+        document.documentElement.setAttribute('data-theme', newTheme);
+        // Применяем тему к новым элементам при изменении темы
+        setTimeout(applyThemeToNewElements, 100);
+      }
+    });
+  }
+} catch (e) {
+  // Игнорируем ошибки если chrome.storage недоступен
+  console.log('Chrome storage not available, using localStorage fallback');
+}
+
+// Периодическое применение темы для динамически загружаемого контента
+setInterval(function() {
+  if (currentTheme === 'dark') {
+    applyThemeToNewElements();
+  }
+}, 2000); // Проверяем каждые 2 секунды
+
+// Слушатель для событий навигации (для SPA)
+window.addEventListener('popstate', function() {
+  setTimeout(applyThemeToNewElements, 500);
+});
+
+// Перехватываем pushState и replaceState для SPA
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = function(...args) {
+  originalPushState.apply(history, args);
+  setTimeout(applyThemeToNewElements, 500);
+};
+
+history.replaceState = function(...args) {
+  originalReplaceState.apply(history, args);
+  setTimeout(applyThemeToNewElements, 500);
+};
+
+// Слушатель для AJAX запросов (если используется XMLHttpRequest)
+const originalXHROpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function(...args) {
+  this.addEventListener('load', function() {
+    setTimeout(applyThemeToNewElements, 100);
+  });
+  originalXHROpen.apply(this, args);
+};
+
+// Слушатель для fetch запросов
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+  return originalFetch.apply(this, args).then(response => {
+    setTimeout(applyThemeToNewElements, 100);
+    return response;
+  });
+};
 
 // Экспортируем функции для совместимости
 window.lanSearchSaveTab = (tabInfo) => window.recentTabsManager.saveTab(tabInfo);

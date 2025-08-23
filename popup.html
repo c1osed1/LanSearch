@@ -3,16 +3,60 @@
 <head>
   <meta charset="utf-8">
   <style>
+    :root {
+      --bg-color: #ffffff;
+      --text-color: #333;
+      --text-secondary: #666;
+      --border-color: #e9ecef;
+      --bg-secondary: #f8f9fa;
+      --bg-tertiary: #e9ecef;
+      --button-bg: #4c8bf5;
+      --button-hover: #3b7de9;
+      --button-disabled: #ccc;
+      --status-auto-bg: #d4edda;
+      --status-auto-color: #155724;
+      --status-auto-border: #c3e6cb;
+      --status-manual-bg: #fff3cd;
+      --status-manual-color: #856404;
+      --status-manual-border: #ffeaa7;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #2d2d2d;
+      --text-color: #ffffff;
+      --text-secondary: #cccccc;
+      --border-color: #444444;
+      --bg-secondary: #3a3a3a;
+      --bg-tertiary: #444444;
+      --button-bg: #4c8bf5;
+      --button-hover: #3b7de9;
+      --button-disabled: #666666;
+      --status-auto-bg: #1e4a1e;
+      --status-auto-color: #90ee90;
+      --status-auto-border: #2d5a2d;
+      --status-manual-bg: #4a4a1e;
+      --status-manual-color: #ffff90;
+      --status-manual-border: #5a5a2d;
+    }
+
     body {
       width: 300px;
       padding: 16px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
     }
     .header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 16px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
     }
     .icon {
       width: 32px;
@@ -31,11 +75,24 @@
     .title {
       font-size: 18px;
       font-weight: 600;
-      color: #333;
+      color: var(--text-color);
       margin: 0;
     }
+    .theme-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      color: var(--text-color);
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+    .theme-toggle:hover {
+      background-color: var(--bg-secondary);
+    }
     .description {
-      color: #666;
+      color: var(--text-secondary);
       font-size: 14px;
       line-height: 1.4;
       margin-bottom: 16px;
@@ -43,7 +100,7 @@
     .button {
       width: 100%;
       padding: 10px 16px;
-      background: #4c8bf5;
+      background: var(--button-bg);
       color: white;
       border: none;
       border-radius: 8px;
@@ -53,24 +110,25 @@
       transition: background 0.2s;
     }
     .button:hover {
-      background: #3b7de9;
+      background: var(--button-hover);
     }
     .button:disabled {
-      background: #ccc;
+      background: var(--button-disabled);
       cursor: not-allowed;
     }
     .shortcuts {
       margin-top: 16px;
       padding: 12px;
-      background: #f8f9fa;
+      background: var(--bg-secondary);
       border-radius: 6px;
       font-size: 12px;
-      color: #666;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
     }
     .shortcuts h4 {
       margin: 0 0 8px 0;
       font-size: 13px;
-      color: #333;
+      color: var(--text-color);
     }
     .shortcut {
       display: flex;
@@ -78,11 +136,12 @@
       margin-bottom: 4px;
     }
     .key {
-      background: #e9ecef;
+      background: var(--bg-tertiary);
       padding: 2px 6px;
       border-radius: 4px;
       font-family: monospace;
       font-size: 11px;
+      color: var(--text-color);
     }
     .status {
       margin-top: 12px;
@@ -92,23 +151,74 @@
       text-align: center;
     }
     .status.auto {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+      background: var(--status-auto-bg);
+      color: var(--status-auto-color);
+      border: 1px solid var(--status-auto-border);
     }
     .status.manual {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeaa7;
+      background: var(--status-manual-bg);
+      color: var(--status-manual-color);
+      border: 1px solid var(--status-manual-border);
+    }
+    .update-section {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+    .update-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .update-title {
+      font-size: 13px;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+    .update-buttons {
+      display: flex;
+      gap: 4px;
+    }
+    .update-btn {
+      padding: 4px 8px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .update-status {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .download-btn {
+      padding: 6px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      width: 100%;
+    }
+    .error-text {
+      color: #dc3545;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="icon">
-      <img src="icons/logo32.png" alt="Lan-Search">
+    <div class="header-left">
+      <div class="icon">
+        <img src="icons/logo32.png" alt="Lan-Search">
+      </div>
+      <h1 class="title">Lan-Search</h1>
     </div>
-    <h1 class="title">Lan-Search</h1>
+    <button id="themeToggle" class="theme-toggle" title="Переключить тему">🌙</button>
   </div>
   
   <p class="description">
@@ -118,14 +228,14 @@
   
   <button id="activateBtn" class="button">Активировать поиск</button>
   
-  <div id="updateSection" style="margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #e9ecef;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-      <span style="font-size: 13px; color: #333; font-weight: 500;">Обновления</span>
-      <div style="display: flex; gap: 4px;">
-        <button id="checkUpdateBtn" style="padding: 4px 8px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">Проверить</button>
+  <div id="updateSection" class="update-section">
+    <div class="update-header">
+      <span class="update-title">Обновления</span>
+      <div class="update-buttons">
+        <button id="checkUpdateBtn" class="update-btn">Проверить</button>
       </div>
     </div>
-    <div id="updateStatus" style="font-size: 12px; color: #666;"></div>
+    <div id="updateStatus" class="update-status"></div>
   </div>
   
   <div id="status" class="status" style="display: none;"></div>
