@@ -32,7 +32,8 @@
         "*://*.cls.net/*",
         "*://*.cls.org/*",
         "*://*.langamesoft.ru/*",
-        "*://*.langamesoftware.ru/*"
+        "*://*.langamesoftware.ru/*",
+        "*://*.langamecloud.ru/*"
       ],
       "js": ["recent-tabs.js", "content.js"],
       "run_at": "document_end"
@@ -51,7 +52,9 @@
         "*://*.cls.net/*",
         "*://*.cls.org/*",
         "*://*.langamesoft.ru/*",
-        "*://*.langamesoftware.ru/*"
+        "*://*.langamesoftware.ru/*",
+        "*://*.langamecloud.ru/*"
+
       ]
     }
   ]
