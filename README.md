@@ -1,6 +1,6 @@
 # Changelog - LanSearch Extension (Chrome)
 ## Version 1.3.10 - 23-08-2025
-- Исправлена работа
+- Исправлена работа)
 
 ## Version 1.3.9 - 22-08-2025
 
