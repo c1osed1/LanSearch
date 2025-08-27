@@ -33,7 +33,9 @@
         "*://*.cls.org/*",
         "*://*.langamesoft.ru/*",
         "*://*.langamesoftware.ru/*",
-        "*://*.langamecloud.ru/*"
+        "*://*.langamecloud.ru/*",
+        "*://*.langamesftw.ru/*",
+        "*://*.langame-pr.ru/*"
       ],
       "js": ["recent-tabs.js", "content.js"],
       "run_at": "document_end"
@@ -53,8 +55,9 @@
         "*://*.cls.org/*",
         "*://*.langamesoft.ru/*",
         "*://*.langamesoftware.ru/*",
-        "*://*.langamecloud.ru/*"
-
+        "*://*.langamecloud.ru/*",
+        "*://*.langamesftw.ru/*",
+        "*://*.langame-pr.ru/*"
       ]
     }
   ]

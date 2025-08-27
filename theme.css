@@ -341,6 +341,182 @@ html[data-theme="dark"] .content-wrapper a {
   color: var(--text-color);
 }
 
+[data-theme="dark"] .content-wrapper .alert-info {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+/* Стили для Flatpickr календаря - только в основном контенте */
+[data-theme="dark"] .content-wrapper .flatpickr-calendar {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-months {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-month {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-current-month {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-monthDropdown-months {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-monthDropdown-month {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-next-month,
+[data-theme="dark"] .content-wrapper .flatpickr-prev-month {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+  fill: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-next-month:hover,
+[data-theme="dark"] .content-wrapper .flatpickr-prev-month:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--button-hover) !important;
+  fill: var(--button-hover) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-innerContainer {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-rContainer {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-weekdays {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-weekdaycontainer {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-weekday {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-days {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .dayContainer {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day:hover {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day:focus {
+  background-color: var(--button-bg) !important;
+  background: var(--button-bg) !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day.today {
+  background-color: var(--button-bg) !important;
+  background: var(--button-bg) !important;
+  color: white !important;
+  border-color: var(--button-bg) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day.selected {
+  background-color: var(--button-hover) !important;
+  background: var(--button-hover) !important;
+  color: white !important;
+  border-color: var(--button-hover) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day.prevMonthDay,
+[data-theme="dark"] .content-wrapper .flatpickr-day.nextMonthDay {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .content-wrapper .flatpickr-day.prevMonthDay:hover,
+[data-theme="dark"] .content-wrapper .flatpickr-day.nextMonthDay:hover {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .numInputWrapper {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .numInput {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .numInput:focus {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--button-bg) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .arrowUp,
+[data-theme="dark"] .content-wrapper .arrowDown {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .arrowUp:hover,
+[data-theme="dark"] .content-wrapper .arrowDown:hover {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+
+[data-theme="dark"] .content-wrapper .alert {
+  background-color: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-color);
+}
+
 /* Стили для бейджей - только в основном контенте */
 [data-theme="dark"] .content-wrapper .badge-light {
   background-color: var(--bg-tertiary);
@@ -683,6 +859,60 @@ html[data-theme="dark"] .content-wrapper a {
 [data-theme="dark"] .content-wrapper .table-sm th,
 [data-theme="dark"] .content-wrapper .table-sm td {
   padding: 0.3rem !important;
+}
+
+/* Стили для datepicker - только в основном контенте */
+[data-theme="dark"] .content-wrapper .datepicker-click-listener {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .datepicker-click-listener:hover {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper .datepicker-click-listener:focus {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--button-bg) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(76, 139, 245, 0.25) !important;
+}
+
+/* Принудительное переопределение для datepicker с inline стилями */
+[data-theme="dark"] .content-wrapper .datepicker-click-listener[style*="background-color: #ffffff"],
+[data-theme="dark"] .content-wrapper .datepicker-click-listener[style*="background-color: white"],
+[data-theme="dark"] .content-wrapper .datepicker-click-listener[style*="background: #fff"],
+[data-theme="dark"] .content-wrapper .datepicker-click-listener[style*="background: #ffffff"],
+[data-theme="dark"] .content-wrapper .datepicker-click-listener[style*="background: white"] {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+/* Переопределение для всех возможных вариантов datepicker */
+[data-theme="dark"] .content-wrapper [class*="datepicker"] {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper [class*="datepicker"]:hover {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .content-wrapper [class*="datepicker"]:focus {
+  background-color: var(--bg-secondary) !important;
+  background: var(--bg-secondary) !important;
+  border-color: var(--button-bg) !important;
+  color: var(--text-color) !important;
 }
 [data-theme="dark"] .content-wrapper .filter-option-inner-inner{
     background-color: var(--bg-secondary) !important;
