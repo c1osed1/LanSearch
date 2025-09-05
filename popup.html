@@ -3,41 +3,7 @@
 <head>
   <meta charset="utf-8">
   <style>
-    :root {
-      --bg-color: #ffffff;
-      --text-color: #333;
-      --text-secondary: #666;
-      --border-color: #e9ecef;
-      --bg-secondary: #f8f9fa;
-      --bg-tertiary: #e9ecef;
-      --button-bg: #4c8bf5;
-      --button-hover: #3b7de9;
-      --button-disabled: #ccc;
-      --status-auto-bg: #d4edda;
-      --status-auto-color: #155724;
-      --status-auto-border: #c3e6cb;
-      --status-manual-bg: #fff3cd;
-      --status-manual-color: #856404;
-      --status-manual-border: #ffeaa7;
-    }
 
-    [data-theme="dark"] {
-      --bg-color: #2d2d2d;
-      --text-color: #ffffff;
-      --text-secondary: #cccccc;
-      --border-color: #444444;
-      --bg-secondary: #3a3a3a;
-      --bg-tertiary: #444444;
-      --button-bg: #4c8bf5;
-      --button-hover: #3b7de9;
-      --button-disabled: #666666;
-      --status-auto-bg: #1e4a1e;
-      --status-auto-color: #90ee90;
-      --status-auto-border: #2d5a2d;
-      --status-manual-bg: #4a4a1e;
-      --status-manual-color: #ffff90;
-      --status-manual-border: #5a5a2d;
-    }
 
     body {
       width: 300px;
@@ -227,6 +193,16 @@
   </p>
   
   <button id="activateBtn" class="button">Активировать поиск</button>
+  
+  <div class="update-section">
+    <div class="update-header">
+      <span class="update-title">Обход Тех.Старт/стоп окон</span>
+      <div class="update-buttons">
+        <button id="modalBypassToggle" class="update-btn">Выключен</button>
+      </div>
+    </div>
+    <div class="update-status">Убирает модальные окна подтверждения тех старт/стоп</div>
+  </div>
   
   <div id="updateSection" class="update-section">
     <div class="update-header">

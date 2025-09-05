@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const checkUpdateBtn = document.getElementById('checkUpdateBtn');
   const updateStatus = document.getElementById('updateStatus');
   const themeToggle = document.getElementById('themeToggle');
+  const modalBypassToggle = document.getElementById('modalBypassToggle');
   
   // Глобальная переменная для кэширования темы
   let currentTheme = 'light';
@@ -98,6 +99,120 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Обработчик переключения темы
   themeToggle.addEventListener('click', toggleTheme);
+  
+  // Функции для работы с обходом модальных окон
+  let modalBypassEnabled = false;
+  
+  function initModalBypass() {
+    try {
+      // Проверяем localStorage для быстрого доступа
+      const localBypass = localStorage.getItem('lanSearchModalBypass');
+      if (localBypass !== null) {
+        modalBypassEnabled = localBypass === 'true';
+        setModalBypassState(modalBypassEnabled);
+        return;
+      }
+      
+      // Затем проверяем chrome.storage
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['modalBypass'], function(result) {
+          try {
+            modalBypassEnabled = result.modalBypass || false;
+            setModalBypassState(modalBypassEnabled);
+            // Сохраняем в localStorage для быстрого доступа
+            try {
+              localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
+            } catch (e) {
+              // Игнорируем ошибки localStorage
+            }
+          } catch (e) {
+            // Fallback при ошибке
+            modalBypassEnabled = false;
+            setModalBypassState(false);
+          }
+        });
+      } else {
+        // Fallback если chrome.storage недоступен
+        modalBypassEnabled = false;
+        setModalBypassState(false);
+      }
+    } catch (e) {
+      // Fallback при любой ошибке
+      modalBypassEnabled = false;
+      setModalBypassState(false);
+    }
+  }
+  
+  function setModalBypassState(enabled) {
+    modalBypassToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    modalBypassToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    modalBypassToggle.title = enabled ? 'Отключить обход модальных окон' : 'Включить обход модальных окон';
+  }
+  
+  function toggleModalBypass() {
+    modalBypassEnabled = !modalBypassEnabled;
+    
+    setModalBypassState(modalBypassEnabled);
+    
+    // Сохраняем в localStorage для быстрого доступа
+    try {
+      localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
+    } catch (e) {
+      // Игнорируем ошибки localStorage
+    }
+    
+    // Сохраняем в chrome.storage с обработкой ошибок
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.set({ modalBypass: modalBypassEnabled }, function() {
+          console.log('Popup: Настройка сохранена в chrome.storage:', modalBypassEnabled);
+          
+          // Принудительно синхронизируем настройки на активной вкладке
+          chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs[0]) {
+              chrome.scripting.executeScript({
+                target: { tabId: tabs[0].id },
+                func: () => {
+                  if (window.lanSearchSyncModalBypass) {
+                    window.lanSearchSyncModalBypass();
+                  }
+                }
+              }).catch(err => {
+                console.log('Popup: Не удалось синхронизировать настройки на вкладке:', err);
+              });
+            }
+          });
+        });
+      }
+    } catch (e) {
+      // Игнорируем ошибки chrome.storage
+      console.log('Chrome storage not available, using localStorage only');
+    }
+  }
+  
+  // Инициализация состояния обхода модальных окон
+  initModalBypass();
+  
+  // Обработчик переключения обхода модальных окон
+  modalBypassToggle.addEventListener('click', toggleModalBypass);
+  
+  // Принудительная синхронизация при открытии popup
+  setTimeout(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncModalBypass) {
+              window.lanSearchSyncModalBypass();
+            }
+          }
+        }).catch(err => {
+          console.log('Popup: Не удалось синхронизировать настройки при открытии popup:', err);
+        });
+      }
+    });
+  }, 100);
   
   // Проверяем текущую вкладку
   async function checkCurrentTab() {
