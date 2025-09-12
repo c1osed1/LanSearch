@@ -36,7 +36,7 @@
         "*://*.langamecloud.ru/*",
         "*://*.langamesftw.ru/*",
         "*://*.langame-pr.ru/*",
-        "*://*.cls.expert/*"
+        "*://*.cls.expert/*",
       ],
       "js": ["recent-tabs.js", "content.js"],
       "run_at": "document_end"

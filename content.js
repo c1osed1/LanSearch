@@ -66,6 +66,7 @@
         color: #333;
         padding-left: 32px; /* room for icon */
         background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>");
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http:
         background-repeat: no-repeat; background-position: 10px center; background-size: 16px;
       }
       .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
@@ -475,6 +476,12 @@
       }
     });
   };
+  
+  
+  window.lanSearchTestButtonReplacement = function() {
+    console.log('Lan-Search: Ручное тестирование замены кнопок');
+    replaceButtonsWithDivs();
+  };
 
   try {
 
@@ -590,7 +597,7 @@
       chrome.storage.onChanged.addListener(function(changes, namespace) {
         if (namespace === 'sync' && changes.theme) {
           const newTheme = changes.theme.newValue || 'light';
-          currentTheme = newTheme; // Обновляем глобальную переменную
+          currentTheme = newTheme; 
           document.documentElement.setAttribute('data-theme', newTheme);
 
           setTimeout(() => {
@@ -614,7 +621,7 @@
 
       htmlElement.setAttribute('data-theme', 'dark');
     }
-  }, 1000); // Проверяем каждую секунду
+  }, 1000); 
 
 
   window.addEventListener('popstate', function() {
@@ -891,21 +898,57 @@
 
 
   function extractButtonParams(button) {
-    const onclick = button.getAttribute('onclick');
-    if (!onclick) return null;
+    const command = button.getAttribute('data-type');
+    if (!command) return null;
     
-
-    const uuidMatch = onclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
-    if (!uuidMatch) {
-      console.warn('Lan-Search: UUID не найден в onclick:', onclick);
+    let uuid = null;
+    let whoSend = null;
+    
+    
+    const onclick = button.getAttribute('onclick');
+    if (onclick) {
+      const uuidMatch = onclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
+      if (uuidMatch) {
+        uuid = uuidMatch[1];
+      }
+    }
+    
+    if (!uuid) {
+      let parent = button.parentElement;
+      while (parent && parent !== document.body) {
+        const parentId = parent.getAttribute('id');
+        if (parentId && parentId.match(/^[A-F0-9a-f-]{36}$/i)) {
+          uuid = parentId;
+          console.log('Lan-Search: UUID найден в родительском элементе:', uuid);
+          break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+    
+    
+    if (!uuid) {
+      const allButtons = document.querySelectorAll('button[data-type]');
+      for (let otherButton of allButtons) {
+        const otherOnclick = otherButton.getAttribute('onclick');
+        if (otherOnclick) {
+          const uuidMatch = otherOnclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
+          if (uuidMatch) {
+            uuid = uuidMatch[1];
+            console.log('Lan-Search: UUID найден в другой кнопке:', uuid);
+            break;
+          }
+        }
+      }
+    }
+    
+    if (!uuid) {
+      console.warn('Lan-Search: UUID не найден для команды:', command);
       return null;
     }
     
-    const uuid = uuidMatch[1];
-    const command = button.getAttribute('data-type') || 'startTehTime';
     
-
-    const whoSend = getCookieValue('PHPSESSID') || getSessionId();
+    whoSend = getCookieValue('PHPSESSID') || getSessionId();
     
     console.log('Lan-Search: Извлеченные параметры - UUID:', uuid, 'Command:', command, 'WhoSend:', whoSend);
     
@@ -914,21 +957,59 @@
 
 
   function extractButtonParamsFromDiv(div) {
-    const onclick = div.getAttribute('data-original-onclick');
-    if (!onclick) return null;
+    const command = div.getAttribute('data-type');
+    if (!command) return null;
     
-
-    const uuidMatch = onclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
-    if (!uuidMatch) {
-      console.warn('Lan-Search: UUID не найден в data-original-onclick:', onclick);
+    let uuid = null;
+    let whoSend = null;
+    
+    
+    const onclick = div.getAttribute('data-original-onclick');
+    if (onclick) {
+      const uuidMatch = onclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
+      if (uuidMatch) {
+        uuid = uuidMatch[1];
+      }
+    }
+    
+    
+    if (!uuid) {
+      let parent = div.parentElement;
+      while (parent && parent !== document.body) {
+        
+        const parentId = parent.getAttribute('id');
+        if (parentId && parentId.match(/^[A-F0-9a-f-]{36}$/i)) {
+          uuid = parentId;
+          console.log('Lan-Search: UUID найден в родительском элементе для div:', uuid);
+          break;
+        }
+        parent = parent.parentElement;
+      }
+    }
+    
+    
+    if (!uuid) {
+      const allButtons = document.querySelectorAll('button[data-type]');
+      for (let otherButton of allButtons) {
+        const otherOnclick = otherButton.getAttribute('onclick');
+        if (otherOnclick) {
+          const uuidMatch = otherOnclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
+          if (uuidMatch) {
+            uuid = uuidMatch[1];
+            console.log('Lan-Search: UUID найден в другой кнопке для div:', uuid);
+            break;
+          }
+        }
+      }
+    }
+    
+    if (!uuid) {
+      console.warn('Lan-Search: UUID не найден для div команды:', command);
       return null;
     }
     
-    const uuid = uuidMatch[1];
-    const command = div.getAttribute('data-type') || 'startTehTime';
     
-
-    const whoSend = getCookieValue('PHPSESSID') || getSessionId();
+    whoSend = getCookieValue('PHPSESSID') || getSessionId();
     
     console.log('Lan-Search: Извлеченные параметры из div - UUID:', uuid, 'Command:', command, 'WhoSend:', whoSend);
     
@@ -991,51 +1072,111 @@
 
   let modalBypassCache = null;
   let modalBypassCacheTime = 0;
-  const CACHE_DURATION = 5000; // 5 секунд
+  const CACHE_DURATION = 5000; 
   
 
   function replaceButtonsWithDivs() {
-    const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC'];
+    const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock'];
+    console.log('Lan-Search: Начинаем замену кнопок на div элементы');
     
-
+    
     const buttons = document.querySelectorAll('button[data-type]');
+    console.log('Lan-Search: Найдено кнопок с data-type:', buttons.length);
     buttons.forEach(button => {
-      const dataType = button.getAttribute('data-type');
+      console.log('Lan-Search: Кнопка с data-type:', button.getAttribute('data-type'), 'Текст:', button.textContent.trim());
+    });
+    
+    
+    const allButtons = document.querySelectorAll('button');
+    console.log('Lan-Search: Всего кнопок на странице:', allButtons.length);
+    
+    const lockButtons = Array.from(allButtons).filter(button => {
+      const text = button.textContent.trim().toLowerCase();
+      const isLockButton = text === 'заблокировать' || text === 'разблокировать';
+      if (isLockButton) {
+        console.log('Lan-Search: Найдена кнопка Lock/UnLock по тексту:', text, 'data-type:', button.getAttribute('data-type'));
+      }
+      return isLockButton;
+    });
+    console.log('Lan-Search: Найдено кнопок Lock/UnLock по тексту:', lockButtons.length);
+    
+    
+    const allButtonsToProcess = [...new Set([...buttons, ...lockButtons])];
+    console.log('Lan-Search: Всего кнопок для обработки:', allButtonsToProcess.length);
+    
+    allButtonsToProcess.forEach((button, index) => {
+      console.log(`Lan-Search: Обрабатываем кнопку ${index + 1}/${allButtonsToProcess.length}`);
       
-      if (supportedCommands.includes(dataType)) {
-        console.log('Lan-Search: Заменяем кнопку на div для команды:', dataType);
+      
+      if (button.getAttribute('data-lan-search-replaced') === 'true') {
+        console.log('Lan-Search: Кнопка уже заменена, пропускаем');
+        return;
+      }
+      
+      const dataType = button.getAttribute('data-type');
+      const buttonText = button.textContent.trim();
+      console.log('Lan-Search: Обрабатываем кнопку - data-type:', dataType, 'Текст:', buttonText);
+      
+      let command = dataType;
+      
+      
+      if (!command) {
+        if (buttonText.toLowerCase() === 'заблокировать') {
+          command = 'Lock';
+        } else if (buttonText.toLowerCase() === 'разблокировать') {
+          command = 'UnLock';
+        }
+      }
+      
+      console.log('Lan-Search: Определенная команда:', command);
+      
+      if (supportedCommands.includes(command)) {
+        console.log('Lan-Search: Заменяем кнопку на div для команды:', command);
         
-
+        
         const div = document.createElement('div');
         
-
+        
         Array.from(button.attributes).forEach(attr => {
           if (attr.name !== 'onclick') {
             div.setAttribute(attr.name, attr.value);
           }
         });
         
-
-        if (button.getAttribute('onclick')) {
-          div.setAttribute('data-original-onclick', button.getAttribute('onclick'));
+        
+        if (!div.getAttribute('data-type')) {
+          div.setAttribute('data-type', command);
         }
         
-
+        
+        if (button.getAttribute('onclick')) {
+          div.setAttribute('data-original-onclick', button.getAttribute('onclick'));
+        } else {
+          
+          div.setAttribute('data-original-onclick', '');
+        }
+        
+        
         div.setAttribute('data-lan-search-replaced', 'true');
         
-
+        
         div.innerHTML = button.innerHTML;
         
-
+        
         div.style.cssText = button.style.cssText;
         
-
+        
         div.style.cursor = 'pointer';
         
-
+        
         button.parentNode.replaceChild(div, button);
+        console.log('Lan-Search: Кнопка успешно заменена на div для команды:', command);
+      } else {
+        console.log('Lan-Search: Кнопка не поддерживается, команда:', command);
       }
     });
+    
+    console.log('Lan-Search: Замена кнопок завершена');
   }
 
 
@@ -1123,9 +1264,9 @@
       
 
       const dataType = target.getAttribute('data-type');
-      const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC'];
+      const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock'];
       
-      if (target.tagName === 'DIV' && supportedCommands.includes(dataType) && target.hasAttribute('data-original-onclick')) {
+      if (target.tagName === 'DIV' && supportedCommands.includes(dataType) && target.hasAttribute('data-lan-search-replaced')) {
         getModalBypassSetting(function(bypassEnabled) {
           if (bypassEnabled) {
             console.log('Lan-Search: Клик по заменённому div элементу, отправляем API запрос');
@@ -1169,8 +1310,29 @@
                   
 
                   if (data.status === true) {
-
-                    showNotification('Команда выполнена успешно!', 'success', 2000);
+                    
+                    let successMessage = 'Команда выполнена успешно!';
+                    switch (params.command) {
+                      case 'startTehTime':
+                        successMessage = 'Тех.Старт выполнен успешно!';
+                        break;
+                      case 'stopTehTime':
+                        successMessage = 'Тех.Стоп выполнен успешно!';
+                        break;
+                      case 'rebootPC':
+                        successMessage = 'Перезагрузка ПК выполнена успешно!';
+                        break;
+                      case 'shutdownPC':
+                        successMessage = 'Выключение ПК выполнено успешно!';
+                        break;
+                      case 'Lock':
+                        successMessage = 'ПК заблокирован успешно!';
+                        break;
+                      case 'UnLock':
+                        successMessage = 'ПК разблокирован успешно!';
+                        break;
+                    }
+                    showNotification(successMessage, 'success', 2000);
                     
 
                     const originalBg = target.style.backgroundColor;
@@ -1182,11 +1344,33 @@
                       target.style.color = originalColor;
                     }, 1000);
                   } else {
-
+                    
                     const errorMessage = data.textStatus || 'Неизвестная ошибка';
                     console.warn('Lan-Search: Сообщение от API:', errorMessage);
                     
-                    showNotification(errorMessage, 'error', 5000);
+                    let errorTitle = 'Ошибка выполнения команды';
+                    switch (params.command) {
+                      case 'startTehTime':
+                        errorTitle = 'Ошибка Тех.Старта';
+                        break;
+                      case 'stopTehTime':
+                        errorTitle = 'Ошибка Тех.Стопа';
+                        break;
+                      case 'rebootPC':
+                        errorTitle = 'Ошибка перезагрузки ПК';
+                        break;
+                      case 'shutdownPC':
+                        errorTitle = 'Ошибка выключения ПК';
+                        break;
+                      case 'Lock':
+                        errorTitle = 'Ошибка блокировки ПК';
+                        break;
+                      case 'UnLock':
+                        errorTitle = 'Ошибка разблокировки ПК';
+                        break;
+                    }
+                    
+                    showNotification(`${errorTitle}: ${errorMessage}`, 'error', 5000);
                     
 
                     const originalBg = target.style.backgroundColor;
@@ -1207,7 +1391,30 @@
                   target.style.pointerEvents = '';
                   
 
-                  showNotification('Ошибка сети: ' + error.message, 'error', 4000);
+                  
+                  let errorTitle = 'Ошибка сети';
+                  switch (params.command) {
+                    case 'startTehTime':
+                      errorTitle = 'Ошибка сети при Тех.Старте';
+                      break;
+                    case 'stopTehTime':
+                      errorTitle = 'Ошибка сети при Тех.Стопе';
+                      break;
+                    case 'rebootPC':
+                      errorTitle = 'Ошибка сети при перезагрузке ПК';
+                      break;
+                    case 'shutdownPC':
+                      errorTitle = 'Ошибка сети при выключении ПК';
+                      break;
+                    case 'Lock':
+                      errorTitle = 'Ошибка сети при блокировке ПК';
+                      break;
+                    case 'UnLock':
+                      errorTitle = 'Ошибка сети при разблокировке ПК';
+                      break;
+                  }
+                  
+                  showNotification(`${errorTitle}: ${error.message}`, 'error', 4000);
                   
 
                   const originalBg = target.style.backgroundColor;
