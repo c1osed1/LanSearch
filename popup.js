@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Секция избранных вкладок
       if (favoriteTabs.length > 0) {
         const favoritesTitle = document.createElement('h4');
-        favoritesTitle.innerHTML = '⭐ Избранные:';
+        favoritesTitle.textContent = ' Избранные:';
         favoritesTitle.style.cssText = `
           margin: 15px 0 8px 0;
           font-size: 13px;
@@ -899,33 +899,56 @@ document.addEventListener('DOMContentLoaded', function() {
         versionComparison = `ℹ️ Не удалось определить версию из коммита`;
       }
       
-      // Формируем HTML для отображения
-      let statusHTML = `
-        <div style="margin-bottom: 12px; font-size: 11px; line-height: 1.4;">
-          <div style="margin-bottom: 6px;">
-            <strong>Последняя проверка:</strong> ${formatDate(new Date())}
-          </div>
-          <div style="margin-bottom: 6px;">
-            <strong>Последнее обновление на GitHub:</strong><br>
-            ${formatDate(commitDate)} (${latestCommitSha})
-          </div>
-          <div style="margin-bottom: 6px;">
-            <strong>Сообщение коммита:</strong><br>
-            ${commitMessage}
-          </div>
-          <div style="margin-bottom: 8px; font-weight: 600;">
-            ${versionComparison}
-          </div>
-      `;
+      // Создаем элементы программно вместо innerHTML для безопасности
+      updateStatus.textContent = '';
       
-      statusHTML += `
-        </div>
-        <button id="downloadUpdateBtn" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;">
-          Скачать обновление
-        </button>
-      `;
+      // Создаем контейнер для информации
+      const infoContainer = document.createElement('div');
+      infoContainer.style.cssText = 'margin-bottom: 12px; font-size: 11px; line-height: 1.4;';
       
-      updateStatus.innerHTML = statusHTML;
+      // Добавляем информацию о последней проверке
+      const lastCheckDiv = document.createElement('div');
+      lastCheckDiv.style.cssText = 'margin-bottom: 6px;';
+      const lastCheckStrong = document.createElement('strong');
+      lastCheckStrong.textContent = 'Последняя проверка:';
+      lastCheckDiv.appendChild(lastCheckStrong);
+      lastCheckDiv.appendChild(document.createTextNode(` ${formatDate(new Date())}`));
+      infoContainer.appendChild(lastCheckDiv);
+      
+      // Добавляем информацию о последнем обновлении
+      const lastUpdateDiv = document.createElement('div');
+      lastUpdateDiv.style.cssText = 'margin-bottom: 6px;';
+      const lastUpdateStrong = document.createElement('strong');
+      lastUpdateStrong.textContent = 'Последнее обновление на GitHub:';
+      lastUpdateDiv.appendChild(lastUpdateStrong);
+      lastUpdateDiv.appendChild(document.createElement('br'));
+      lastUpdateDiv.appendChild(document.createTextNode(`${formatDate(commitDate)} (${latestCommitSha})`));
+      infoContainer.appendChild(lastUpdateDiv);
+      
+      // Добавляем сообщение коммита
+      const commitDiv = document.createElement('div');
+      commitDiv.style.cssText = 'margin-bottom: 6px;';
+      const commitStrong = document.createElement('strong');
+      commitStrong.textContent = 'Сообщение коммита:';
+      commitDiv.appendChild(commitStrong);
+      commitDiv.appendChild(document.createElement('br'));
+      commitDiv.appendChild(document.createTextNode(commitMessage));
+      infoContainer.appendChild(commitDiv);
+      
+      // Добавляем сравнение версий
+      const versionDiv = document.createElement('div');
+      versionDiv.style.cssText = 'margin-bottom: 8px; font-weight: 600;';
+      versionDiv.textContent = versionComparison;
+      infoContainer.appendChild(versionDiv);
+      
+      updateStatus.appendChild(infoContainer);
+      
+      // Создаем кнопку скачивания
+      const downloadBtn = document.createElement('button');
+      downloadBtn.id = 'downloadUpdateBtn';
+      downloadBtn.textContent = 'Скачать обновление';
+      downloadBtn.style.cssText = 'padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;';
+      updateStatus.appendChild(downloadBtn);
       
       // Добавляем обработчик для кнопки скачивания
       setTimeout(() => {
@@ -939,14 +962,21 @@ document.addEventListener('DOMContentLoaded', function() {
       
     } catch (error) {
       console.error('Ошибка проверки обновлений:', error);
-      updateStatus.innerHTML = `
-        <div style="margin-bottom: 8px; color: #dc3545;">
-          Ошибка проверки обновлений: ${error.message}
-        </div>
-        <button id="downloadUpdateBtn" style="padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;">
-          Скачать обновление
-        </button>
-      `;
+      // Создаем элементы программно вместо innerHTML для безопасности
+      updateStatus.textContent = '';
+      
+      // Создаем контейнер для ошибки
+      const errorDiv = document.createElement('div');
+      errorDiv.style.cssText = 'margin-bottom: 8px; color: #dc3545;';
+      errorDiv.textContent = `Ошибка проверки обновлений: ${error.message}`;
+      updateStatus.appendChild(errorDiv);
+      
+      // Создаем кнопку скачивания
+      const downloadBtn = document.createElement('button');
+      downloadBtn.id = 'downloadUpdateBtn';
+      downloadBtn.textContent = 'Скачать обновление';
+      downloadBtn.style.cssText = 'padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;';
+      updateStatus.appendChild(downloadBtn);
       
       setTimeout(() => {
         const downloadBtn = document.getElementById('downloadUpdateBtn');

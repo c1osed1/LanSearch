@@ -17,33 +17,6 @@
   --status-manual-border: #ffeaa7;
 }
 
-/* Дополнительная защита - отключаем все стили темной темы на неподходящих доменах */
-html:not([data-lansearch-domain="true"]) [data-theme="dark"] {
-  /* Принудительно сбрасываем все переменные на светлые значения */
-  --bg-color: #ffffff !important;
-  --text-color: #333 !important;
-  --text-secondary: #666 !important;
-  --border-color: #e9ecef !important;
-  --bg-secondary: #f8f9fa !important;
-  --bg-tertiary: #e9ecef !important;
-  --button-bg: #f54c4c !important;
-  --button-hover: rgb(233, 59, 59) !important;
-  --button-disabled: #ccc !important;
-  --status-auto-bg: #d4edda !important;
-  --status-auto-color: #155724 !important;
-  --status-auto-border: #c3e6cb !important;
-  --status-manual-bg: #fff3cd !important;
-  --status-manual-color: #856404 !important;
-  --status-manual-border: #ffeaa7 !important;
-}
-
-/* Принудительно отключаем темную тему на всех элементах для неподходящих доменов */
-html:not([data-lansearch-domain="true"]) [data-theme="dark"] * {
-  background-color: inherit !important;
-  background: inherit !important;
-  color: inherit !important;
-  border-color: inherit !important;
-}
 
 
 
