@@ -1228,20 +1228,22 @@
             console.log('Lan-Search: Клик по заменённому div элементу, отправляем API запрос');
             
 
-            const clickId = target.getAttribute('data-original-onclick') + '_' + Date.now();
+            // Создаем уникальный ID для клика, используя data-type и timestamp
+            const dataType = target.getAttribute('data-type');
+            const clickId = dataType + '_' + Date.now();
             
-
-            if (processedClicks.has(clickId.split('_')[0])) {
+            
+            if (processedClicks.has(clickId)) {
               console.log('Lan-Search: Клик уже обрабатывается, пропускаем');
               return;
             }
             
-
-            processedClicks.add(clickId.split('_')[0]);
+            
+            processedClicks.add(clickId);
             
 
             setTimeout(() => {
-              processedClicks.delete(clickId.split('_')[0]);
+              processedClicks.delete(clickId);
             }, 3000);
             
 
