@@ -4,7 +4,7 @@ class RecentTabsManager {
     this.storageKey = 'lanSearchRecentTabs';
     this.favoritesKey = 'lanSearchFavoriteTabs';
     this.maxTabs = 10;
-    this.maxFavorites = 5;
+    this.maxFavorites = 20;
     
     // Проверяем доступность chrome.storage
     if (!chrome.storage || !chrome.storage.local) {
@@ -174,7 +174,7 @@ class RecentTabsManager {
         this.getFavoriteTabs().then(favorites => {
           // Проверяем, не превышен ли лимит
           if (favorites.length >= this.maxFavorites) {
-            resolve({ success: false, message: 'Достигнут лимит избранных вкладок (5)' });
+            resolve({ success: false, message: 'Достигнут лимит избранных вкладок (20)' });
             return;
           }
           
@@ -632,7 +632,7 @@ class RecentTabsManager {
       `;
 
       const favoritesTitle = document.createElement('h3');
-      favoritesTitle.textContent = '⭐ Избранные вкладки';
+      favoritesTitle.textContent = '⭐ Избранные вкладки (Теперь до 20 штук и можно зажимать и перетаскивать) ';
       favoritesTitle.style.cssText = `
         margin: 10px 0;
         color: var(--text-color, #333);
@@ -641,6 +641,7 @@ class RecentTabsManager {
       `;
 
       const favoritesGrid = document.createElement('div');
+      favoritesGrid.className = 'favorites-grid';
       favoritesGrid.style.cssText = `
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -695,6 +696,12 @@ class RecentTabsManager {
   // Создание карточки вкладки
   createTabCard(tab, isFavorite = false) {
     const card = document.createElement('div');
+    
+    // Добавляем класс для избранных карточек
+    if (isFavorite) {
+      card.classList.add('favorite-card');
+      card.setAttribute('data-favorite', 'true');
+    }
     
     // Применяем цвет если он установлен для избранной вкладки
     let cardStyle = `
@@ -997,6 +1004,13 @@ class RecentTabsManager {
     if (container) {
       container.remove();
       this.displayOnMainPage();
+      
+      // Инициализируем drag & drop для новых карточек
+      setTimeout(() => {
+        if (window.initFavoritesDragDrop) {
+          window.initFavoritesDragDrop();
+        }
+      }, 500);
     }
   }
 

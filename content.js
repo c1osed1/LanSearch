@@ -461,6 +461,9 @@
 
   window.lanSearchInit = init;
   
+  // Экспортируем функцию drag & drop для избранных
+  window.initFavoritesDragDrop = initFavoritesDragDrop;
+  
 
   window.lanSearchSyncModalBypass = function() {
     console.log('Lan-Search: Принудительная синхронизация настроек модального обхода');
@@ -494,6 +497,276 @@
     if (window.recentTabsManager) {
       window.recentTabsManager.startTracking(menuRoot);
     }
+  }
+
+  // Глобальные переменные для drag & drop
+  let globalDraggedElement = null;
+  let globalDraggedIndex = -1;
+
+  // Функция для инициализации drag & drop для избранных вкладок
+  function initFavoritesDragDrop() {
+    if (!window.recentTabsManager) return;
+
+    // Добавляем CSS стили для drag & drop
+    if (!document.getElementById('favorites-drag-drop-styles')) {
+      const style = document.createElement('style');
+      style.id = 'favorites-drag-drop-styles';
+      style.textContent = `
+        .favorites-grid {
+          display: grid !important;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+          gap: 15px !important;
+          margin-top: 15px !important;
+        }
+        
+        .favorite-card {
+          transition: all 0.2s ease !important;
+          cursor: grab !important;
+          user-select: none !important;
+        }
+        
+        .favorite-card:hover {
+          transform: translateY(-2px) !important;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        }
+        
+        .favorite-card.dragging {
+          opacity: 0.5 !important;
+          transform: rotate(5deg) !important;
+          cursor: grabbing !important;
+          z-index: 1000 !important;
+          box-shadow: 0 8px 25px rgba(0,0,0,0.3) !important;
+        }
+        
+        .favorite-card.drag-over {
+          border: 2px dashed #4c8bf5 !important;
+          background: rgba(76, 139, 245, 0.1) !important;
+          transform: scale(1.02) !important;
+        }
+        
+        
+        .drag-handle {
+          position: absolute !important;
+          top: 8px !important;
+          left: 8px !important;
+          width: 20px !important;
+          height: 20px !important;
+          background: rgba(0,0,0,0.1) !important;
+          border-radius: 4px !important;
+          cursor: grab !important;
+          display: none !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 12px !important;
+          color: #666 !important;
+          z-index: 10 !important;
+        }
+        
+        .favorite-card:hover .drag-handle {
+          display: flex !important;
+        }
+        
+        .drag-handle:hover {
+          background: rgba(0,0,0,0.2) !important;
+        }
+        
+        .drag-handle:active {
+          cursor: grabbing !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Наблюдаем за изменениями DOM для добавления drag & drop к новым карточкам
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) { // Element node
+              // Ищем новые карточки избранных
+              const favoriteCards = node.querySelectorAll ? 
+                node.querySelectorAll('.favorite-card, [data-favorite="true"]') : [];
+              
+              if (node.classList && (node.classList.contains('favorite-card') || node.getAttribute('data-favorite') === 'true')) {
+                addDragDropToCard(node);
+              }
+              
+              favoriteCards.forEach(card => addDragDropToCard(card));
+            }
+          });
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    // Добавляем drag & drop к существующим карточкам
+    setTimeout(() => {
+      const existingCards = document.querySelectorAll('.favorite-card, [data-favorite="true"]');
+      existingCards.forEach(card => addDragDropToCard(card));
+    }, 1000);
+  }
+
+  // Функция для добавления drag & drop к конкретной карточке
+  function addDragDropToCard(card) {
+    if (!card || card.hasAttribute('data-drag-enabled')) return;
+    
+    card.setAttribute('data-drag-enabled', 'true');
+    card.classList.add('favorite-card');
+    
+    // Добавляем handle для перетаскивания
+    const dragHandle = document.createElement('div');
+    dragHandle.className = 'drag-handle';
+    dragHandle.textContent = '⋮⋮';
+    dragHandle.title = 'Перетащите для изменения порядка';
+    card.appendChild(dragHandle);
+    
+    // Обработчики событий
+    card.addEventListener('dragstart', function(e) {
+      globalDraggedElement = this;
+      globalDraggedIndex = Array.from(this.parentNode.children).indexOf(this);
+      
+      console.log('Lan-Search: Drag start - globalDraggedElement:', globalDraggedElement);
+      console.log('Lan-Search: Drag start - globalDraggedIndex:', globalDraggedIndex);
+      
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.outerHTML);
+    });
+    
+    card.addEventListener('dragend', function(e) {
+      this.classList.remove('dragging');
+      console.log('Lan-Search: Drag end - сбрасываем глобальные переменные');
+      globalDraggedElement = null;
+      globalDraggedIndex = -1;
+    });
+    
+    card.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      if (this !== globalDraggedElement) {
+        this.classList.add('drag-over');
+      }
+    });
+    
+    card.addEventListener('dragleave', function(e) {
+      this.classList.remove('drag-over');
+    });
+    
+    card.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over');
+      
+      console.log('Lan-Search: Drop event triggered');
+      console.log('Lan-Search: globalDraggedElement:', globalDraggedElement);
+      console.log('Lan-Search: this (target):', this);
+      console.log('Lan-Search: this !== globalDraggedElement:', this !== globalDraggedElement);
+      
+      if (this !== globalDraggedElement && globalDraggedElement) {
+        // Получаем текущие индексы
+        const currentDraggedIndex = Array.from(this.parentNode.children).indexOf(globalDraggedElement);
+        const dropIndex = Array.from(this.parentNode.children).indexOf(this);
+        
+        console.log('Lan-Search: Перемещение с индекса', currentDraggedIndex, 'на индекс', dropIndex);
+        console.log('Lan-Search: globalDraggedElement до перемещения:', globalDraggedElement);
+        
+        // Перемещаем элемент
+        if (currentDraggedIndex < dropIndex) {
+          // Перетаскиваем вниз - вставляем после целевого элемента
+          console.log('Lan-Search: Перемещение вниз - вставляем после');
+          this.parentNode.insertBefore(globalDraggedElement, this.nextSibling);
+        } else {
+          // Перетаскиваем вверх - вставляем перед целевым элементом
+          console.log('Lan-Search: Перемещение вверх - вставляем перед');
+          this.parentNode.insertBefore(globalDraggedElement, this);
+        }
+        
+        console.log('Lan-Search: globalDraggedElement после перемещения:', globalDraggedElement);
+        console.log('Lan-Search: Новый индекс globalDraggedElement:', Array.from(this.parentNode.children).indexOf(globalDraggedElement));
+        
+        // Обновляем индекс перетаскиваемого элемента
+        globalDraggedIndex = Array.from(this.parentNode.children).indexOf(globalDraggedElement);
+        
+        // Сохраняем новый порядок
+        saveFavoritesOrder();
+        
+        // Показываем уведомление
+        showNotification('Порядок избранных вкладок изменен', 'success', 2000);
+      } else {
+        console.log('Lan-Search: Drop не выполнен - условия не выполнены');
+        console.log('Lan-Search: globalDraggedElement равен null или this === globalDraggedElement');
+      }
+    });
+    
+    // Делаем карточку перетаскиваемой
+    card.draggable = true;
+  }
+
+  // Функция для сохранения нового порядка избранных
+  function saveFavoritesOrder() {
+    if (!window.recentTabsManager) return;
+    
+    const favoritesGrid = document.querySelector('.favorites-grid');
+    if (!favoritesGrid) return;
+    
+    const cards = Array.from(favoritesGrid.children).filter(card => 
+      card.classList.contains('favorite-card') && !card.classList.contains('drag-placeholder')
+    );
+    
+    console.log('Lan-Search: Найдено карточек для сохранения:', cards.length);
+    
+    // Извлекаем ID вкладок в новом порядке
+    const newOrder = cards.map(card => {
+      const link = card.querySelector('a[href]');
+      const href = link ? link.getAttribute('href') : null;
+      console.log('Lan-Search: Карточка href:', href);
+      return href;
+    }).filter(id => id);
+    
+    console.log('Lan-Search: Новый порядок href:', newOrder);
+    
+    // Получаем текущие избранные и переупорядочиваем их
+    window.recentTabsManager.getFavoriteTabs().then(favorites => {
+      console.log('Lan-Search: Текущие избранные:', favorites.map(f => f.href));
+      
+      const reorderedFavorites = [];
+      
+      // Добавляем элементы в новом порядке
+      newOrder.forEach(href => {
+        const favorite = favorites.find(fav => fav.href === href);
+        if (favorite) {
+          reorderedFavorites.push(favorite);
+          console.log('Lan-Search: Добавлен в новый порядок:', favorite.title);
+        }
+      });
+      
+      // Добавляем оставшиеся элементы (если есть)
+      favorites.forEach(favorite => {
+        if (!reorderedFavorites.find(fav => fav.href === favorite.href)) {
+          reorderedFavorites.push(favorite);
+          console.log('Lan-Search: Добавлен оставшийся элемент:', favorite.title);
+        }
+      });
+      
+      console.log('Lan-Search: Финальный порядок:', reorderedFavorites.map(f => f.title));
+      
+      // Сохраняем новый порядок
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ 
+          'lanSearchFavoriteTabs': reorderedFavorites 
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Ошибка сохранения порядка избранных:', chrome.runtime.lastError);
+          } else {
+            console.log('Lan-Search: Порядок избранных сохранен успешно');
+          }
+        });
+      }
+    });
   }
 
 
@@ -565,6 +838,7 @@
           observeDOMChanges();
           observeThemeAttribute();
           initRecentTabsTracking();
+          initFavoritesDragDrop();
           if (window.recentTabsManager) {
             window.recentTabsManager.displayOnMainPage();
           }
@@ -576,6 +850,7 @@
         observeDOMChanges();
         observeThemeAttribute();
         initRecentTabsTracking();
+        initFavoritesDragDrop();
         if (window.recentTabsManager) {
           window.recentTabsManager.displayOnMainPage();
         }
