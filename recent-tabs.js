@@ -6,6 +6,11 @@ class RecentTabsManager {
     this.maxTabs = 10;
     this.maxFavorites = 20;
     
+    // Кэш для избранных вкладок
+    this.favoritesCache = null;
+    this.favoritesCacheTime = 0;
+    this.CACHE_DURATION = 1000; // 1 секунда
+    
     // Проверяем доступность chrome.storage
     if (!chrome.storage || !chrome.storage.local) {
       console.warn('Lan-Search: chrome.storage.local недоступен');
@@ -144,6 +149,15 @@ class RecentTabsManager {
   getFavoriteTabs() {
     return new Promise((resolve) => {
       try {
+        const now = Date.now();
+        
+        // Проверяем кэш
+        if (this.favoritesCache !== null && (now - this.favoritesCacheTime) < this.CACHE_DURATION) {
+          console.log('Lan-Search: Используем кэш избранных в порядке:', this.favoritesCache.map(t => t.title));
+          resolve(this.favoritesCache);
+          return;
+        }
+        
         // Проверяем, доступен ли chrome.storage
         if (!chrome.storage || !chrome.storage.local) {
           console.warn('chrome.storage.local недоступен');
@@ -158,6 +172,12 @@ class RecentTabsManager {
             return;
           }
           const tabs = result[this.favoritesKey] || [];
+          
+          // Обновляем кэш
+          this.favoritesCache = tabs;
+          this.favoritesCacheTime = now;
+          
+          console.log('Lan-Search: Загружены избранные из storage в порядке:', tabs.map(t => t.title));
           resolve(tabs);
         });
       } catch (error) {
@@ -190,6 +210,10 @@ class RecentTabsManager {
           chrome.storage.local.set({ [this.favoritesKey]: favorites }, () => {
             if (chrome.runtime.lastError) {
               console.error('Ошибка сохранения в favorites (addToFavorites):', chrome.runtime.lastError);
+            } else {
+              // Обновляем кэш
+              this.favoritesCache = favorites;
+              this.favoritesCacheTime = Date.now();
             }
           });
           
@@ -223,6 +247,10 @@ class RecentTabsManager {
           chrome.storage.local.set({ [this.favoritesKey]: filteredFavorites }, () => {
             if (chrome.runtime.lastError) {
               console.error('Ошибка сохранения в favorites (removeFromFavorites):', chrome.runtime.lastError);
+            } else {
+              // Обновляем кэш
+              this.favoritesCache = filteredFavorites;
+              this.favoritesCacheTime = Date.now();
             }
           });
           
@@ -268,6 +296,10 @@ class RecentTabsManager {
           chrome.storage.local.set({ [this.favoritesKey]: updatedFavorites }, () => {
             if (chrome.runtime.lastError) {
               console.error('Ошибка сохранения цвета (setFavoriteColor):', chrome.runtime.lastError);
+            } else {
+              // Обновляем кэш
+              this.favoritesCache = updatedFavorites;
+              this.favoritesCacheTime = Date.now();
             }
           });
           resolve({ success: true, message: 'Цвет установлен' });
@@ -294,6 +326,10 @@ class RecentTabsManager {
           chrome.storage.local.set({ [this.favoritesKey]: updatedFavorites }, () => {
             if (chrome.runtime.lastError) {
               console.error('Ошибка удаления цвета (removeFavoriteColor):', chrome.runtime.lastError);
+            } else {
+              // Обновляем кэш
+              this.favoritesCache = updatedFavorites;
+              this.favoritesCacheTime = Date.now();
             }
           });
           resolve({ success: true, message: 'Цвет удален' });
@@ -606,6 +642,8 @@ class RecentTabsManager {
 
     Promise.all([this.getRecentTabs(), this.getFavoriteTabs()]).then(([recentTabs, favoriteTabs]) => {
       if (recentTabs.length === 0 && favoriteTabs.length === 0) return;
+
+      console.log('Lan-Search: Отображение избранных вкладок в порядке:', favoriteTabs.map(f => f.title));
 
     const langameSubscriptionWrapper = document.getElementById('langameSubscriptionWrapper');
     if (!langameSubscriptionWrapper) return;

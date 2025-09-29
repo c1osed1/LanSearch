@@ -719,34 +719,57 @@
     
     console.log('Lan-Search: Найдено карточек для сохранения:', cards.length);
     
-    // Извлекаем ID вкладок в новом порядке
-    const newOrder = cards.map(card => {
-      const link = card.querySelector('a[href]');
-      const href = link ? link.getAttribute('href') : null;
-      console.log('Lan-Search: Карточка href:', href);
-      return href;
-    }).filter(id => id);
-    
-    console.log('Lan-Search: Новый порядок href:', newOrder);
-    
-    // Получаем текущие избранные и переупорядочиваем их
+    // Получаем текущие избранные и переупорядочиваем их по порядку карточек
     window.recentTabsManager.getFavoriteTabs().then(favorites => {
-      console.log('Lan-Search: Текущие избранные:', favorites.map(f => f.href));
+      console.log('Lan-Search: Текущие избранные:', favorites.map(f => f.title));
       
+      // Создаем новый порядок на основе позиций карточек
       const reorderedFavorites = [];
       
-      // Добавляем элементы в новом порядке
-      newOrder.forEach(href => {
-        const favorite = favorites.find(fav => fav.href === href);
-        if (favorite) {
-          reorderedFavorites.push(favorite);
-          console.log('Lan-Search: Добавлен в новый порядок:', favorite.title);
+      // Проходим по карточкам в их текущем порядке
+      cards.forEach((card, index) => {
+        // Ищем заголовок в карточке - ищем div с текстом (не кнопки)
+        let cardTitle = null;
+        
+        // Сначала ищем в структуре: div > div (заголовок)
+        const titleDiv = card.querySelector('div > div');
+        if (titleDiv && titleDiv.textContent) {
+          cardTitle = titleDiv.textContent.trim();
+        }
+        
+        // Если не найден, ищем любой div с текстом
+        if (!cardTitle) {
+          const allDivs = card.querySelectorAll('div');
+          for (let div of allDivs) {
+            const text = div.textContent?.trim();
+            if (text && text.length > 0 && !text.includes('⋮⋮') && !text.includes('⭐') && !text.includes('🎨')) {
+              cardTitle = text;
+              break;
+            }
+          }
+        }
+        
+        // Извлекаем только название без пути (до первого слеша)
+        if (cardTitle && cardTitle.includes('/')) {
+          cardTitle = cardTitle.split('/')[0].trim();
+        }
+        
+        console.log(`Lan-Search: Карточка ${index}, найденный заголовок: "${cardTitle}"`);
+        
+        if (cardTitle) {
+          const favorite = favorites.find(fav => fav.title === cardTitle);
+          if (favorite) {
+            reorderedFavorites.push(favorite);
+            console.log(`Lan-Search: Позиция ${index}: ${favorite.title}`);
+          } else {
+            console.log(`Lan-Search: Не найден favorite для заголовка: "${cardTitle}"`);
+          }
         }
       });
       
       // Добавляем оставшиеся элементы (если есть)
       favorites.forEach(favorite => {
-        if (!reorderedFavorites.find(fav => fav.href === favorite.href)) {
+        if (!reorderedFavorites.find(fav => fav.title === favorite.title)) {
           reorderedFavorites.push(favorite);
           console.log('Lan-Search: Добавлен оставшийся элемент:', favorite.title);
         }
@@ -763,6 +786,12 @@
             console.error('Ошибка сохранения порядка избранных:', chrome.runtime.lastError);
           } else {
             console.log('Lan-Search: Порядок избранных сохранен успешно');
+            
+            // Обновляем кэш в recentTabsManager
+            if (window.recentTabsManager && window.recentTabsManager.favoritesCache) {
+              window.recentTabsManager.favoritesCache = reorderedFavorites;
+              console.log('Lan-Search: Кэш избранных обновлен');
+            }
           }
         });
       }
