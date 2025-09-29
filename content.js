@@ -1033,45 +1033,13 @@
 
   function replaceButtonsWithDivs() {
     const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock', 'LockPS', 'UnLockPS'];
-    console.log('Lan-Search: Начинаем замену кнопок на div элементы');
     
-    // Находим все кнопки с data-type
-    const buttons = document.querySelectorAll('button[data-type]');
-    console.log('Lan-Search: Найдено кнопок с data-type:', buttons.length);
+    // Находим только необработанные кнопки
+    const buttons = document.querySelectorAll('button[data-type]:not([data-lan-search-replaced])');
+    
     buttons.forEach(button => {
-      console.log('Lan-Search: Кнопка с data-type:', button.getAttribute('data-type'), 'Текст:', button.textContent.trim());
-    });
-    
-    // Также ищем кнопки по тексту (для Lock/UnLock)
-    const allButtons = document.querySelectorAll('button');
-    console.log('Lan-Search: Всего кнопок на странице:', allButtons.length);
-    
-    const lockButtons = Array.from(allButtons).filter(button => {
-      const text = button.textContent.trim().toLowerCase();
-      const isLockButton = text === 'заблокировать' || text === 'разблокировать';
-      if (isLockButton) {
-        console.log('Lan-Search: Найдена кнопка Lock/UnLock по тексту:', text, 'data-type:', button.getAttribute('data-type'));
-      }
-      return isLockButton;
-    });
-    console.log('Lan-Search: Найдено кнопок Lock/UnLock по тексту:', lockButtons.length);
-    
-    // Объединяем все кнопки для обработки, убираем дубликаты
-    const allButtonsToProcess = [...new Set([...buttons, ...lockButtons])];
-    console.log('Lan-Search: Всего кнопок для обработки:', allButtonsToProcess.length);
-    
-    allButtonsToProcess.forEach((button, index) => {
-      console.log(`Lan-Search: Обрабатываем кнопку ${index + 1}/${allButtonsToProcess.length}`);
-      
-      // Пропускаем уже замененные кнопки
-      if (button.getAttribute('data-lan-search-replaced') === 'true') {
-        console.log('Lan-Search: Кнопка уже заменена, пропускаем');
-        return;
-      }
-      
       const dataType = button.getAttribute('data-type');
       const buttonText = button.textContent.trim();
-      console.log('Lan-Search: Обрабатываем кнопку - data-type:', dataType, 'Текст:', buttonText);
       
       let command = dataType;
       
@@ -1084,11 +1052,7 @@
         }
       }
       
-      console.log('Lan-Search: Определенная команда:', command);
-      
       if (supportedCommands.includes(command)) {
-        console.log('Lan-Search: Заменяем кнопку на div для команды:', command);
-        
         // Создаем div элемент
         const div = document.createElement('div');
         
@@ -1104,35 +1068,23 @@
           div.setAttribute('data-type', command);
         }
         
-        // Сохраняем оригинальный onclick в data-original-onclick (если есть)
+        // Сохраняем оригинальный onclick
         if (button.getAttribute('onclick')) {
           div.setAttribute('data-original-onclick', button.getAttribute('onclick'));
-        } else {
-          // Для кнопок без onclick (например, Lock/UnLock) сохраняем пустое значение
-          div.setAttribute('data-original-onclick', '');
         }
         
         // Добавляем маркер замены
         div.setAttribute('data-lan-search-replaced', 'true');
         
-        // Копируем содержимое
+        // Копируем содержимое и стили
         div.innerHTML = button.innerHTML;
-        
-        // Копируем стили
         div.style.cssText = button.style.cssText;
-        
-        // Устанавливаем курсор
         div.style.cursor = 'pointer';
         
         // Заменяем кнопку на div
         button.parentNode.replaceChild(div, button);
-        console.log('Lan-Search: Кнопка успешно заменена на div для команды:', command);
-      } else {
-        console.log('Lan-Search: Кнопка не поддерживается, команда:', command);
       }
     });
-    
-    console.log('Lan-Search: Замена кнопок завершена');
   }
 
 
@@ -1176,13 +1128,19 @@
     if (!shouldAutoActivate()) return;
     
 
+    let processingButtons = false;
+    
     function processButtons() {
+      if (processingButtons) return;
+      processingButtons = true;
+      
       getModalBypassSetting(function(bypassEnabled) {
         if (bypassEnabled) {
           replaceButtonsWithDivs();
         } else {
           restoreDivsToButtons();
         }
+        processingButtons = false;
       });
     }
     
@@ -1190,10 +1148,12 @@
     processButtons();
     
 
+    let observerTimeout;
     const observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          setTimeout(processButtons, 100);
+          clearTimeout(observerTimeout);
+          observerTimeout = setTimeout(processButtons, 500);
         }
       });
     });
@@ -1228,20 +1188,22 @@
             console.log('Lan-Search: Клик по заменённому div элементу, отправляем API запрос');
             
 
-            const clickId = target.getAttribute('data-original-onclick') + '_' + Date.now();
+            // Создаем уникальный ID для клика, используя data-type и timestamp
+            const dataType = target.getAttribute('data-type');
+            const clickId = dataType + '_' + Date.now();
             
-
-            if (processedClicks.has(clickId.split('_')[0])) {
+            
+            if (processedClicks.has(clickId)) {
               console.log('Lan-Search: Клик уже обрабатывается, пропускаем');
               return;
             }
             
-
-            processedClicks.add(clickId.split('_')[0]);
+            
+            processedClicks.add(clickId);
             
 
             setTimeout(() => {
-              processedClicks.delete(clickId.split('_')[0]);
+              processedClicks.delete(clickId);
             }, 3000);
             
 
@@ -1408,6 +1370,109 @@
   }
 
 
+  // Простой режим выбора ПК
+  let selectionMode = false;
+
+  function initPCSelection() {
+    if (!shouldAutoActivate()) return;
+    
+    // Обработчик для кнопки "Выбрать"
+    document.addEventListener('click', function(event) {
+      if (event.target && event.target.id === 'selectPC') {
+        selectionMode = true;
+        addSelectionStyles();
+        showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
+      }
+      
+      // Обработчик для кнопки "Отмена"
+      if (event.target && event.target.id === 'cancelSelect') {
+        exitSelectionMode();
+      }
+    });
+
+    // Обработчик для кликов по блокам ПК
+    document.addEventListener('click', function(event) {
+      if (!selectionMode) return;
+      
+      // Ищем форму ПК (родительский элемент)
+      const pcForm = event.target.closest('form.pc');
+      if (!pcForm) return;
+      
+      // Ищем чекбокс в этом блоке
+      const checkbox = pcForm.querySelector('.pc-selector');
+      if (!checkbox) return;
+      
+      // Переключаем состояние чекбокса
+      checkbox.checked = !checkbox.checked;
+      
+      // Показываем уведомление
+      const pcName = pcForm.querySelector('.pc_name')?.textContent || 'ПК';
+      const status = checkbox.checked ? 'выбран' : 'снят с выбора';
+      showNotification(`${pcName} ${status}`, 'success', 1500);
+    });
+
+    // Горячие клавиши
+    document.addEventListener('keydown', function(event) {
+      if (!selectionMode) return;
+      
+      if (event.ctrlKey && event.key === 'a') {
+        event.preventDefault();
+        document.querySelectorAll('.pc-selector').forEach(cb => cb.checked = true);
+        showNotification('Выделены все ПК', 'success', 2000);
+      }
+      
+      if (event.key === 'Escape') {
+        exitSelectionMode();
+      }
+    });
+  }
+
+  function addSelectionStyles() {
+    if (document.getElementById('pc-selection-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'pc-selection-styles';
+    style.textContent = `
+      .selection-mode form.pc {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 2px solid transparent;
+        border-radius: 8px;
+      }
+      
+      .selection-mode form.pc:hover {
+        border-color: #4c8bf5;
+        background: rgba(76, 139, 245, 0.05);
+        transform: scale(1.02);
+      }
+      
+      .selection-mode form.pc:has(.pc-selector:checked) {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.1);
+      }
+      
+      .selection-mode .checkbox-holder {
+        display: block !important;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+      }
+      
+      .selection-mode .pc-selector {
+        transform: scale(1.2);
+      }
+    `;
+    document.head.appendChild(style);
+    document.body.classList.add('selection-mode');
+  }
+
+  function exitSelectionMode() {
+    selectionMode = false;
+    document.body.classList.remove('selection-mode');
+    showNotification('Режим выбора отключен', 'warning', 2000);
+  }
+
   if (shouldAutoActivate()) {
     console.log('Lan-Search: Инициализация обхода модальных окон на домене:', window.location.hostname);
     
@@ -1417,9 +1482,13 @@
     });
     
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initModalBypass);
+      document.addEventListener('DOMContentLoaded', () => {
+        initModalBypass();
+        initPCSelection();
+      });
     } else {
       initModalBypass();
+      initPCSelection();
     }
   }
 
