@@ -1734,7 +1734,10 @@
   
   function initMassivePCSelection() {
     if (!shouldAutoActivate()) return;
-    
+    if (!window.location.pathname.includes('/pc_tasks/')) {
+      console.log('Lan-Search: Массовый выбор ПК доступен только на странице /pc_tasks/');
+      return;
+    }
     
     const checkForTable = () => {
       const table = document.querySelector('#dataTable, table.dataTable');
@@ -1774,31 +1777,25 @@
     const panel = document.createElement('div');
     panel.id = 'massive-pc-selection-panel';
     panel.style.cssText = `
-      position: fixed;
-      top: 50%;
-      right: 20px;
-      transform: translateY(-50%);
-      background: #1c1c1c;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-      z-index: 10000;
-      min-width: 280px;
-      color: white;
+      background: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      border: 1px solid #dee2e6;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      color: #333;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
     `;
     
     
     const title = document.createElement('div');
-    title.textContent = 'выборщик пк';
+    title.textContent = 'Массовый выбор ПК';
     title.style.cssText = `
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 15px;
+      margin-bottom: 6px;
       text-align: center;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      color: #333;
     `;
     
     
@@ -1807,11 +1804,11 @@
     input.placeholder = 'Например: 2-10 или 2,5,8-12';
     input.style.cssText = `
       width: 100%;
-      padding: 10px 12px;
+      padding: 12px 14px;
       border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 12px;
+      border-radius: 4px;
+      font-size: 16px;
+      margin-bottom: 6px;
       background: rgba(255, 255, 255, 0.95);
       color: #333;
       box-sizing: border-box;
@@ -1831,9 +1828,9 @@
     const hint = document.createElement('div');
     hint.textContent = 'Формат: 2-10, 2,5,8-12';
     hint.style.cssText = `
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 12px;
+      font-size: 10px;
+      color: #666;
+      margin-bottom: 6px;
       text-align: center;
     `;
     
@@ -1841,8 +1838,8 @@
     const buttonsContainer = document.createElement('div');
     buttonsContainer.style.cssText = `
       display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 4px;
+      margin-bottom: 6px;
     `;
     
     
@@ -2030,16 +2027,18 @@
     content.appendChild(buttonsContainer);
     content.appendChild(quickButtons);
     
-    panel.appendChild(toggleBtn);
-    panel.appendChild(minimizedIcon);
     panel.appendChild(content);
     
-    document.body.appendChild(panel);
+    // Вставляем панель перед оберткой таблицы (dataTable_wrapper)
+    const tableWrapper = table.closest('#dataTable_wrapper');
+    if (tableWrapper) {
+      tableWrapper.parentNode.insertBefore(panel, tableWrapper);
+    } else {
+      // Fallback - вставляем перед таблицей
+      table.parentNode.insertBefore(panel, table);
+    }
     
-    
-    makeDraggable(panel);
-    
-    console.log('Lan-Search: Панель массового выбора ПК создана');
+    console.log('Lan-Search: Панель массового выбора ПК создана и вставлена перед таблицей');
   }
 
   function createQuickButtonStyle(color) {
