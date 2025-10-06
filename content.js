@@ -65,7 +65,7 @@
         background: rgba(255,255,255,0.9);
         color: #333;
         padding-left: 32px; /* room for icon */
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http:
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>");
         background-repeat: no-repeat; background-position: 10px center; background-size: 16px;
       }
       .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
