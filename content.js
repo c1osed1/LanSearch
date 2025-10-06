@@ -65,7 +65,7 @@
         background: rgba(255,255,255,0.9);
         color: #333;
         padding-left: 32px; /* room for icon */
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>");
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http:
         background-repeat: no-repeat; background-position: 10px center; background-size: 16px;
       }
       .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
@@ -461,7 +461,7 @@
 
   window.lanSearchInit = init;
   
-  // Экспортируем функцию drag & drop для избранных
+  
   window.initFavoritesDragDrop = initFavoritesDragDrop;
   
 
@@ -499,15 +499,15 @@
     }
   }
 
-  // Глобальные переменные для drag & drop
+  
   let globalDraggedElement = null;
   let globalDraggedIndex = -1;
 
-  // Функция для инициализации drag & drop для избранных вкладок
+  
   function initFavoritesDragDrop() {
     if (!window.recentTabsManager) return;
 
-    // Добавляем CSS стили для drag & drop
+    
     if (!document.getElementById('favorites-drag-drop-styles')) {
       const style = document.createElement('style');
       style.id = 'favorites-drag-drop-styles';
@@ -577,13 +577,13 @@
       document.head.appendChild(style);
     }
 
-    // Наблюдаем за изменениями DOM для добавления drag & drop к новым карточкам
+    
     const observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
           mutation.addedNodes.forEach(function(node) {
-            if (node.nodeType === 1) { // Element node
-              // Ищем новые карточки избранных
+            if (node.nodeType === 1) { 
+              
               const favoriteCards = node.querySelectorAll ? 
                 node.querySelectorAll('.favorite-card, [data-favorite="true"]') : [];
               
@@ -603,28 +603,28 @@
       subtree: true
     });
 
-    // Добавляем drag & drop к существующим карточкам
+    
     setTimeout(() => {
       const existingCards = document.querySelectorAll('.favorite-card, [data-favorite="true"]');
       existingCards.forEach(card => addDragDropToCard(card));
     }, 1000);
   }
 
-  // Функция для добавления drag & drop к конкретной карточке
+  
   function addDragDropToCard(card) {
     if (!card || card.hasAttribute('data-drag-enabled')) return;
     
     card.setAttribute('data-drag-enabled', 'true');
     card.classList.add('favorite-card');
     
-    // Добавляем handle для перетаскивания
+    
     const dragHandle = document.createElement('div');
     dragHandle.className = 'drag-handle';
     dragHandle.textContent = '⋮⋮';
     dragHandle.title = 'Перетащите для изменения порядка';
     card.appendChild(dragHandle);
     
-    // Обработчики событий
+    
     card.addEventListener('dragstart', function(e) {
       globalDraggedElement = this;
       globalDraggedIndex = Array.from(this.parentNode.children).indexOf(this);
@@ -667,20 +667,20 @@
       console.log('Lan-Search: this !== globalDraggedElement:', this !== globalDraggedElement);
       
       if (this !== globalDraggedElement && globalDraggedElement) {
-        // Получаем текущие индексы
+        
         const currentDraggedIndex = Array.from(this.parentNode.children).indexOf(globalDraggedElement);
         const dropIndex = Array.from(this.parentNode.children).indexOf(this);
         
         console.log('Lan-Search: Перемещение с индекса', currentDraggedIndex, 'на индекс', dropIndex);
         console.log('Lan-Search: globalDraggedElement до перемещения:', globalDraggedElement);
         
-        // Перемещаем элемент
+        
         if (currentDraggedIndex < dropIndex) {
-          // Перетаскиваем вниз - вставляем после целевого элемента
+          
           console.log('Lan-Search: Перемещение вниз - вставляем после');
           this.parentNode.insertBefore(globalDraggedElement, this.nextSibling);
         } else {
-          // Перетаскиваем вверх - вставляем перед целевым элементом
+          
           console.log('Lan-Search: Перемещение вверх - вставляем перед');
           this.parentNode.insertBefore(globalDraggedElement, this);
         }
@@ -688,13 +688,13 @@
         console.log('Lan-Search: globalDraggedElement после перемещения:', globalDraggedElement);
         console.log('Lan-Search: Новый индекс globalDraggedElement:', Array.from(this.parentNode.children).indexOf(globalDraggedElement));
         
-        // Обновляем индекс перетаскиваемого элемента
+        
         globalDraggedIndex = Array.from(this.parentNode.children).indexOf(globalDraggedElement);
         
-        // Сохраняем новый порядок
+        
         saveFavoritesOrder();
         
-        // Показываем уведомление
+        
         showNotification('Порядок избранных вкладок изменен', 'success', 2000);
       } else {
         console.log('Lan-Search: Drop не выполнен - условия не выполнены');
@@ -702,11 +702,11 @@
       }
     });
     
-    // Делаем карточку перетаскиваемой
+    
     card.draggable = true;
   }
 
-  // Функция для сохранения нового порядка избранных
+  
   function saveFavoritesOrder() {
     if (!window.recentTabsManager) return;
     
@@ -719,25 +719,25 @@
     
     console.log('Lan-Search: Найдено карточек для сохранения:', cards.length);
     
-    // Получаем текущие избранные и переупорядочиваем их по порядку карточек
+    
     window.recentTabsManager.getFavoriteTabs().then(favorites => {
       console.log('Lan-Search: Текущие избранные:', favorites.map(f => f.title));
       
-      // Создаем новый порядок на основе позиций карточек
+      
       const reorderedFavorites = [];
       
-      // Проходим по карточкам в их текущем порядке
+      
       cards.forEach((card, index) => {
-        // Ищем заголовок в карточке - ищем div с текстом (не кнопки)
+        
         let cardTitle = null;
         
-        // Сначала ищем в структуре: div > div (заголовок)
+        
         const titleDiv = card.querySelector('div > div');
         if (titleDiv && titleDiv.textContent) {
           cardTitle = titleDiv.textContent.trim();
         }
         
-        // Если не найден, ищем любой div с текстом
+        
         if (!cardTitle) {
           const allDivs = card.querySelectorAll('div');
           for (let div of allDivs) {
@@ -749,7 +749,7 @@
           }
         }
         
-        // Извлекаем только название без пути (до первого слеша)
+        
         if (cardTitle && cardTitle.includes('/')) {
           cardTitle = cardTitle.split('/')[0].trim();
         }
@@ -767,7 +767,7 @@
         }
       });
       
-      // Добавляем оставшиеся элементы (если есть)
+      
       favorites.forEach(favorite => {
         if (!reorderedFavorites.find(fav => fav.title === favorite.title)) {
           reorderedFavorites.push(favorite);
@@ -777,7 +777,7 @@
       
       console.log('Lan-Search: Финальный порядок:', reorderedFavorites.map(f => f.title));
       
-      // Сохраняем новый порядок
+      
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
         chrome.storage.local.set({ 
           'lanSearchFavoriteTabs': reorderedFavorites 
@@ -787,7 +787,7 @@
           } else {
             console.log('Lan-Search: Порядок избранных сохранен успешно');
             
-            // Обновляем кэш в recentTabsManager
+            
             if (window.recentTabsManager && window.recentTabsManager.favoritesCache) {
               window.recentTabsManager.favoritesCache = reorderedFavorites;
               console.log('Lan-Search: Кэш избранных обновлен');
@@ -894,7 +894,7 @@
       chrome.storage.onChanged.addListener(function(changes, namespace) {
         if (namespace === 'sync' && changes.theme) {
           const newTheme = changes.theme.newValue || 'light';
-          currentTheme = newTheme; // Обновляем глобальную переменную
+          currentTheme = newTheme; 
           document.documentElement.setAttribute('data-theme', newTheme);
 
           setTimeout(() => {
@@ -918,7 +918,7 @@
 
       htmlElement.setAttribute('data-theme', 'dark');
     }
-  }, 1000); // Проверяем каждую секунду
+  }, 1000); 
 
 
   window.addEventListener('popstate', function() {
@@ -1224,7 +1224,7 @@
     let uuid = null;
     let whoSend = null;
     
-    // Сначала пытаемся найти UUID в data-original-onclick
+    
     const onclick = div.getAttribute('data-original-onclick');
     if (onclick) {
       const uuidMatch = onclick.match(/['"]([A-F0-9a-f-]{36})['\"]/i);
@@ -1233,7 +1233,7 @@
       }
     }
     
-    // Если UUID не найден в onclick, ищем в родительских элементах
+    
     if (!uuid) {
       let parent = div.parentElement;
       while (parent && parent !== document.body) {
@@ -1247,7 +1247,7 @@
       }
     }
     
-    // Если UUID все еще не найден, ищем в других кнопках на странице
+    
     if (!uuid) {
       const allButtons = document.querySelectorAll('button[data-type]');
       for (let otherButton of allButtons) {
@@ -1268,7 +1268,7 @@
       return null;
     }
     
-    // Получаем whoSend
+    
     whoSend = getCookieValue('PHPSESSID') || getSessionId();
     
     console.log('Lan-Search: Извлеченные параметры из div - UUID:', uuid, 'Command:', command, 'WhoSend:', whoSend);
@@ -1332,13 +1332,13 @@
 
   let modalBypassCache = null;
   let modalBypassCacheTime = 0;
-  const CACHE_DURATION = 5000; // 5 секунд
+  const CACHE_DURATION = 5000; 
   
 
   function replaceButtonsWithDivs() {
     const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock', 'LockPS', 'UnLockPS'];
     
-    // Находим только необработанные кнопки
+    
     const buttons = document.querySelectorAll('button[data-type]:not([data-lan-search-replaced])');
     
     buttons.forEach(button => {
@@ -1347,7 +1347,7 @@
       
       let command = dataType;
       
-      // Если нет data-type, определяем команду по тексту
+      
       if (!command) {
         if (buttonText.toLowerCase() === 'заблокировать') {
           command = 'Lock';
@@ -1357,35 +1357,35 @@
       }
       
       if (supportedCommands.includes(command)) {
-        // Создаем div элемент
+        
         const div = document.createElement('div');
         
-        // Копируем все атрибуты кроме onclick
+        
         Array.from(button.attributes).forEach(attr => {
           if (attr.name !== 'onclick') {
             div.setAttribute(attr.name, attr.value);
           }
         });
         
-        // Если у кнопки нет data-type, устанавливаем его
+        
         if (!div.getAttribute('data-type')) {
           div.setAttribute('data-type', command);
         }
         
-        // Сохраняем оригинальный onclick
+        
         if (button.getAttribute('onclick')) {
           div.setAttribute('data-original-onclick', button.getAttribute('onclick'));
         }
         
-        // Добавляем маркер замены
+        
         div.setAttribute('data-lan-search-replaced', 'true');
         
-        // Копируем содержимое и стили
+        
         div.innerHTML = button.innerHTML;
         div.style.cssText = button.style.cssText;
         div.style.cursor = 'pointer';
         
-        // Заменяем кнопку на div
+        
         button.parentNode.replaceChild(div, button);
       }
     });
@@ -1492,7 +1492,7 @@
             console.log('Lan-Search: Клик по заменённому div элементу, отправляем API запрос');
             
 
-            // Создаем уникальный ID для клика, используя data-type и timestamp
+            
             const dataType = target.getAttribute('data-type');
             const clickId = dataType + '_' + Date.now();
             
@@ -1532,7 +1532,7 @@
                   
 
                   if (data.status === true) {
-                    // Показываем специфичное сообщение для каждой команды
+                    
                     let successMessage = 'Команда выполнена успешно!';
                     switch (params.command) {
                       case 'startTehTime':
@@ -1572,7 +1572,7 @@
                       target.style.color = originalColor;
                     }, 1000);
                   } else {
-                    // Ошибка выполнения
+                    
                     const errorMessage = data.textStatus || 'Неизвестная ошибка';
                     console.warn('Lan-Search: Сообщение от API:', errorMessage);
                     
@@ -1625,7 +1625,7 @@
                   target.style.pointerEvents = '';
                   
 
-                  // Показываем ошибку сети
+                  
                   let errorTitle = 'Ошибка сети';
                   switch (params.command) {
                     case 'startTehTime':
@@ -1674,13 +1674,13 @@
   }
 
 
-  // Простой режим выбора ПК
+  
   let selectionMode = false;
 
   function initPCSelection() {
     if (!shouldAutoActivate()) return;
     
-    // Обработчик для кнопки "Выбрать"
+    
     document.addEventListener('click', function(event) {
       if (event.target && event.target.id === 'selectPC') {
         selectionMode = true;
@@ -1688,34 +1688,34 @@
         showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
       }
       
-      // Обработчик для кнопки "Отмена"
+      
       if (event.target && event.target.id === 'cancelSelect') {
         exitSelectionMode();
       }
     });
 
-    // Обработчик для кликов по блокам ПК
+    
     document.addEventListener('click', function(event) {
       if (!selectionMode) return;
       
-      // Ищем форму ПК (родительский элемент)
+      
       const pcForm = event.target.closest('form.pc');
       if (!pcForm) return;
       
-      // Ищем чекбокс в этом блоке
+      
       const checkbox = pcForm.querySelector('.pc-selector');
       if (!checkbox) return;
       
-      // Переключаем состояние чекбокса
+      
       checkbox.checked = !checkbox.checked;
       
-      // Показываем уведомление
+      
       const pcName = pcForm.querySelector('.pc_name')?.textContent || 'ПК';
       const status = checkbox.checked ? 'выбран' : 'снят с выбора';
       showNotification(`${pcName} ${status}`, 'success', 1500);
     });
 
-    // Горячие клавиши
+    
     document.addEventListener('keydown', function(event) {
       if (!selectionMode) return;
       
@@ -1729,6 +1729,551 @@
         exitSelectionMode();
       }
     });
+  }
+
+  
+  function initMassivePCSelection() {
+    if (!shouldAutoActivate()) return;
+    
+    
+    const checkForTable = () => {
+      const table = document.querySelector('#dataTable, table.dataTable');
+      if (!table) return;
+      
+      
+      if (document.getElementById('massive-pc-selection-panel')) return;
+      
+      
+      createMassiveSelectionPanel(table);
+    };
+    
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkForTable);
+    } else {
+      checkForTable();
+    }
+    
+    
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          checkForTable();
+        }
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+
+  function createMassiveSelectionPanel(table) {
+    
+    const panel = document.createElement('div');
+    panel.id = 'massive-pc-selection-panel';
+    panel.style.cssText = `
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      z-index: 10000;
+      min-width: 280px;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    `;
+    
+    
+    const title = document.createElement('div');
+    title.textContent = 'выборщик пк';
+    title.style.cssText = `
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      text-align: center;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    `;
+    
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Например: 2-10 или 2,5,8-12';
+    input.style.cssText = `
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      box-sizing: border-box;
+      outline: none;
+      transition: all 0.2s;
+    `;
+    
+    input.addEventListener('focus', () => {
+      input.style.boxShadow = '0 0 0 3px rgba(255, 255, 255, 0.3)';
+    });
+    
+    input.addEventListener('blur', () => {
+      input.style.boxShadow = 'none';
+    });
+    
+    
+    const hint = document.createElement('div');
+    hint.textContent = 'Формат: 2-10, 2,5,8-12';
+    hint.style.cssText = `
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 12px;
+      text-align: center;
+    `;
+    
+    
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.cssText = `
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    `;
+    
+    
+    const selectBtn = document.createElement('button');
+    selectBtn.textContent = 'Выбрать';
+    selectBtn.style.cssText = `
+      flex: 1;
+      padding: 10px;
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    `;
+    
+    selectBtn.addEventListener('mouseenter', () => {
+      selectBtn.style.transform = 'translateY(-2px)';
+      selectBtn.style.boxShadow = '0 6px 16px rgba(40, 167, 69, 0.4)';
+    });
+    
+    selectBtn.addEventListener('mouseleave', () => {
+      selectBtn.style.transform = 'translateY(0)';
+      selectBtn.style.boxShadow = '0 4px 12px rgba(40, 167, 69, 0.3)';
+    });
+    
+    selectBtn.addEventListener('click', () => {
+      const range = input.value.trim();
+      if (range) {
+        selectPCsByRange(range, table);
+      } else {
+        showNotification('Введите диапазон или номера ПК', 'warning', 2000);
+      }
+    });
+    
+    
+    const deselectBtn = document.createElement('button');
+    deselectBtn.textContent = 'Снять';
+    deselectBtn.style.cssText = `
+      flex: 1;
+      padding: 10px;
+      background: linear-gradient(135deg, #dc3545, #c82333);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    `;
+    
+    deselectBtn.addEventListener('mouseenter', () => {
+      deselectBtn.style.transform = 'translateY(-2px)';
+      deselectBtn.style.boxShadow = '0 6px 16px rgba(220, 53, 69, 0.4)';
+    });
+    
+    deselectBtn.addEventListener('mouseleave', () => {
+      deselectBtn.style.transform = 'translateY(0)';
+      deselectBtn.style.boxShadow = '0 4px 12px rgba(220, 53, 69, 0.3)';
+    });
+    
+    deselectBtn.addEventListener('click', () => {
+      const range = input.value.trim();
+      if (range) {
+        deselectPCsByRange(range, table);
+      } else {
+        showNotification('Введите диапазон или номера ПК', 'warning', 2000);
+      }
+    });
+    
+    
+    const quickButtons = document.createElement('div');
+    quickButtons.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    `;
+    
+    
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = '✓ Все';
+    selectAllBtn.style.cssText = createQuickButtonStyle('#17a2b8');
+    selectAllBtn.addEventListener('click', () => selectAllPCs(table));
+    addQuickButtonHover(selectAllBtn, '#17a2b8');
+    
+    
+    const selectFreeBtn = document.createElement('button');
+    selectFreeBtn.textContent = '✓ Свободные';
+    selectFreeBtn.style.cssText = createQuickButtonStyle('#28a745');
+    selectFreeBtn.addEventListener('click', () => selectFreePCs(table));
+    addQuickButtonHover(selectFreeBtn, '#28a745');
+    
+    
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.textContent = '✗ Очистить';
+    clearAllBtn.style.cssText = createQuickButtonStyle('#6c757d');
+    clearAllBtn.addEventListener('click', () => clearAllPCs(table));
+    addQuickButtonHover(clearAllBtn, '#6c757d');
+    
+    
+    const invertBtn = document.createElement('button');
+    invertBtn.textContent = '↔ Инверт';
+    invertBtn.style.cssText = createQuickButtonStyle('#ffc107');
+    invertBtn.addEventListener('click', () => invertSelection(table));
+    addQuickButtonHover(invertBtn, '#ffc107');
+    
+    
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = '−';
+    toggleBtn.style.cssText = `
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    `;
+    
+    toggleBtn.addEventListener('mouseenter', () => {
+      toggleBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+    });
+    
+    toggleBtn.addEventListener('mouseleave', () => {
+      toggleBtn.style.background = 'rgba(255, 255, 255, 0.2)';
+    });
+    
+    let isMinimized = false;
+    toggleBtn.addEventListener('click', () => {
+      isMinimized = !isMinimized;
+      if (isMinimized) {
+        panel.style.width = '60px';
+        panel.style.height = '60px';
+        panel.style.padding = '10px';
+        content.style.display = 'none';
+        toggleBtn.textContent = '+';
+        minimizedIcon.style.display = 'block';
+      } else {
+        panel.style.width = '';
+        panel.style.height = '';
+        panel.style.padding = '20px';
+        content.style.display = 'block';
+        toggleBtn.textContent = '−';
+        minimizedIcon.style.display = 'none';
+      }
+    });
+    
+    
+    const minimizedIcon = document.createElement('div');
+    minimizedIcon.textContent = '🎯';
+    minimizedIcon.style.cssText = `
+      display: none;
+      font-size: 32px;
+      text-align: center;
+    `;
+    
+    
+    const content = document.createElement('div');
+    
+    
+    buttonsContainer.appendChild(selectBtn);
+    buttonsContainer.appendChild(deselectBtn);
+    
+    quickButtons.appendChild(selectAllBtn);
+    quickButtons.appendChild(selectFreeBtn);
+    quickButtons.appendChild(clearAllBtn);
+    quickButtons.appendChild(invertBtn);
+    
+    content.appendChild(title);
+    content.appendChild(input);
+    content.appendChild(hint);
+    content.appendChild(buttonsContainer);
+    content.appendChild(quickButtons);
+    
+    panel.appendChild(toggleBtn);
+    panel.appendChild(minimizedIcon);
+    panel.appendChild(content);
+    
+    document.body.appendChild(panel);
+    
+    
+    makeDraggable(panel);
+    
+    console.log('Lan-Search: Панель массового выбора ПК создана');
+  }
+
+  function createQuickButtonStyle(color) {
+    return `
+      padding: 8px;
+      background: ${color};
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    `;
+  }
+
+  function addQuickButtonHover(button, color) {
+    button.addEventListener('mouseenter', () => {
+      button.style.transform = 'translateY(-2px)';
+      button.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.transform = 'translateY(0)';
+      button.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+    });
+  }
+
+  function makeDraggable(element) {
+    let isDragging = false;
+    let currentX;
+    let currentY;
+    let initialX;
+    let initialY;
+
+    element.addEventListener('mousedown', (e) => {
+      
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
+      
+      isDragging = true;
+      initialX = e.clientX - element.offsetLeft;
+      initialY = e.clientY - element.offsetTop;
+      element.style.cursor = 'grabbing';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        e.preventDefault();
+        currentX = e.clientX - initialX;
+        currentY = e.clientY - initialY;
+        
+        element.style.left = currentX + 'px';
+        element.style.top = currentY + 'px';
+        element.style.right = 'auto';
+        element.style.transform = 'none';
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        element.style.cursor = '';
+      }
+    });
+  }
+
+  function extractPCNumber(text) {
+    
+    
+    const cleaned = text.trim();
+    
+    
+    const numberMatch = cleaned.match(/\d+/);
+    if (numberMatch) {
+      return parseInt(numberMatch[0]);
+    }
+    
+    return null;
+  }
+
+  function parseRange(rangeStr) {
+    const numbers = new Set();
+    const parts = rangeStr.split(',').map(p => p.trim());
+    
+    for (const part of parts) {
+      if (part.includes('-')) {
+        
+        const [start, end] = part.split('-').map(n => parseInt(n.trim()));
+        if (!isNaN(start) && !isNaN(end)) {
+          for (let i = Math.min(start, end); i <= Math.max(start, end); i++) {
+            numbers.add(i);
+          }
+        }
+      } else {
+        
+        const num = parseInt(part.trim());
+        if (!isNaN(num)) {
+          numbers.add(num);
+        }
+      }
+    }
+    
+    return Array.from(numbers).sort((a, b) => a - b);
+  }
+
+  function selectPCsByRange(rangeStr, table) {
+    const numbers = parseRange(rangeStr);
+    if (numbers.length === 0) {
+      showNotification('Неверный формат диапазона', 'error', 2000);
+      return;
+    }
+    
+    let selectedCount = 0;
+    
+    
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      
+      const pcNumberCell = row.querySelector('td[data-sort]');
+      if (!pcNumberCell) return;
+      
+      
+      const pcNumber = extractPCNumber(pcNumberCell.textContent);
+      if (pcNumber !== null && numbers.includes(pcNumber)) {
+        
+        const checkbox = row.querySelector('input[type="checkbox"].el_pc');
+        if (checkbox && !checkbox.checked) {
+          checkbox.checked = true;
+          selectedCount++;
+        }
+      }
+    });
+    
+    if (selectedCount > 0) {
+      showNotification(`Выбрано ПК: ${numbers.join(', ')} (${selectedCount} шт.)`, 'success', 3000);
+    } else {
+      showNotification('Не найдено ПК с указанными номерами', 'warning', 2000);
+    }
+  }
+
+  function deselectPCsByRange(rangeStr, table) {
+    const numbers = parseRange(rangeStr);
+    if (numbers.length === 0) {
+      showNotification('Неверный формат диапазона', 'error', 2000);
+      return;
+    }
+    
+    let deselectedCount = 0;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const pcNumberCell = row.querySelector('td[data-sort]');
+      if (!pcNumberCell) return;
+      
+      
+      const pcNumber = extractPCNumber(pcNumberCell.textContent);
+      if (pcNumber !== null && numbers.includes(pcNumber)) {
+        const checkbox = row.querySelector('input[type="checkbox"].el_pc');
+        if (checkbox && checkbox.checked) {
+          checkbox.checked = false;
+          deselectedCount++;
+        }
+      }
+    });
+    
+    if (deselectedCount > 0) {
+      showNotification(`Снят выбор с ПК: ${numbers.join(', ')} (${deselectedCount} шт.)`, 'success', 3000);
+    } else {
+      showNotification('Не найдено выбранных ПК с указанными номерами', 'warning', 2000);
+    }
+  }
+
+  function selectAllPCs(table) {
+    const checkboxes = table.querySelectorAll('tbody input[type="checkbox"].el_pc');
+    let count = 0;
+    checkboxes.forEach(checkbox => {
+      if (!checkbox.checked) {
+        checkbox.checked = true;
+        count++;
+      }
+    });
+    showNotification(`Выбраны все ПК (${count} шт.)`, 'success', 2000);
+  }
+
+  function selectFreePCs(table) {
+    const rows = table.querySelectorAll('tbody tr');
+    let count = 0;
+    
+    rows.forEach(row => {
+      
+      if (row.classList.contains('bg-success')) {
+        const checkbox = row.querySelector('input[type="checkbox"].el_pc');
+        if (checkbox && !checkbox.checked) {
+          checkbox.checked = true;
+          count++;
+        }
+      }
+    });
+    
+    if (count > 0) {
+      showNotification(`Выбраны свободные ПК (${count} шт.)`, 'success', 2000);
+    } else {
+      showNotification('Нет свободных ПК для выбора', 'warning', 2000);
+    }
+  }
+
+  function clearAllPCs(table) {
+    const checkboxes = table.querySelectorAll('tbody input[type="checkbox"].el_pc');
+    let count = 0;
+    checkboxes.forEach(checkbox => {
+      if (checkbox.checked) {
+        checkbox.checked = false;
+        count++;
+      }
+    });
+    showNotification(`Снят выбор со всех ПК (${count} шт.)`, 'success', 2000);
+  }
+
+  function invertSelection(table) {
+    const checkboxes = table.querySelectorAll('tbody input[type="checkbox"].el_pc');
+    let selectedCount = 0;
+    let deselectedCount = 0;
+    
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = !checkbox.checked;
+      if (checkbox.checked) {
+        selectedCount++;
+      } else {
+        deselectedCount++;
+      }
+    });
+    
+    showNotification(`Инвертирован выбор: +${selectedCount}, -${deselectedCount}`, 'success', 2000);
   }
 
   function addSelectionStyles() {
@@ -1789,10 +2334,12 @@
       document.addEventListener('DOMContentLoaded', () => {
         initModalBypass();
         initPCSelection();
+        initMassivePCSelection();
       });
     } else {
       initModalBypass();
       initPCSelection();
+      initMassivePCSelection();
     }
   }
 
