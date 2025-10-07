@@ -1680,6 +1680,9 @@
   function initPCSelection() {
     if (!shouldAutoActivate()) return;
     
+    if (window.location.pathname.includes('/all_clubs_pc/')) {
+      addCheckDisksButton();
+    }
     
     document.addEventListener('click', function(event) {
       if (event.target && event.target.id === 'selectPC') {
@@ -2309,14 +2312,14 @@
       return;
     }
     
-    // Находим родительский .row элемент
+    
     const rowElement = leftColumn.closest('.row');
     if (!rowElement) {
       console.log('Lan-Search: Не найден родительский .row элемент');
       return;
     }
     
-    // Находим следующий .row элемент после текущего
+    
     const nextRowElement = rowElement.nextElementSibling;
     if (!nextRowElement || !nextRowElement.classList.contains('row')) {
       console.log('Lan-Search: Не найден следующий .row элемент');
@@ -2515,7 +2518,7 @@
     panel.appendChild(buttonsContainer);
     panel.appendChild(quickButtons);
     
-    // Вставляем панель между двумя .row блоками (перед следующим .row)
+    
     nextRowElement.parentNode.insertBefore(panel, nextRowElement);
     console.log('Lan-Search: Панель массового выбора вставлена между .row блоками');
     
@@ -2703,6 +2706,267 @@
     document.body.classList.remove('selection-mode');
     showNotification('Режим выбора отключен', 'warning', 2000);
   }
+
+  
+  function addCheckDisksButton() {
+    
+    if (document.getElementById('checkDisksBtn')) return;
+    
+    
+    const selectPCBtn = document.getElementById('selectPC');
+    if (!selectPCBtn) return;
+    
+    
+    const checkDisksBtn = document.createElement('a');
+    checkDisksBtn.id = 'checkDisksBtn';
+    checkDisksBtn.href = '#';
+    checkDisksBtn.className = 'btn btn-outline-info mb-3 mr-1';
+    checkDisksBtn.innerHTML = '<i class="fa fa-hdd-o"></i> Проверить диски';
+    checkDisksBtn.title = 'Проверить состояние дисков FreeNAS';
+    
+    
+    selectPCBtn.parentNode.insertBefore(checkDisksBtn, selectPCBtn.nextSibling);
+    
+    
+    checkDisksBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      checkDisksStatus();
+    });
+    
+    console.log('Lan-Search: Кнопка "Проверить диски" добавлена');
+  }
+  
+  function getClubIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const clubId = urlParams.get('club_id');
+    return clubId || '1';
+  }
+  
+  function checkDisksStatus() {
+    const clubId = getClubIdFromUrl();
+    console.log('Lan-Search: Проверяем диски для club_id:', clubId);
+    
+    showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
+    
+    
+    fetch('/freenas_wrap/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.text())
+    .then(html => {
+      parseDisksData(html);
+    })
+    .catch(error => {
+      console.error('Lan-Search: Ошибка при проверке дисков:', error);
+      showNotification('Ошибка при проверке дисков', 'error', 3000);
+    });
+  }
+  
+  function parseDisksData(html) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const rows = doc.querySelectorAll('tr[id^="pcID-"]');
+    
+    if (rows.length === 0) {
+      showNotification('Диски не найдены', 'warning', 3000);
+      return;
+    }
+    
+    
+    
+    addDiskInfoToPCs(rows);
+    showNotification(`Найдено ${rows.length} дисков`, 'success', 2000);
+  }
+  
+  function createDisksPanel(rows) {
+    
+    const existingPanel = document.getElementById('disksInfoPanel');
+    if (existingPanel) {
+      existingPanel.remove();
+    }
+    
+    const panel = document.createElement('div');
+    panel.id = 'disksInfoPanel';
+    panel.style.cssText = `
+      background: linear-gradient(135deg, rgba(248, 249, 250, 0.98), rgba(255, 255, 255, 0.95));
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px auto;
+      max-width: 800px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    `;
+    
+    const title = document.createElement('h5');
+    title.textContent = 'Состояние дисков FreeNAS';
+    title.style.cssText = 'margin-bottom: 15px; text-align: center; color: #333;';
+    
+    const table = document.createElement('table');
+    table.className = 'table table-sm table-striped';
+    table.style.cssText = 'margin-bottom: 0;';
+    
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+      <tr>
+        <th>ПК</th>
+        <th>Snapshot</th>
+        <th>Статус</th>
+      </tr>
+    `;
+    
+    const tbody = document.createElement('tbody');
+    
+    rows.forEach(row => {
+      const pcCell = row.querySelector('td[data-uuid]');
+      const statusCell = row.querySelector('td:nth-child(3)');
+      const switchCell = row.querySelector('td .switch');
+      
+      if (!pcCell || !statusCell) return;
+      
+      const pcName = pcCell.textContent.trim();
+      const uuid = pcCell.getAttribute('data-uuid');
+      const status = statusCell.textContent.trim();
+      const isExcluded = switchCell && switchCell.querySelector('input[type="checkbox"]').checked;
+      const snapshotDate = extractSnapshotDate(status);
+      
+      
+      const substitutionStatus = isExcluded ? 'Подмена отключена' : 'Подмена включена';
+      const statusColor = isExcluded ? '#dc3545' : '#28a745'; 
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${pcName}</strong></td>
+        <td>${snapshotDate}</td>
+        <td style="color: ${statusColor}; font-weight: 500;">
+          ${substitutionStatus}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+    
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '×';
+    closeBtn.style.cssText = `
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+    `;
+    closeBtn.addEventListener('click', () => panel.remove());
+    
+    panel.appendChild(closeBtn);
+    panel.appendChild(title);
+    panel.appendChild(table);
+    
+    
+    const selectActions = document.querySelector('.select-actions');
+    if (selectActions) {
+      selectActions.parentNode.insertBefore(panel, selectActions.nextSibling);
+    } else {
+      document.body.appendChild(panel);
+    }
+  }
+  
+  function extractSnapshotDate(statusText) {
+    const match = statusText.match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
+    return match ? match[1] : 'Не определено';
+  }
+  
+  function addDiskInfoToPCs(rows) {
+    
+    const diskDataMap = new Map();
+    
+    rows.forEach(row => {
+      const pcCell = row.querySelector('td[data-uuid]');
+      const statusCell = row.querySelector('td:nth-child(3)');
+      const switchCell = row.querySelector('td .switch');
+      
+      if (!pcCell || !statusCell) return;
+      
+      const uuid = pcCell.getAttribute('data-uuid');
+      const status = statusCell.textContent.trim();
+      const isExcluded = switchCell && switchCell.querySelector('input[type="checkbox"]').checked;
+      const snapshotDate = extractSnapshotDate(status);
+      
+      diskDataMap.set(uuid, {
+        snapshotDate,
+        isExcluded
+      });
+    });
+    
+    
+    const pcForms = document.querySelectorAll('form.pc');
+    pcForms.forEach(form => {
+      const uuid = form.id;
+      if (!uuid || !diskDataMap.has(uuid)) return;
+      
+      const diskData = diskDataMap.get(uuid);
+      
+      
+      const existingDiskInfo = form.querySelector('.disk-info');
+      if (existingDiskInfo) {
+        existingDiskInfo.remove();
+      }
+      
+      
+      const diskInfo = document.createElement('div');
+      diskInfo.className = 'disk-info';
+      diskInfo.style.cssText = `
+        margin-top: 5px;
+        padding: 5px;
+        font-size: 11px;
+        color: #666;
+        text-align: center;
+      `;
+      
+      
+      const substitutionStatus = diskData.isExcluded ? 'Подмена отключена' : 'Подмена включена';
+      const statusColor = diskData.isExcluded ? '#dc3545' : '#28a745'; 
+      
+      diskInfo.innerHTML = `
+        <div style="font-size: 10px; color: #666;">${diskData.snapshotDate}</div>
+        <div style="margin-top: 3px; font-size: 10px; color: ${statusColor}; font-weight: 500;">
+          ${substitutionStatus}
+        </div>
+      `;
+      
+      
+      const allBrs = form.querySelectorAll('br');
+      if (allBrs.length > 0) {
+        const lastBr = allBrs[allBrs.length - 1];
+        lastBr.remove();
+        console.log('Lan-Search: Удален последний <br> из формы', uuid);
+      }
+      
+      
+      const emptyDiv = form.querySelector('div.col-12.text-center');
+      if (emptyDiv) {
+        emptyDiv.remove();
+        console.log('Lan-Search: Удален div.col-12.text-center из формы', uuid);
+      }
+      
+      const unlockButton = form.querySelector('[data-type="UnLock"]');
+      if (unlockButton) {
+        unlockButton.parentNode.insertBefore(diskInfo, unlockButton.nextSibling);
+      } else {
+        
+        form.appendChild(diskInfo);
+      }
+    });
+  }
+  
 
   if (shouldAutoActivate()) {
     console.log('Lan-Search: Инициализация обхода модальных окон на домене:', window.location.hostname);

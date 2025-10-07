@@ -935,3 +935,7 @@ html[data-theme="dark"] .content-wrapper a {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.dataTables_paginate {
+  padding:25px
+}
