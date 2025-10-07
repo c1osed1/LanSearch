@@ -2776,7 +2776,37 @@
       return;
     }
     
+    // Ищем блок с информацией о снимках по заголовку "Снимки"
+    const allHeadings = doc.querySelectorAll('.alert-heading');
+    let snapshotAlert = null;
     
+    console.log('Lan-Search: Найдено заголовков:', allHeadings.length);
+    
+    allHeadings.forEach((heading, index) => {
+      const text = heading.textContent.trim();
+      console.log(`Lan-Search: Заголовок ${index}:`, text);
+      
+      if (text === 'Снимки') {
+        snapshotAlert = heading.closest('.alert.alert-info');
+        console.log('Lan-Search: Найден правильный заголовок "Снимки"');
+      }
+    });
+    
+    console.log('Lan-Search: Найден блок alert:', snapshotAlert);
+    
+    if (snapshotAlert) {
+      console.log('Lan-Search: Содержимое блока alert:', snapshotAlert.innerHTML);
+      const latestSnapshotDate = extractLatestSnapshotDate(snapshotAlert);
+      console.log('Lan-Search: Извлеченная дата:', latestSnapshotDate);
+      
+      if (latestSnapshotDate) {
+        addSnapshotInfoButton(latestSnapshotDate);
+      } else {
+        console.log('Lan-Search: Не удалось извлечь дату из блока alert');
+      }
+    } else {
+      console.log('Lan-Search: Блок с заголовком "Снимки" не найден в HTML ответе');
+    }
     
     addDiskInfoToPCs(rows);
     showNotification(`Найдено ${rows.length} дисков`, 'success', 2000);
@@ -2881,7 +2911,141 @@
   
   function extractSnapshotDate(statusText) {
     const match = statusText.match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
-    return match ? match[1] : 'Не определено';
+    if (match) {
+      // Убираем секунды из даты
+      const dateTime = match[1];
+      return dateTime.substring(0, 16); // убираем последние 3 символа (секунды)
+    }
+    return 'Не определено';
+  }
+  
+  function extractLatestSnapshotDate(snapshotAlert) {
+    const dateCells = snapshotAlert.querySelectorAll('.col-4');
+    console.log('Lan-Search: Найдено .col-4 элементов:', dateCells.length);
+    
+    let latestDate = null;
+    let latestDateStr = null;
+    
+    dateCells.forEach((cell, index) => {
+      const dateText = cell.textContent.trim();
+      console.log(`Lan-Search: Элемент ${index}:`, dateText);
+      
+      const dateMatch = dateText.match(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
+      if (dateMatch) {
+        const dateStr = dateMatch[1];
+        console.log('Lan-Search: Найдена дата:', dateStr);
+        
+        const date = new Date(dateStr.split(' ')[0].split('.').reverse().join('-') + ' ' + dateStr.split(' ')[1]);
+        
+        if (!latestDate || date > latestDate) {
+          latestDate = date;
+          latestDateStr = dateStr;
+          console.log('Lan-Search: Новая самая свежая дата:', dateStr);
+        }
+      }
+    });
+    
+    console.log('Lan-Search: Итоговая самая свежая дата:', latestDateStr);
+    return latestDateStr;
+  }
+  
+  function addSnapshotInfoButton(latestDate) {
+    console.log('Lan-Search: Создаем кнопку с датой:', latestDate);
+    
+    // Удаляем существующую кнопку если есть
+    const existingBtn = document.getElementById('snapshotInfoBtn');
+    if (existingBtn) {
+      existingBtn.remove();
+      console.log('Lan-Search: Удалена существующая кнопка snapshot');
+    }
+    
+    // Создаем кнопку с информацией о снимке
+    const snapshotBtn = document.createElement('a');
+    snapshotBtn.id = 'snapshotInfoBtn';
+    snapshotBtn.href = '#';
+    snapshotBtn.className = 'btn btn-outline-success mb-3 mr-1';
+    snapshotBtn.innerHTML = `<i class="fa fa-clock-o"></i> ${latestDate}`;
+    snapshotBtn.title = 'Последний снимок FreeNAS';
+    
+    // Вставляем рядом с кнопкой "Проверить диски"
+    const checkDisksBtn = document.getElementById('checkDisksBtn');
+    console.log('Lan-Search: Найдена кнопка checkDisksBtn:', checkDisksBtn);
+    
+    if (checkDisksBtn) {
+      checkDisksBtn.parentNode.insertBefore(snapshotBtn, checkDisksBtn.nextSibling);
+      console.log('Lan-Search: Кнопка с информацией о снимке добавлена:', latestDate);
+    } else {
+      console.log('Lan-Search: Кнопка checkDisksBtn не найдена, не удалось вставить snapshot кнопку');
+    }
+  }
+  
+  function findLatestSnapshot(doc) {
+    // Ищем блок с снимками
+    const alertBlock = doc.querySelector('.alert.alert-info');
+    if (!alertBlock) return null;
+    
+    // Ищем все строки с датами
+    const dateRows = alertBlock.querySelectorAll('.row');
+    let latestDate = null;
+    let latestRow = null;
+    
+    dateRows.forEach(row => {
+      const dateCell = row.querySelector('.col-4:first-child');
+      if (dateCell) {
+        const dateText = dateCell.textContent.trim();
+        const dateMatch = dateText.match(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
+        if (dateMatch) {
+          const dateStr = dateMatch[1];
+          const date = new Date(dateStr.split(' ')[0].split('.').reverse().join('-') + ' ' + dateStr.split(' ')[1]);
+          
+          if (!latestDate || date > latestDate) {
+            latestDate = date;
+            latestRow = row;
+          }
+        }
+      }
+    });
+    
+    return latestRow;
+  }
+  
+  function showLatestSnapshot(snapshotRow) {
+    // Удаляем предыдущий блок, если есть
+    const existingBlock = document.getElementById('latestSnapshotInfo');
+    if (existingBlock) {
+      existingBlock.remove();
+    }
+    
+    // Создаем новый блок
+    const snapshotInfo = document.createElement('div');
+    snapshotInfo.id = 'latestSnapshotInfo';
+    snapshotInfo.style.cssText = `
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #0c5460;
+    `;
+    
+    // Извлекаем дату из строки
+    const dateCell = snapshotRow.querySelector('.col-4:first-child');
+    const dateText = dateCell ? dateCell.textContent.trim() : 'Не определено';
+    
+    // Убираем секунды из даты
+    const cleanDate = dateText.replace(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}):\d{2}/, '$1');
+    
+    snapshotInfo.innerHTML = `
+      <div style="font-weight: 500; margin-bottom: 2px;">Самый свежий снимок:</div>
+      <div style="font-size: 11px;">${cleanDate}</div>
+    `;
+    
+    // Вставляем рядом с кнопкой "Проверить диски"
+    const checkDisksBtn = document.getElementById('checkDisksBtn');
+    if (checkDisksBtn) {
+      checkDisksBtn.parentNode.insertBefore(snapshotInfo, checkDisksBtn.nextSibling);
+    }
   }
   
   function addDiskInfoToPCs(rows) {
