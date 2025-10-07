@@ -1686,11 +1686,18 @@
         selectionMode = true;
         addSelectionStyles();
         showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
+        
+        if (window.location.pathname.includes('/all_clubs_pc/')) {
+          showMassiveSelectionPanelForAllClubs();
+        }
       }
       
       
       if (event.target && event.target.id === 'cancelSelect') {
         exitSelectionMode();
+        if (window.location.pathname.includes('/all_clubs_pc/')) {
+          hideMassiveSelectionPanelForAllClubs();
+        }
       }
     });
 
@@ -2260,6 +2267,373 @@
 
   function invertSelection(table) {
     const checkboxes = table.querySelectorAll('tbody input[type="checkbox"].el_pc');
+    let selectedCount = 0;
+    let deselectedCount = 0;
+    
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = !checkbox.checked;
+      if (checkbox.checked) {
+        selectedCount++;
+      } else {
+        deselectedCount++;
+      }
+    });
+    
+    showNotification(`Инвертирован выбор: +${selectedCount}, -${deselectedCount}`, 'success', 2000);
+  }
+
+  // Функции для панели массового выбора на /all_clubs_pc/
+  function showMassiveSelectionPanelForAllClubs() {
+    // Проверяем, не создана ли уже панель
+    if (document.getElementById('massive-pc-selection-panel-allclubs')) {
+      const panel = document.getElementById('massive-pc-selection-panel-allclubs');
+      panel.style.display = 'block';
+      return;
+    }
+    
+    createMassiveSelectionPanelForAllClubs();
+  }
+  
+  function hideMassiveSelectionPanelForAllClubs() {
+    const panel = document.getElementById('massive-pc-selection-panel-allclubs');
+    if (panel) {
+      panel.style.display = 'none';
+    }
+  }
+  
+  function createMassiveSelectionPanelForAllClubs() {
+    // Находим левый блок для вставки панели
+    const leftColumn = document.querySelector('.row .col-12.col-lg-6');
+    if (!leftColumn) {
+      console.log('Lan-Search: Не найден левый блок для панели массового выбора');
+      return;
+    }
+    
+    // Добавляем стили для темной темы
+    if (!document.getElementById('massive-selection-allclubs-theme-styles')) {
+      const themeStyle = document.createElement('style');
+      themeStyle.id = 'massive-selection-allclubs-theme-styles';
+      themeStyle.textContent = `
+        #massive-pc-selection-panel-allclubs {
+          background: linear-gradient(135deg, rgba(248, 249, 250, 0.98), rgba(255, 255, 255, 0.95));
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          transition: all 0.3s ease;
+        }
+        
+        #massive-pc-selection-panel-allclubs:hover {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        
+        #massive-pc-selection-panel-allclubs .panel-input {
+          background: white;
+          color: #333;
+          border: 1px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        [data-theme="dark"] #massive-pc-selection-panel-allclubs {
+          background: linear-gradient(135deg, rgba(45, 45, 45, 0.98), rgba(55, 55, 55, 0.95));
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        [data-theme="dark"] #massive-pc-selection-panel-allclubs:hover {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        [data-theme="dark"] #massive-pc-selection-panel-allclubs .panel-input {
+          background: rgba(60, 60, 60, 0.9);
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        [data-theme="dark"] #massive-pc-selection-panel-allclubs .panel-input::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+      `;
+      document.head.appendChild(themeStyle);
+    }
+    
+    // Минималистичная панель для /all_clubs_pc/
+    const panel = document.createElement('div');
+    panel.id = 'massive-pc-selection-panel-allclubs';
+    panel.style.cssText = `
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    `;
+    
+    // Поле ввода (компактное)
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '2-10 или 2,5,8';
+    input.className = 'panel-input';
+    input.style.cssText = `
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+      outline: none;
+      transition: all 0.2s;
+    `;
+    
+    input.addEventListener('focus', () => {
+      input.style.borderColor = '#4c8bf5';
+      input.style.boxShadow = '0 0 0 2px rgba(76, 139, 245, 0.2)';
+    });
+    
+    input.addEventListener('blur', () => {
+      input.style.borderColor = 'rgba(0, 0, 0, 0.2)';
+      input.style.boxShadow = 'none';
+    });
+    
+    // Кнопки "Выбрать" и "Снять" (компактные)
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.cssText = `
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    `;
+    
+    const selectBtn = document.createElement('button');
+    selectBtn.textContent = '✓';
+    selectBtn.title = 'Выбрать';
+    selectBtn.style.cssText = `
+      flex: 1;
+      padding: 6px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    
+    selectBtn.addEventListener('mouseenter', () => {
+      selectBtn.style.background = '#218838';
+      selectBtn.style.transform = 'scale(1.05)';
+    });
+    
+    selectBtn.addEventListener('mouseleave', () => {
+      selectBtn.style.background = '#28a745';
+      selectBtn.style.transform = 'scale(1)';
+    });
+    
+    selectBtn.addEventListener('click', () => {
+      const range = input.value.trim();
+      if (range) {
+        selectPCsByRangeForAllClubs(range);
+      } else {
+        showNotification('Введите диапазон', 'warning', 2000);
+      }
+    });
+    
+    const deselectBtn = document.createElement('button');
+    deselectBtn.textContent = '✗';
+    deselectBtn.title = 'Снять';
+    deselectBtn.style.cssText = `
+      flex: 1;
+      padding: 6px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    
+    deselectBtn.addEventListener('mouseenter', () => {
+      deselectBtn.style.background = '#c82333';
+      deselectBtn.style.transform = 'scale(1.05)';
+    });
+    
+    deselectBtn.addEventListener('mouseleave', () => {
+      deselectBtn.style.background = '#dc3545';
+      deselectBtn.style.transform = 'scale(1)';
+    });
+    
+    deselectBtn.addEventListener('click', () => {
+      const range = input.value.trim();
+      if (range) {
+        deselectPCsByRangeForAllClubs(range);
+      } else {
+        showNotification('Введите диапазон', 'warning', 2000);
+      }
+    });
+    
+    // Быстрые кнопки (компактные, 2x2 сетка)
+    const quickButtons = document.createElement('div');
+    quickButtons.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    `;
+    
+    // Выбрать все
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = 'Все';
+    selectAllBtn.style.cssText = createCompactButtonStyle('#17a2b8');
+    selectAllBtn.addEventListener('click', () => selectAllPCsForAllClubs());
+    addCompactButtonHover(selectAllBtn, '#17a2b8', '#138496');
+    
+    // Очистить
+    const clearAllBtn = document.createElement('button');
+    clearAllBtn.textContent = 'Очистить';
+    clearAllBtn.style.cssText = createCompactButtonStyle('#6c757d');
+    clearAllBtn.addEventListener('click', () => clearAllPCsForAllClubs());
+    addCompactButtonHover(clearAllBtn, '#6c757d', '#5a6268');
+    
+    // Инверт
+    const invertBtn = document.createElement('button');
+    invertBtn.textContent = 'Инверт';
+    invertBtn.style.cssText = createCompactButtonStyle('#ffc107');
+    invertBtn.addEventListener('click', () => invertSelectionForAllClubs());
+    addCompactButtonHover(invertBtn, '#ffc107', '#e0a800');
+    
+    // Собираем панель
+    buttonsContainer.appendChild(selectBtn);
+    buttonsContainer.appendChild(deselectBtn);
+    
+    quickButtons.appendChild(selectAllBtn);
+    quickButtons.appendChild(clearAllBtn);
+    quickButtons.appendChild(invertBtn);
+    
+    panel.appendChild(input);
+    panel.appendChild(buttonsContainer);
+    panel.appendChild(quickButtons);
+    
+    // Вставляем панель в левый блок (после существующих элементов)
+    leftColumn.appendChild(panel);
+    
+    console.log('Lan-Search: Минималистичная панель массового выбора создана для /all_clubs_pc/');
+  }
+  
+  function createCompactButtonStyle(color) {
+    return `
+      padding: 6px 8px;
+      background: ${color};
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    `;
+  }
+  
+  function addCompactButtonHover(button, color, hoverColor) {
+    button.addEventListener('mouseenter', () => {
+      button.style.background = hoverColor;
+      button.style.transform = 'scale(1.05)';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.background = color;
+      button.style.transform = 'scale(1)';
+    });
+  }
+  
+  // Функции работы с чекбоксами для /all_clubs_pc/
+  function selectPCsByRangeForAllClubs(rangeStr) {
+    const numbers = parseRange(rangeStr);
+    if (numbers.length === 0) {
+      showNotification('Неверный формат диапазона', 'error', 2000);
+      return;
+    }
+    
+    let selectedCount = 0;
+    const pcForms = document.querySelectorAll('form.pc');
+    
+    pcForms.forEach(form => {
+      // Ищем имя ПК
+      const pcNameElement = form.querySelector('.pc_name');
+      if (!pcNameElement) return;
+      
+      const pcText = pcNameElement.textContent.trim();
+      const pcNumber = extractPCNumber(pcText);
+      
+      if (pcNumber !== null && numbers.includes(pcNumber)) {
+        const checkbox = form.querySelector('.pc-selector');
+        if (checkbox && !checkbox.checked) {
+          checkbox.checked = true;
+          selectedCount++;
+        }
+      }
+    });
+    
+    if (selectedCount > 0) {
+      showNotification(`Выбрано ПК: ${numbers.join(', ')} (${selectedCount} шт.)`, 'success', 3000);
+    } else {
+      showNotification('Не найдено ПК с указанными номерами', 'warning', 2000);
+    }
+  }
+  
+  function deselectPCsByRangeForAllClubs(rangeStr) {
+    const numbers = parseRange(rangeStr);
+    if (numbers.length === 0) {
+      showNotification('Неверный формат диапазона', 'error', 2000);
+      return;
+    }
+    
+    let deselectedCount = 0;
+    const pcForms = document.querySelectorAll('form.pc');
+    
+    pcForms.forEach(form => {
+      const pcNameElement = form.querySelector('.pc_name');
+      if (!pcNameElement) return;
+      
+      const pcText = pcNameElement.textContent.trim();
+      const pcNumber = extractPCNumber(pcText);
+      
+      if (pcNumber !== null && numbers.includes(pcNumber)) {
+        const checkbox = form.querySelector('.pc-selector');
+        if (checkbox && checkbox.checked) {
+          checkbox.checked = false;
+          deselectedCount++;
+        }
+      }
+    });
+    
+    if (deselectedCount > 0) {
+      showNotification(`Снят выбор с ПК: ${numbers.join(', ')} (${deselectedCount} шт.)`, 'success', 3000);
+    } else {
+      showNotification('Не найдено выбранных ПК с указанными номерами', 'warning', 2000);
+    }
+  }
+  
+  function selectAllPCsForAllClubs() {
+    const checkboxes = document.querySelectorAll('form.pc .pc-selector');
+    let count = 0;
+    checkboxes.forEach(checkbox => {
+      if (!checkbox.checked) {
+        checkbox.checked = true;
+        count++;
+      }
+    });
+    showNotification(`Выбраны все ПК (${count} шт.)`, 'success', 2000);
+  }
+  
+  function clearAllPCsForAllClubs() {
+    const checkboxes = document.querySelectorAll('form.pc .pc-selector');
+    let count = 0;
+    checkboxes.forEach(checkbox => {
+      if (checkbox.checked) {
+        checkbox.checked = false;
+        count++;
+      }
+    });
+    showNotification(`Снят выбор со всех ПК (${count} шт.)`, 'success', 2000);
+  }
+  
+  function invertSelectionForAllClubs() {
+    const checkboxes = document.querySelectorAll('form.pc .pc-selector');
     let selectedCount = 0;
     let deselectedCount = 0;
     
