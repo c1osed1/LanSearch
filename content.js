@@ -2036,12 +2036,12 @@
     
     panel.appendChild(content);
     
-    // Вставляем панель перед оберткой таблицы (dataTable_wrapper)
+    
     const tableWrapper = table.closest('#dataTable_wrapper');
     if (tableWrapper) {
       tableWrapper.parentNode.insertBefore(panel, tableWrapper);
     } else {
-      // Fallback - вставляем перед таблицей
+      
       table.parentNode.insertBefore(panel, table);
     }
     
@@ -2282,9 +2282,9 @@
     showNotification(`Инвертирован выбор: +${selectedCount}, -${deselectedCount}`, 'success', 2000);
   }
 
-  // Функции для панели массового выбора на /all_clubs_pc/
+  
   function showMassiveSelectionPanelForAllClubs() {
-    // Проверяем, не создана ли уже панель
+    
     if (document.getElementById('massive-pc-selection-panel-allclubs')) {
       const panel = document.getElementById('massive-pc-selection-panel-allclubs');
       panel.style.display = 'block';
@@ -2302,26 +2302,34 @@
   }
   
   function createMassiveSelectionPanelForAllClubs() {
-    // Находим левый блок для вставки панели
+    
     const leftColumn = document.querySelector('.row .col-12.col-lg-6');
     if (!leftColumn) {
       console.log('Lan-Search: Не найден левый блок для панели массового выбора');
       return;
     }
     
-    // Добавляем стили для темной темы
+    // Находим родительский .row элемент
+    const rowElement = leftColumn.closest('.row');
+    if (!rowElement) {
+      console.log('Lan-Search: Не найден родительский .row элемент');
+      return;
+    }
+    
+    // Находим следующий .row элемент после текущего
+    const nextRowElement = rowElement.nextElementSibling;
+    if (!nextRowElement || !nextRowElement.classList.contains('row')) {
+      console.log('Lan-Search: Не найден следующий .row элемент');
+      return;
+    }
+    
+    
     if (!document.getElementById('massive-selection-allclubs-theme-styles')) {
       const themeStyle = document.createElement('style');
       themeStyle.id = 'massive-selection-allclubs-theme-styles';
       themeStyle.textContent = `
-        #massive-pc-selection-panel-allclubs {
-          background: linear-gradient(135deg, rgba(248, 249, 250, 0.98), rgba(255, 255, 255, 0.95));
-          border: 1px solid rgba(0, 0, 0, 0.1);
-          transition: all 0.3s ease;
-        }
-        
-        #massive-pc-selection-panel-allclubs:hover {
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        #massive-pc-selection-panel-allclubs .panel-title {
+          color: #333;
         }
         
         #massive-pc-selection-panel-allclubs .panel-input {
@@ -2352,17 +2360,19 @@
       document.head.appendChild(themeStyle);
     }
     
-    // Минималистичная панель для /all_clubs_pc/
+    
     const panel = document.createElement('div');
     panel.id = 'massive-pc-selection-panel-allclubs';
     panel.style.cssText = `
       padding: 12px;
       border-radius: 8px;
-      margin-bottom: 15px;
+      margin: 15px auto;
+      width: 100%;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-align: center;
     `;
     
-    // Поле ввода (компактное)
+    
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = '2-10 или 2,5,8';
@@ -2388,7 +2398,7 @@
       input.style.boxShadow = 'none';
     });
     
-    // Кнопки "Выбрать" и "Снять" (компактные)
+    
     const buttonsContainer = document.createElement('div');
     buttonsContainer.style.cssText = `
       display: flex;
@@ -2414,7 +2424,6 @@
     
     selectBtn.addEventListener('mouseenter', () => {
       selectBtn.style.background = '#218838';
-      selectBtn.style.transform = 'scale(1.05)';
     });
     
     selectBtn.addEventListener('mouseleave', () => {
@@ -2449,7 +2458,6 @@
     
     deselectBtn.addEventListener('mouseenter', () => {
       deselectBtn.style.background = '#c82333';
-      deselectBtn.style.transform = 'scale(1.05)';
     });
     
     deselectBtn.addEventListener('mouseleave', () => {
@@ -2466,36 +2474,36 @@
       }
     });
     
-    // Быстрые кнопки (компактные, 2x2 сетка)
+    
     const quickButtons = document.createElement('div');
     quickButtons.style.cssText = `
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
       gap: 6px;
+      justify-content: center;
     `;
     
-    // Выбрать все
+    
     const selectAllBtn = document.createElement('button');
     selectAllBtn.textContent = 'Все';
     selectAllBtn.style.cssText = createCompactButtonStyle('#17a2b8');
     selectAllBtn.addEventListener('click', () => selectAllPCsForAllClubs());
     addCompactButtonHover(selectAllBtn, '#17a2b8', '#138496');
     
-    // Очистить
+    
     const clearAllBtn = document.createElement('button');
     clearAllBtn.textContent = 'Очистить';
     clearAllBtn.style.cssText = createCompactButtonStyle('#6c757d');
     clearAllBtn.addEventListener('click', () => clearAllPCsForAllClubs());
     addCompactButtonHover(clearAllBtn, '#6c757d', '#5a6268');
     
-    // Инверт
+    
     const invertBtn = document.createElement('button');
     invertBtn.textContent = 'Инверт';
     invertBtn.style.cssText = createCompactButtonStyle('#ffc107');
     invertBtn.addEventListener('click', () => invertSelectionForAllClubs());
     addCompactButtonHover(invertBtn, '#ffc107', '#e0a800');
     
-    // Собираем панель
+    
     buttonsContainer.appendChild(selectBtn);
     buttonsContainer.appendChild(deselectBtn);
     
@@ -2507,14 +2515,16 @@
     panel.appendChild(buttonsContainer);
     panel.appendChild(quickButtons);
     
-    // Вставляем панель в левый блок (после существующих элементов)
-    leftColumn.appendChild(panel);
+    // Вставляем панель между двумя .row блоками (перед следующим .row)
+    nextRowElement.parentNode.insertBefore(panel, nextRowElement);
+    console.log('Lan-Search: Панель массового выбора вставлена между .row блоками');
     
     console.log('Lan-Search: Минималистичная панель массового выбора создана для /all_clubs_pc/');
   }
   
   function createCompactButtonStyle(color) {
     return `
+      flex: 1;
       padding: 6px 8px;
       background: ${color};
       color: white;
@@ -2531,7 +2541,6 @@
   function addCompactButtonHover(button, color, hoverColor) {
     button.addEventListener('mouseenter', () => {
       button.style.background = hoverColor;
-      button.style.transform = 'scale(1.05)';
     });
     
     button.addEventListener('mouseleave', () => {
@@ -2540,7 +2549,7 @@
     });
   }
   
-  // Функции работы с чекбоксами для /all_clubs_pc/
+  
   function selectPCsByRangeForAllClubs(rangeStr) {
     const numbers = parseRange(rangeStr);
     if (numbers.length === 0) {
@@ -2552,7 +2561,7 @@
     const pcForms = document.querySelectorAll('form.pc');
     
     pcForms.forEach(form => {
-      // Ищем имя ПК
+      
       const pcNameElement = form.querySelector('.pc_name');
       if (!pcNameElement) return;
       
