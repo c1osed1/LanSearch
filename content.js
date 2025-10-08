@@ -3132,6 +3132,366 @@
   }
   
 
+  // Функции для работы со стилями карты ПК
+  let pcStylesCache = null;
+  let pcStylesCacheTime = 0;
+  
+  function getPCStylesSetting(callback) {
+    const now = Date.now();
+    
+    // Проверяем кэш
+    if (pcStylesCache !== null && (now - pcStylesCacheTime) < CACHE_DURATION) {
+      callback(pcStylesCache);
+      return;
+    }
+    
+    try {
+      // Проверяем chrome.storage
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['pcStyles'], function(result) {
+          try {
+            const enabled = result.pcStyles || false;
+            
+            // Обновляем кэш
+            pcStylesCache = enabled;
+            pcStylesCacheTime = now;
+            
+            // Сохраняем в localStorage
+            try {
+              localStorage.setItem('lanSearchPCStyles', enabled.toString());
+            } catch (e) {
+              // Игнорируем ошибки localStorage
+            }
+            
+            callback(enabled);
+          } catch (e) {
+            // Fallback на localStorage
+            const localStyles = localStorage.getItem('lanSearchPCStyles');
+            const enabled = localStyles === 'true';
+            
+            pcStylesCache = enabled;
+            pcStylesCacheTime = now;
+            
+            callback(enabled);
+          }
+        });
+      } else {
+        // Fallback если chrome.storage недоступен
+        const localStyles = localStorage.getItem('lanSearchPCStyles');
+        const enabled = localStyles === 'true';
+        
+        pcStylesCache = enabled;
+        pcStylesCacheTime = now;
+        
+        callback(enabled);
+      }
+    } catch (e) {
+      pcStylesCache = false;
+      pcStylesCacheTime = now;
+      
+      callback(false);
+    }
+  }
+  
+  function clearPCStylesCache() {
+    pcStylesCache = null;
+    pcStylesCacheTime = 0;
+  }
+  
+  // Функция для внедрения CSS стилей карт ПК
+  function injectPCStyles() {
+    if (document.getElementById('lan-search-pc-styles')) return;
+    
+    const link = document.createElement('link');
+    link.id = 'lan-search-pc-styles';
+    link.rel = 'stylesheet';
+    link.href = chrome.runtime.getURL('style_pc.css');
+    document.head.appendChild(link);
+    
+    console.log('Lan-Search: Стили карт ПК внедрены');
+  }
+  
+  // Функция для удаления CSS стилей карт ПК
+  function removePCStyles() {
+    const link = document.getElementById('lan-search-pc-styles');
+    if (link) {
+      link.remove();
+      console.log('Lan-Search: Стили карт ПК удалены');
+    }
+  }
+  
+  // Функция замены классов на ПК карточках
+  function applyPCStyles() {
+    const pcForms = document.querySelectorAll('form.pc:not([data-lan-search-styled])');
+    
+    if (pcForms.length === 0) return;
+    
+    console.log('Lan-Search: Применяем стили к', pcForms.length, 'карточкам ПК');
+    
+    pcForms.forEach(form => {
+      // Помечаем, что стили применены
+      form.setAttribute('data-lan-search-styled', 'true');
+      form.classList.add('lan-search-styled');
+      
+      // Заменяем классы на форме
+      form.classList.add('lan-search-pc-card');
+      
+      // Контейнер карточки
+      const container = form.querySelector('.mb-3.border.border-dark');
+      if (container) {
+        container.classList.add('lan-search-pc-container');
+        container.classList.remove('mb-3', 'border', 'border-dark');
+      }
+      
+      // Номер ПК
+      const pcName = form.querySelector('.pc_name');
+      if (pcName) {
+        pcName.classList.add('lan-search-pc-number');
+        pcName.classList.remove('bg-dark', 'text-white', 'p-0', 'w-100');
+      }
+      
+      // Статус
+      const status = form.querySelector('[data-type="status"]');
+      if (status) {
+        status.classList.add('lan-search-pc-status');
+        const statusText = status.textContent.trim().toLowerCase();
+        
+        if (statusText.includes('свобод') || statusText.includes('free')) {
+          status.classList.add('status-free');
+        } else if (statusText.includes('занят') || statusText.includes('busy')) {
+          status.classList.add('status-busy');
+        } else {
+          status.classList.add('status-connection');
+        }
+        
+        status.classList.remove('bg-secondary', 'text-center');
+      }
+      
+      // Кнопки
+      const buttons = form.querySelectorAll('button.btn');
+      buttons.forEach(btn => {
+        btn.classList.add('lan-search-btn');
+      });
+      
+      // Поле комментария
+      const commentInput = form.querySelector('.comment_input');
+      if (commentInput) {
+        commentInput.classList.add('lan-search-comment-input');
+        commentInput.classList.remove('form-control', 'form-control-sm');
+      }
+      
+      // Чекбоксы
+      const checkboxContainers = form.querySelectorAll('.custom-control.custom-checkbox');
+      checkboxContainers.forEach(container => {
+        container.classList.add('lan-search-checkbox');
+        container.classList.remove('custom-control', 'custom-checkbox', 'pl-4');
+      });
+      
+      // Информация о ПК
+      const pcInfo = form.querySelector('.pc_info');
+      if (pcInfo) {
+        pcInfo.classList.add('lan-search-pc-info');
+        // Убираем инлайн стили, которые делают блок огромным
+        pcInfo.style.minHeight = '15px';
+        pcInfo.style.padding = '2px 4px';
+        pcInfo.style.fontSize = '8px';
+        pcInfo.style.lineHeight = '1.2';
+      }
+      
+      // Дропдаун
+      const dropdown = form.querySelector('.pc-dropdow');
+      if (dropdown) {
+        dropdown.classList.add('lan-search-dropdown');
+        
+        const dropdownToggle = dropdown.querySelector('.btn-pc');
+        if (dropdownToggle) {
+          dropdownToggle.classList.add('lan-search-dropdown-toggle');
+        }
+      }
+      
+      // Версия
+      const version = form.querySelector('.version');
+      if (version && version.parentElement) {
+        version.parentElement.classList.add('lan-search-version');
+      }
+    });
+    
+    if (pcForms.length > 0) {
+      showNotification('Применены современные стили к карточкам ПК', 'success', 2000);
+    }
+  }
+  
+  // Функция восстановления оригинальных классов
+  function removePCStylesFromCards() {
+    const pcForms = document.querySelectorAll('form.pc[data-lan-search-styled]');
+    
+    if (pcForms.length === 0) return;
+    
+    console.log('Lan-Search: Убираем стили с', pcForms.length, 'карточек ПК');
+    
+    pcForms.forEach(form => {
+      // Убираем маркер
+      form.removeAttribute('data-lan-search-styled');
+      form.classList.remove('lan-search-styled', 'lan-search-pc-card');
+      
+      // Контейнер карточки
+      const container = form.querySelector('.lan-search-pc-container');
+      if (container) {
+        container.classList.remove('lan-search-pc-container');
+        container.classList.add('mb-3', 'border', 'border-dark');
+      }
+      
+      // Номер ПК
+      const pcName = form.querySelector('.lan-search-pc-number');
+      if (pcName) {
+        pcName.classList.remove('lan-search-pc-number');
+        pcName.classList.add('bg-dark', 'text-white', 'p-0', 'w-100');
+      }
+      
+      // Статус
+      const status = form.querySelector('.lan-search-pc-status');
+      if (status) {
+        status.classList.remove('lan-search-pc-status', 'status-free', 'status-busy', 'status-connection');
+        status.classList.add('bg-secondary', 'text-center');
+      }
+      
+      // Кнопки
+      const buttons = form.querySelectorAll('button.lan-search-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('lan-search-btn');
+      });
+      
+      // Поле комментария
+      const commentInput = form.querySelector('.lan-search-comment-input');
+      if (commentInput) {
+        commentInput.classList.remove('lan-search-comment-input');
+        commentInput.classList.add('form-control', 'form-control-sm');
+      }
+      
+      // Чекбоксы
+      const checkboxContainers = form.querySelectorAll('.lan-search-checkbox');
+      checkboxContainers.forEach(container => {
+        container.classList.remove('lan-search-checkbox');
+        container.classList.add('custom-control', 'custom-checkbox', 'pl-4');
+      });
+      
+      // Информация о ПК
+      const pcInfo = form.querySelector('.lan-search-pc-info');
+      if (pcInfo) {
+        pcInfo.classList.remove('lan-search-pc-info');
+        // Восстанавливаем оригинальные стили
+        pcInfo.style.minHeight = '';
+        pcInfo.style.padding = '';
+        pcInfo.style.fontSize = '';
+        pcInfo.style.lineHeight = '';
+      }
+      
+      // Дропдаун
+      const dropdown = form.querySelector('.lan-search-dropdown');
+      if (dropdown) {
+        dropdown.classList.remove('lan-search-dropdown');
+        
+        const dropdownToggle = dropdown.querySelector('.lan-search-dropdown-toggle');
+        if (dropdownToggle) {
+          dropdownToggle.classList.remove('lan-search-dropdown-toggle');
+        }
+      }
+      
+      // Версия
+      const version = form.querySelector('.lan-search-version');
+      if (version) {
+        version.classList.remove('lan-search-version');
+      }
+    });
+    
+    if (pcForms.length > 0) {
+      showNotification('Восстановлены оригинальные стили карточек ПК', 'warning', 2000);
+    }
+  }
+  
+  // Функция инициализации стилей карт ПК
+  function initPCStyles() {
+    if (!shouldAutoActivate()) return;
+    
+    // Проверяем настройку и применяем стили
+    let processingStyles = false;
+    
+    function processStyles() {
+      if (processingStyles) return;
+      processingStyles = true;
+      
+      getPCStylesSetting(function(stylesEnabled) {
+        console.log('Lan-Search: Стили карт ПК:', stylesEnabled ? 'ВКЛЮЧЕНЫ' : 'ОТКЛЮЧЕНЫ');
+        
+        if (stylesEnabled) {
+          injectPCStyles();
+          applyPCStyles();
+        } else {
+          removePCStyles();
+          removePCStylesFromCards();
+        }
+        processingStyles = false;
+      });
+    }
+    
+    // Применяем стили при загрузке
+    processStyles();
+    
+    // Отслеживаем добавление новых карточек ПК
+    let observerTimeout;
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          // Проверяем, есть ли новые карточки ПК
+          const hasNewPCCards = Array.from(mutation.addedNodes).some(node => {
+            return node.nodeType === 1 && (
+              node.classList?.contains('pc') ||
+              node.querySelector?.('form.pc')
+            );
+          });
+          
+          if (hasNewPCCards) {
+            clearTimeout(observerTimeout);
+            observerTimeout = setTimeout(processStyles, 500);
+          }
+        }
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    // Отслеживаем изменение настройки
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(function(changes, namespace) {
+        if (namespace === 'sync' && changes.pcStyles) {
+          console.log('Lan-Search: Настройка стилей карт ПК изменилась, сбрасываем кэш');
+          clearPCStylesCache();
+          processStyles();
+        }
+      });
+    }
+  }
+  
+  // Экспортируем функцию для вызова из popup
+  window.lanSearchSyncPCStyles = function() {
+    console.log('Lan-Search: Принудительная синхронизация настроек стилей ПК');
+    clearPCStylesCache();
+    getPCStylesSetting(function(enabled) {
+      if (enabled) {
+        console.log('Lan-Search: Синхронизация завершена - стили ВКЛЮЧЕНЫ');
+        injectPCStyles();
+        applyPCStyles();
+      } else {
+        console.log('Lan-Search: Синхронизация завершена - стили ОТКЛЮЧЕНЫ');
+        removePCStyles();
+        removePCStylesFromCards();
+      }
+    });
+  };
+
   if (shouldAutoActivate()) {
     console.log('Lan-Search: Инициализация обхода модальных окон на домене:', window.location.hostname);
     
@@ -3145,11 +3505,13 @@
         initModalBypass();
         initPCSelection();
         initMassivePCSelection();
+        initPCStyles();
       });
     } else {
       initModalBypass();
       initPCSelection();
       initMassivePCSelection();
+      initPCStyles();
     }
   }
 

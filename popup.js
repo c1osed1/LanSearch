@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const updateStatus = document.getElementById('updateStatus');
   const themeToggle = document.getElementById('themeToggle');
   const modalBypassToggle = document.getElementById('modalBypassToggle');
+  const pcStylesToggle = document.getElementById('pcStylesToggle');
   
   // Глобальная переменная для кэширования темы
   let currentTheme = 'light';
@@ -196,6 +197,102 @@ document.addEventListener('DOMContentLoaded', function() {
   // Обработчик переключения обхода модальных окон
   modalBypassToggle.addEventListener('click', toggleModalBypass);
   
+  // Функции для работы со стилями карт ПК
+  let pcStylesEnabled = false;
+  
+  function initPCStyles() {
+    try {
+      // Проверяем localStorage для быстрого доступа
+      const localStyles = localStorage.getItem('lanSearchPCStyles');
+      if (localStyles !== null) {
+        pcStylesEnabled = localStyles === 'true';
+        setPCStylesState(pcStylesEnabled);
+        return;
+      }
+      
+      // Затем проверяем chrome.storage
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['pcStyles'], function(result) {
+          try {
+            pcStylesEnabled = result.pcStyles || false;
+            setPCStylesState(pcStylesEnabled);
+            // Сохраняем в localStorage для быстрого доступа
+            try {
+              localStorage.setItem('lanSearchPCStyles', pcStylesEnabled.toString());
+            } catch (e) {
+              // Игнорируем ошибки localStorage
+            }
+          } catch (e) {
+            // Fallback при ошибке
+            pcStylesEnabled = false;
+            setPCStylesState(false);
+          }
+        });
+      } else {
+        // Fallback если chrome.storage недоступен
+        pcStylesEnabled = false;
+        setPCStylesState(false);
+      }
+    } catch (e) {
+      // Fallback при любой ошибке
+      pcStylesEnabled = false;
+      setPCStylesState(false);
+    }
+  }
+  
+  function setPCStylesState(enabled) {
+    pcStylesToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    pcStylesToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    pcStylesToggle.title = enabled ? 'Отключить стили карт ПК' : 'Включить стили карт ПК';
+  }
+  
+  function togglePCStyles() {
+    pcStylesEnabled = !pcStylesEnabled;
+    
+    setPCStylesState(pcStylesEnabled);
+    
+    // Сохраняем в localStorage для быстрого доступа
+    try {
+      localStorage.setItem('lanSearchPCStyles', pcStylesEnabled.toString());
+    } catch (e) {
+      // Игнорируем ошибки localStorage
+    }
+    
+    // Сохраняем в chrome.storage с обработкой ошибок
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.set({ pcStyles: pcStylesEnabled }, function() {
+          console.log('Popup: Настройка стилей ПК сохранена в chrome.storage:', pcStylesEnabled);
+          
+          // Принудительно синхронизируем настройки на активной вкладке
+          chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            if (tabs[0]) {
+              chrome.scripting.executeScript({
+                target: { tabId: tabs[0].id },
+                func: () => {
+                  if (window.lanSearchSyncPCStyles) {
+                    window.lanSearchSyncPCStyles();
+                  }
+                }
+              }).catch(err => {
+                console.log('Popup: Не удалось синхронизировать стили ПК на вкладке:', err);
+              });
+            }
+          });
+        });
+      }
+    } catch (e) {
+      // Игнорируем ошибки chrome.storage
+      console.log('Chrome storage not available, using localStorage only');
+    }
+  }
+  
+  // Инициализация состояния стилей ПК
+  initPCStyles();
+  
+  // Обработчик переключения стилей ПК
+  pcStylesToggle.addEventListener('click', togglePCStyles);
+  
   // Принудительная синхронизация при открытии popup
   setTimeout(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -205,6 +302,9 @@ document.addEventListener('DOMContentLoaded', function() {
           func: () => {
             if (window.lanSearchSyncModalBypass) {
               window.lanSearchSyncModalBypass();
+            }
+            if (window.lanSearchSyncPCStyles) {
+              window.lanSearchSyncPCStyles();
             }
           }
         }).catch(err => {
