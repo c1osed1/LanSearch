@@ -936,6 +936,25 @@ html[data-theme="dark"] .content-wrapper a {
   100% { transform: rotate(360deg); }
 }
 
-.dataTables_paginate {
-  padding:25px
+footer{
+  display: none !important;
+}
+
+.btn{
+  padding: 5px 8px;
+}
+.btn-outline-success{
+  background-color: #59ac6c42;
+}
+.btn-outline-danger{
+  background-color: #ca6c752d;
+}
+.btn-outline-primary{
+  background-color: #007bff5b;
+}
+.btn-outline-warning{
+  background-color: #ffc1075b;
+}
+.btn-outline-info{
+  background-color: #17a2b85b;
 }

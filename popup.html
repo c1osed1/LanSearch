@@ -6,32 +6,48 @@
 
 
     body {
-      width: 300px;
-      padding: 16px;
+      width: 320px;
+      padding: 20px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      transition: background-color 0.3s, color 0.3s;
+      background-color: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+    
+    [data-theme="dark"] body {
+      background-color: #1a1a1a;
+      color: #ffffff;
     }
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    
+    [data-theme="dark"] .header {
+      border-bottom-color: #333333;
     }
     .header-left {
       display: flex;
       align-items: center;
     }
     .icon {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       margin-right: 12px;
       border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
+      background-color: #f8f9fa;
+    }
+    
+    [data-theme="dark"] .icon {
+      background-color: #2a2a2a;
     }
     .icon img {
       width: 100%;
@@ -39,137 +55,222 @@
       border-radius: 6px;
     }
     .title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-color);
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a1a;
       margin: 0;
     }
-    .theme-toggle {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: 6px;
-      color: var(--text-color);
-      font-size: 16px;
-      transition: background-color 0.2s;
+    
+    [data-theme="dark"] .title {
+      color: #ffffff;
     }
+    .theme-toggle {
+      background: #f8f9fa;
+      border: 1px solid #e5e5e5;
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 8px;
+      color: #1a1a1a;
+      font-size: 16px;
+    }
+    
+    [data-theme="dark"] .theme-toggle {
+      background: #2a2a2a;
+      border-color: #333333;
+      color: #ffffff;
+    }
+    
     .theme-toggle:hover {
-      background-color: var(--bg-secondary);
+      background: #e9ecef;
+    }
+    
+    [data-theme="dark"] .theme-toggle:hover {
+      background: #333333;
     }
     .description {
-      color: var(--text-secondary);
+      color: #666666;
       font-size: 14px;
-      line-height: 1.4;
-      margin-bottom: 16px;
+      line-height: 1.5;
+      margin-bottom: 20px;
     }
-    .button {
+    
+    [data-theme="dark"] .description {
+      color: #cccccc;
+    }
+    .button-popup {
       width: 100%;
-      padding: 10px 16px;
-      background: var(--button-bg);
+      padding: 12px 16px;
+      background: #007bff;
       color: white;
       border: none;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    .button:hover {
-      background: var(--button-hover);
+    
+    .button-popup:hover {
+      background: #0056b3;
     }
-    .button:disabled {
-      background: var(--button-disabled);
+    
+    .button-popup:disabled {
+      background: #6c757d;
       cursor: not-allowed;
     }
     .shortcuts {
-      margin-top: 16px;
-      padding: 12px;
-      background: var(--bg-secondary);
-      border-radius: 6px;
+      margin-top: 20px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
       font-size: 12px;
-      color: var(--text-secondary);
-      border: 1px solid var(--border-color);
+      color: #666666;
+      border: 1px solid #e5e5e5;
+    }
+    
+    [data-theme="dark"] .shortcuts {
+      background: #2a2a2a;
+      color: #cccccc;
+      border-color: #333333;
     }
     .shortcuts h4 {
-      margin: 0 0 8px 0;
-      font-size: 13px;
-      color: var(--text-color);
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+    
+    [data-theme="dark"] .shortcuts h4 {
+      color: #ffffff;
     }
     .shortcut {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 4px;
+      align-items: center;
+      margin-bottom: 8px;
     }
+    
     .key {
-      background: var(--bg-tertiary);
-      padding: 2px 6px;
+      background: #e9ecef;
+      padding: 4px 8px;
       border-radius: 4px;
       font-family: monospace;
       font-size: 11px;
-      color: var(--text-color);
+      color: #1a1a1a;
+      font-weight: 500;
+    }
+    
+    [data-theme="dark"] .key {
+      background: #333333;
+      color: #ffffff;
     }
     .status {
-      margin-top: 12px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 12px;
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
       text-align: center;
+      font-weight: 500;
     }
+    
     .status.auto {
-      background: var(--status-auto-bg);
-      color: var(--status-auto-color);
-      border: 1px solid var(--status-auto-border);
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
     }
+    
+    [data-theme="dark"] .status.auto {
+      background: #1e4a1e;
+      color: #90ee90;
+      border-color: #2d5a2d;
+    }
+    
     .status.manual {
-      background: var(--status-manual-bg);
-      color: var(--status-manual-color);
-      border: 1px solid var(--status-manual-border);
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    [data-theme="dark"] .status.manual {
+      background: #4a4a1e;
+      color: #ffff90;
+      border-color: #5a5a2d;
     }
     .update-section {
-      margin-top: 12px;
-      padding: 12px;
-      background: var(--bg-secondary);
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
+      margin-top: 16px;
+      padding: 6px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 1px solid #e5e5e5;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    [data-theme="dark"] .update-section {
+      background: #2a2a2a;
+      border-color: #333333;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
     .update-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
     }
+    
     .update-title {
       font-size: 13px;
-      color: var(--text-color);
-      font-weight: 500;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+    
+    [data-theme="dark"] .update-title {
+      color: #ffffff;
     }
     .update-buttons {
       display: flex;
       gap: 4px;
     }
     .update-btn {
-      padding: 4px 8px;
+      padding: 6px 12px;
       background: #28a745;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .update-btn:hover {
+      background: #218838;
+    }
+    
+    .update-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
     }
     .update-status {
-      font-size: 12px;
-      color: var(--text-secondary);
+      font-size: 13px;
+      color: #666666;
+      line-height: 1.4;
+    }
+    
+    [data-theme="dark"] .update-status {
+      color: #cccccc;
     }
     .download-btn {
-      padding: 6px 12px;
+      padding: 8px 16px;
       background: #007bff;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 12px;
+      font-weight: 500;
       width: 100%;
+    }
+    
+    .download-btn:hover {
+      background: #0056b3;
     }
     .error-text {
       color: #dc3545;
@@ -188,12 +289,11 @@
   </div>
   
   <p class="description">
-    Добавляет поиск по глобальному меню на доменах langame и cls. 
-    Автоматически активируется на доменах с "langame".
+    Не только добавляет поиск на доменах LanGame, но и создаёт набор удобных настроек для работы!
   </p>
-  
-  <button id="activateBtn" class="button">Активировать поиск</button>
-  
+  <span class="description">    Не просто LanSearch, а LanPlus
+
+  </span>  
   <div class="update-section">
     <div class="update-header">
       <span class="update-title">Обход модальных окон</span>
@@ -202,6 +302,46 @@
       </div>
     </div>
     <div class="update-status">Убирает модальные окна подтверждения тех старт/стоп и блокировки/разблокировки ПК</div>
+  </div>
+  
+  <div class="update-section">
+    <div class="update-header">
+      <span class="update-title">Современные стили карт ПК</span>
+      <div class="update-buttons">
+        <button id="pcStylesToggle" class="update-btn">Выключен</button>
+      </div>
+    </div>
+    <div class="update-status">Применяет иные стили для панели устройств</div>
+  </div>
+  
+  <div class="update-section">
+    <div class="update-header">
+      <span class="update-title">Оптимизация таблиц</span>
+      <div class="update-buttons">
+        <button id="tableOptimizationToggle" class="update-btn">Выключен</button>
+      </div>
+    </div>
+    <div class="update-status">Сокращает названия колонок в таблицах для экономии места</div>
+  </div>
+  
+  <div class="update-section">
+    <div class="update-header">
+      <span class="update-title">Скрыть чекбоксы ПК</span>
+      <div class="update-buttons">
+        <button id="hideCheckboxesToggle" class="update-btn">Выключен</button>
+      </div>
+    </div>
+    <div class="update-status">Скрывает чекбоксы "Посадка" и "Бронь" на карточках ПК для экономии места</div>
+  </div>
+  
+  <div class="update-section">
+    <div class="update-header">
+      <span class="update-title">Скрыть комментарии ПК</span>
+      <div class="update-buttons">
+        <button id="hideCommentsToggle" class="update-btn">Выключен</button>
+      </div>
+    </div>
+    <div class="update-status">Скрывает поля комментариев на карточках ПК для экономии места</div>
   </div>
   
   <div id="updateSection" class="update-section">
