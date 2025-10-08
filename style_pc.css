@@ -1,0 +1,367 @@
+/* Современные стили для карты компьютеров клуба */
+
+/* Основная карточка ПК */
+.lan-search-pc-card {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+  position: relative;
+  padding: 0;
+  max-width: 100px;
+  width: 100px;
+}
+
+/* Контейнер карточки */
+.lan-search-pc-container {
+  min-height: auto;
+  border: none;
+  padding: 4px;
+  background: transparent;
+}
+
+/* Номер ПК */
+.lan-search-pc-number {
+  background: #4c8bf5;
+  color: white;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 4px 4px 0 0;
+  width: 100%;
+}
+
+/* Статус ПК */
+.lan-search-pc-status {
+  padding: 2px 4px;
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 0 0 6px 6px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.lan-search-pc-status.status-free {
+  background: #28a745;
+  color: white;
+}
+
+.lan-search-pc-status.status-busy {
+  background: #dc3545;
+  color: white;
+}
+
+.lan-search-pc-status.status-connection {
+  background: #6c757d;
+  color: white;
+}
+
+/* Кнопки */
+.lan-search-pc-card .lan-search-btn {
+  width: 100%;
+  padding: 3px 4px;
+  font-size: 9px;
+  font-weight: 500;
+  border-radius: 3px;
+  border: none;
+  margin-bottom: 2px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 20px;
+}
+
+/* Кнопки с иконками - ограничиваем высоту */
+.lan-search-pc-card .btn.btn-sm {
+  max-height: 20px !important;
+  padding: 2px 4px !important;
+  font-size: 8px !important;
+}
+
+.lan-search-btn.btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.lan-search-btn.btn-success {
+  background: #28a745;
+  color: white;
+}
+
+.lan-search-btn.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.lan-search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Информация о ПК */
+.lan-search-pc-info {
+  padding: 2px 4px !important;
+  min-height: 15px !important;
+  font-size: 8px !important;
+  color: #495057 !important;
+  background: #f8f9fa !important;
+
+  margin-bottom: 2px;
+  line-height: 1.2 !important;
+  max-width: 90px;
+  margin: auto;
+  display: ruby;
+}
+.input-group{
+    flex-wrap: nowrap;
+}
+.lan-search-pc-info .remain,
+.lan-search-pc-info .timeLock,
+.lan-search-pc-info .game_acc {
+  font-weight: 500 !important;
+  margin-bottom: 1px !important;
+  font-size: 8px !important;
+}
+
+.lan-search-pc-info .col-12 {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-height: 15px !important;
+}
+
+.input-group-append{
+    height: 20px;
+}
+/* Поле ввода комментария */
+.lan-search-comment-input {
+  width: 100%;
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 8px;
+  background: white;
+  height: 20px;
+}
+
+.lan-search-comment-input:focus {
+  outline: none;
+  border-color: #4c8bf5;
+}
+
+/* Чекбоксы */
+.lan-search-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  background: #f8f9fa;
+  border-radius: 3px;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.lan-search-checkbox input[type="checkbox"] {
+  margin-right: 3px;
+  cursor: pointer;
+}
+
+.lan-search-checkbox label {
+  cursor: pointer;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Дропдаун меню */
+.lan-search-dropdown {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  z-index: 5;
+  width: 20px;
+  height: 20px;
+}
+
+.lan-search-dropdown-toggle {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: #17a2b8;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  top: 2px;
+  right: -80px;
+}
+
+.lan-search-dropdown-toggle:hover {
+  background: #138496;
+}
+
+/* Выпадающее меню - убираем все стили, оставляем оригинальные Bootstrap */
+.lan-search-dropdown .dropdown-menu {
+  /* Убираем все кастомные стили, оставляем оригинальные Bootstrap */
+}
+
+/* Темная тема */
+[data-theme="dark"] .lan-search-pc-card {
+  background: #2d2d2d;
+  border-color: #444;
+}
+
+[data-theme="dark"] .lan-search-pc-number {
+  background: #4c8bf5;
+}
+
+[data-theme="dark"] .lan-search-pc-info {
+  background: #2d2d2d !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .lan-search-pc-info .remain,
+[data-theme="dark"] .lan-search-pc-info .timeLock,
+[data-theme="dark"] .lan-search-pc-info .game_acc {
+  color: #fff !important;
+}
+
+[data-theme="dark"] .lan-search-comment-input {
+  background: #3a3a3a;
+  border-color: #555;
+  color: white;
+}
+
+[data-theme="dark"] .lan-search-comment-input:focus {
+  border-color: #4c8bf5;
+}
+
+[data-theme="dark"] .lan-search-checkbox {
+  background: #3a3a3a;
+}
+
+[data-theme="dark"] .lan-search-checkbox label {
+  color: #fff;
+}
+
+/* Убираем все анимации */
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .lan-search-pc-card {
+    max-width: 90px;
+    margin: 1px;
+  }
+  
+  .lan-search-pc-number {
+    font-size: 10px;
+    padding: 3px 4px;
+  }
+  
+  .lan-search-btn {
+    font-size: 8px;
+    padding: 2px 3px;
+  }
+}
+
+/* Специальные состояния карточек */
+.lan-search-pc-card.pc-offline {
+  opacity: 0.6;
+}
+
+.lan-search-pc-card.pc-selected {
+  border: 1px solid #4c8bf5;
+}
+
+/* Версия агента */
+.lan-search-version {
+  font-size: 9px;
+  color: #6c757d;
+  text-align: center;
+  padding: 1px;
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .lan-search-version {
+  color: #999;
+}
+
+/* Скрытие старых элементов при активации новых стилей */
+.lan-search-styled .border-dark {
+  border: none !important;
+}
+
+.lan-search-styled .bg-dark {
+  background: none !important;
+}
+
+/* Скрываем блок с текстом "Заблокировать/Разблокировать" */
+.lan-search-styled .text.text-dark.font-weight-bold.text-body.fio.border {
+  display: none !important;
+}
+
+.dropdown-menu.show{
+    z-index: 10000 !important;
+}
+
+/* Скрываем кнопку дропдауна когда меню открыто */
+.lan-search-dropdown:has(.dropdown-menu.show) .lan-search-dropdown-toggle {
+    opacity: 0;
+}
+
+/* Принудительно скрываем кнопку когда меню открыто */
+.lan-search-dropdown .dropdown-menu.show ~ .lan-search-dropdown-toggle {
+    display: none !important;
+}
+
+/* Альтернативный способ - скрываем через JavaScript класс */
+.lan-search-dropdown.menu-open .lan-search-dropdown-toggle {
+    display: none !important;
+}
+
+/* Стили для оптимизации таблиц на странице /guests_search/ */
+.lan-search-table-optimized th.sorting div {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Сокращения для конкретных колонок */
+.lan-search-table-optimized th[aria-label*="Бонусный баланс"] div {
+    content: "Бонусы" !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Ручная группа"] div {
+    content: "Ручная Г." !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Данные документа"] div {
+    content: "Данные Д." !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Последняя авторизация"] div {
+    content: "Последн. Вход." !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Дата регистрации"] div {
+    content: "Регистр." !important;
+}
+
+/* Скрытие чекбоксов ПК */
+.lan-search-hide-checkboxes .custom-control.custom-checkbox {
+    display: none !important;
+}
+
+/* Скрытие комментариев ПК */
+.lan-search-hide-comments .input-group {
+    display: none !important;
+}
