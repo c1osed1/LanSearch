@@ -1,17 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const activateBtn = document.getElementById('activateBtn');
   const statusDiv = document.getElementById('status');
   const checkUpdateBtn = document.getElementById('checkUpdateBtn');
   const updateStatus = document.getElementById('updateStatus');
   const themeToggle = document.getElementById('themeToggle');
   const modalBypassToggle = document.getElementById('modalBypassToggle');
   const pcStylesToggle = document.getElementById('pcStylesToggle');
+  const tableOptimizationToggle = document.getElementById('tableOptimizationToggle');
+  const hideCheckboxesToggle = document.getElementById('hideCheckboxesToggle');
+  const hideCommentsToggle = document.getElementById('hideCommentsToggle');
   
-  // Глобальная переменная для кэширования темы
+  
   let currentTheme = 'light';
   let themeApplied = false;
   
-  // Функции для работы с темной темой
+  
   function initTheme() {
     if (themeApplied) {
       setTheme(currentTheme);
@@ -19,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     try {
-      // Сначала проверяем localStorage для быстрого доступа
+      
       const localTheme = localStorage.getItem('lanSearchTheme');
       if (localTheme) {
         currentTheme = localTheme;
@@ -28,34 +30,34 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Затем проверяем chrome.storage
+      
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(['theme'], function(result) {
           try {
             currentTheme = result.theme || 'light';
             themeApplied = true;
             setTheme(currentTheme);
-            // Сохраняем в localStorage для быстрого доступа
+            
             try {
               localStorage.setItem('lanSearchTheme', currentTheme);
             } catch (e) {
-              // Игнорируем ошибки localStorage
+              
             }
           } catch (e) {
-            // Fallback при ошибке
+            
             currentTheme = 'light';
             themeApplied = true;
             setTheme('light');
           }
         });
       } else {
-        // Fallback если chrome.storage недоступен
+        
         currentTheme = 'light';
         themeApplied = true;
         setTheme('light');
       }
     } catch (e) {
-      // Fallback при любой ошибке
+      
       currentTheme = 'light';
       themeApplied = true;
       setTheme('light');
@@ -72,41 +74,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const currentThemeAttr = document.documentElement.getAttribute('data-theme') || 'light';
     const newTheme = currentThemeAttr === 'light' ? 'dark' : 'light';
     
-    // Обновляем кэш
+    
     currentTheme = newTheme;
     
     setTheme(newTheme);
     
-    // Сохраняем в localStorage для быстрого доступа
+    
     try {
       localStorage.setItem('lanSearchTheme', newTheme);
     } catch (e) {
-      // Игнорируем ошибки localStorage
+      
     }
     
-    // Сохраняем в chrome.storage с обработкой ошибок
+    
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.set({ theme: newTheme });
       }
     } catch (e) {
-      // Игнорируем ошибки chrome.storage
+      
       console.log('Chrome storage not available, using localStorage only');
     }
   }
   
-  // Инициализация темы
+  
   initTheme();
   
-  // Обработчик переключения темы
+  
   themeToggle.addEventListener('click', toggleTheme);
   
-  // Функции для работы с обходом модальных окон
+  
   let modalBypassEnabled = false;
   
   function initModalBypass() {
     try {
-      // Проверяем localStorage для быстрого доступа
+      
       const localBypass = localStorage.getItem('lanSearchModalBypass');
       if (localBypass !== null) {
         modalBypassEnabled = localBypass === 'true';
@@ -114,31 +116,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Затем проверяем chrome.storage
+      
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(['modalBypass'], function(result) {
           try {
             modalBypassEnabled = result.modalBypass || false;
             setModalBypassState(modalBypassEnabled);
-            // Сохраняем в localStorage для быстрого доступа
+            
             try {
               localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
             } catch (e) {
-              // Игнорируем ошибки localStorage
+              
             }
           } catch (e) {
-            // Fallback при ошибке
+            
             modalBypassEnabled = false;
             setModalBypassState(false);
           }
         });
       } else {
-        // Fallback если chrome.storage недоступен
+        
         modalBypassEnabled = false;
         setModalBypassState(false);
       }
     } catch (e) {
-      // Fallback при любой ошибке
+      
       modalBypassEnabled = false;
       setModalBypassState(false);
     }
@@ -155,20 +157,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setModalBypassState(modalBypassEnabled);
     
-    // Сохраняем в localStorage для быстрого доступа
+    
     try {
       localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
     } catch (e) {
-      // Игнорируем ошибки localStorage
+      
     }
     
-    // Сохраняем в chrome.storage с обработкой ошибок
+    
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.set({ modalBypass: modalBypassEnabled }, function() {
           console.log('Popup: Настройка сохранена в chrome.storage:', modalBypassEnabled);
           
-          // Принудительно синхронизируем настройки на активной вкладке
+          
           chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (tabs[0]) {
               chrome.scripting.executeScript({
@@ -186,23 +188,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
     } catch (e) {
-      // Игнорируем ошибки chrome.storage
+      
       console.log('Chrome storage not available, using localStorage only');
     }
   }
   
-  // Инициализация состояния обхода модальных окон
+  
   initModalBypass();
   
-  // Обработчик переключения обхода модальных окон
+  
   modalBypassToggle.addEventListener('click', toggleModalBypass);
-  
-  // Функции для работы со стилями карт ПК
   let pcStylesEnabled = false;
-  
+  let tableOptimizationEnabled = false;
+  let hideCheckboxesEnabled = false;
+  let hideCommentsEnabled = false;
   function initPCStyles() {
     try {
-      // Проверяем localStorage для быстрого доступа
       const localStyles = localStorage.getItem('lanSearchPCStyles');
       if (localStyles !== null) {
         pcStylesEnabled = localStyles === 'true';
@@ -210,31 +211,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Затем проверяем chrome.storage
+      
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(['pcStyles'], function(result) {
           try {
             pcStylesEnabled = result.pcStyles || false;
             setPCStylesState(pcStylesEnabled);
-            // Сохраняем в localStorage для быстрого доступа
+            
             try {
               localStorage.setItem('lanSearchPCStyles', pcStylesEnabled.toString());
             } catch (e) {
-              // Игнорируем ошибки localStorage
+              
             }
           } catch (e) {
-            // Fallback при ошибке
+            
             pcStylesEnabled = false;
             setPCStylesState(false);
           }
         });
       } else {
-        // Fallback если chrome.storage недоступен
+        
         pcStylesEnabled = false;
         setPCStylesState(false);
       }
     } catch (e) {
-      // Fallback при любой ошибке
+      
       pcStylesEnabled = false;
       setPCStylesState(false);
     }
@@ -251,20 +252,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setPCStylesState(pcStylesEnabled);
     
-    // Сохраняем в localStorage для быстрого доступа
+    
     try {
       localStorage.setItem('lanSearchPCStyles', pcStylesEnabled.toString());
     } catch (e) {
-      // Игнорируем ошибки localStorage
+      
     }
     
-    // Сохраняем в chrome.storage с обработкой ошибок
+    
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.set({ pcStyles: pcStylesEnabled }, function() {
           console.log('Popup: Настройка стилей ПК сохранена в chrome.storage:', pcStylesEnabled);
           
-          // Принудительно синхронизируем настройки на активной вкладке
+          
           chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             if (tabs[0]) {
               chrome.scripting.executeScript({
@@ -282,18 +283,228 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       }
     } catch (e) {
-      // Игнорируем ошибки chrome.storage
+      
       console.log('Chrome storage not available, using localStorage only');
     }
   }
   
-  // Инициализация состояния стилей ПК
+  
   initPCStyles();
   
-  // Обработчик переключения стилей ПК
+  
   pcStylesToggle.addEventListener('click', togglePCStyles);
   
-  // Принудительная синхронизация при открытии popup
+  
+  function initTableOptimization() {
+    try {
+      
+      const localOptimization = localStorage.getItem('lanSearchTableOptimization');
+      if (localOptimization !== null) {
+        tableOptimizationEnabled = localOptimization === 'true';
+        setTableOptimizationState(tableOptimizationEnabled);
+        return;
+      }
+      
+      
+      chrome.storage.sync.get(['tableOptimization'], function(result) {
+        if (result.tableOptimization !== undefined) {
+          tableOptimizationEnabled = result.tableOptimization;
+        } else {
+          tableOptimizationEnabled = false;
+        }
+        setTableOptimizationState(tableOptimizationEnabled);
+      });
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации оптимизации таблиц:', error);
+      tableOptimizationEnabled = false;
+      setTableOptimizationState(false);
+    }
+  }
+  
+  function setTableOptimizationState(enabled) {
+    tableOptimizationToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    tableOptimizationToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    tableOptimizationToggle.title = enabled ? 'Отключить оптимизацию таблиц' : 'Включить оптимизацию таблиц';
+  }
+  
+  function toggleTableOptimization() {
+    tableOptimizationEnabled = !tableOptimizationEnabled;
+    setTableOptimizationState(tableOptimizationEnabled);
+    
+    
+    localStorage.setItem('lanSearchTableOptimization', tableOptimizationEnabled.toString());
+    
+    
+    chrome.storage.sync.set({ tableOptimization: tableOptimizationEnabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек оптимизации таблиц:', chrome.runtime.lastError);
+      }
+    });
+    
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncTableOptimization) {
+              window.lanSearchSyncTableOptimization();
+            }
+          }
+        }).catch(err => {
+          console.log('Popup: Не удалось применить оптимизацию таблиц:', err);
+        });
+      }
+    });
+  }
+  
+  
+  initTableOptimization();
+  
+  
+  tableOptimizationToggle.addEventListener('click', toggleTableOptimization);
+  
+  
+  function initHideCheckboxes() {
+    try {
+      
+      const localHideCheckboxes = localStorage.getItem('lanSearchHideCheckboxes');
+      if (localHideCheckboxes !== null) {
+        hideCheckboxesEnabled = localHideCheckboxes === 'true';
+        setHideCheckboxesState(hideCheckboxesEnabled);
+        return;
+      }
+      
+      
+      chrome.storage.sync.get(['hideCheckboxes'], function(result) {
+        if (result.hideCheckboxes !== undefined) {
+          hideCheckboxesEnabled = result.hideCheckboxes;
+        } else {
+          hideCheckboxesEnabled = false;
+        }
+        setHideCheckboxesState(hideCheckboxesEnabled);
+      });
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации скрытия чекбоксов:', error);
+      hideCheckboxesEnabled = false;
+      setHideCheckboxesState(false);
+    }
+  }
+  
+  function setHideCheckboxesState(enabled) {
+    hideCheckboxesToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    hideCheckboxesToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    hideCheckboxesToggle.title = enabled ? 'Показать чекбоксы ПК' : 'Скрыть чекбоксы ПК';
+  }
+  
+  function toggleHideCheckboxes() {
+    hideCheckboxesEnabled = !hideCheckboxesEnabled;
+    setHideCheckboxesState(hideCheckboxesEnabled);
+    
+    
+    localStorage.setItem('lanSearchHideCheckboxes', hideCheckboxesEnabled.toString());
+    
+    
+    chrome.storage.sync.set({ hideCheckboxes: hideCheckboxesEnabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек скрытия чекбоксов:', chrome.runtime.lastError);
+      }
+    });
+    
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncHideCheckboxes) {
+              window.lanSearchSyncHideCheckboxes();
+            }
+          }
+        }).catch(err => {
+          console.log('Popup: Не удалось применить скрытие чекбоксов:', err);
+        });
+      }
+    });
+  }
+  
+  
+  initHideCheckboxes();
+  
+  
+  hideCheckboxesToggle.addEventListener('click', toggleHideCheckboxes);
+  
+  
+  function initHideComments() {
+    try {
+      
+      const localHideComments = localStorage.getItem('lanSearchHideComments');
+      if (localHideComments !== null) {
+        hideCommentsEnabled = localHideComments === 'true';
+        setHideCommentsState(hideCommentsEnabled);
+        return;
+      }
+      
+      
+      chrome.storage.sync.get(['hideComments'], function(result) {
+        if (result.hideComments !== undefined) {
+          hideCommentsEnabled = result.hideComments;
+        } else {
+          hideCommentsEnabled = false;
+        }
+        setHideCommentsState(hideCommentsEnabled);
+      });
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации скрытия комментариев:', error);
+      hideCommentsEnabled = false;
+      setHideCommentsState(false);
+    }
+  }
+  
+  function setHideCommentsState(enabled) {
+    hideCommentsToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    hideCommentsToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    hideCommentsToggle.title = enabled ? 'Показать комментарии ПК' : 'Скрыть комментарии ПК';
+  }
+  
+  function toggleHideComments() {
+    hideCommentsEnabled = !hideCommentsEnabled;
+    setHideCommentsState(hideCommentsEnabled);
+    
+    
+    localStorage.setItem('lanSearchHideComments', hideCommentsEnabled.toString());
+    
+    
+    chrome.storage.sync.set({ hideComments: hideCommentsEnabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек скрытия комментариев:', chrome.runtime.lastError);
+      }
+    });
+    
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncHideComments) {
+              window.lanSearchSyncHideComments();
+            }
+          }
+        }).catch(err => {
+          console.log('Popup: Не удалось применить скрытие комментариев:', err);
+        });
+      }
+    });
+  }
+  
+  
+  initHideComments();
+  
+  
+  hideCommentsToggle.addEventListener('click', toggleHideComments);
+  
+  
   setTimeout(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       if (tabs[0]) {
@@ -303,8 +514,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window.lanSearchSyncModalBypass) {
               window.lanSearchSyncModalBypass();
             }
-            if (window.lanSearchSyncPCStyles) {
-              window.lanSearchSyncPCStyles();
+                    if (window.lanSearchSyncPCStyles) {
+                      window.lanSearchSyncPCStyles();
+                    }
+                    if (window.lanSearchSyncTableOptimization) {
+                      window.lanSearchSyncTableOptimization();
+                    }
+                    if (window.lanSearchSyncHideCheckboxes) {
+                      window.lanSearchSyncHideCheckboxes();
+                    }
+                    if (window.lanSearchSyncHideComments) {
+                      window.lanSearchSyncHideComments();
             }
           }
         }).catch(err => {
@@ -314,89 +534,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }, 100);
   
-  // Проверяем текущую вкладку
-  async function checkCurrentTab() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      if (!tab?.id) {
-        showStatus('Не удалось получить активную вкладку', 'manual');
-        return;
-      }
-
-      const url = new URL(tab.url);
-      const hostname = url.hostname.toLowerCase();
-      
-      // Проверяем домен через функцию расширения
-      const result = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: (hostname) => {
-          if (window.lanSearchIsSuitableDomain) {
-            return window.lanSearchIsSuitableDomain(hostname);
-          }
-          // Fallback если функция недоступна
-          return hostname.includes('langame') || hostname.includes('cls');
-        },
-        args: [hostname]
-      });
-
-      const isSuitable = result[0]?.result || false;
-      
-      if (isSuitable) {
-        showStatus('Автоматическая активация на подходящем домене', 'auto');
-        activateBtn.disabled = true;
-        activateBtn.textContent = 'Автоактивация';
-      } else {
-        showStatus('Ручная активация', 'manual');
-        activateBtn.disabled = false;
-        activateBtn.textContent = 'Активировать поиск';
-      }
-      
-    } catch (error) {
-      console.error('Ошибка проверки вкладки:', error);
-      showStatus('Ошибка проверки домена', 'manual');
-    }
-  }
-  
   function showStatus(message, type) {
-    statusDiv.textContent = message;
-    statusDiv.className = `status ${type}`;
-    statusDiv.style.display = 'block';
-  }
-  
-  activateBtn.addEventListener('click', async function() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      if (!tab?.id) {
-        alert('Не удалось получить активную вкладку');
-        return;
-      }
-
-      // Вызываем функцию инициализации на странице
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: () => {
-          if (window.lanSearchInit) {
-            window.lanSearchInit();
-          }
-        }
-      });
-
-      showStatus('Поиск активирован!', 'auto');
-      setTimeout(() => window.close(), 1000);
-      
-    } catch (error) {
-      console.error('Ошибка активации поиска:', error);
-      alert('Ошибка при активации поиска: ' + error.message);
+    if (statusDiv) {
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+      statusDiv.style.display = 'block';
     }
-  });
+  }
 
-  // Fallback функция для получения эмодзи иконки
+
+  
   function getFallbackIcon(dataIcon) {
     if (!dataIcon) return '📄';
 
-    // Маппинг data-icon на эмодзи
+    
     const iconMap = {
       'dashboard': '📊',
       'partners': '🤝',
@@ -584,11 +735,11 @@ document.addEventListener('DOMContentLoaded', function() {
     return iconMap[dataIcon] || '📄';
   }
 
-  // Функция создания элемента вкладки
+  
   function createTabItem(tab, isFavorite = false) {
     const tabItem = document.createElement('div');
     
-    // Применяем цвет если он установлен для избранной вкладки
+    
     let tabStyle = `
       padding: 8px 12px;
       margin: 4px 0;
@@ -604,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     
     if (isFavorite && tab.color) {
-      // Находим конфигурацию цвета
+      
       const availableColors = [
         { name: 'Красный', value: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)', border: 'rgba(255, 107, 107, 0.3)' },
         { name: 'Оранжевый', value: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)', border: 'rgba(255, 167, 38, 0.3)' },
@@ -693,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    // Иконка
+    
     if (tab.iconStyles) {
       const icon = document.createElement('span');
       icon.style.cssText = `
@@ -711,7 +862,7 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
       tabItem.appendChild(icon);
     } else if (tab.icon) {
-      // Fallback - создаем эмодзи на основе data-icon
+      
       const icon = document.createElement('span');
       icon.textContent = getFallbackIcon(tab.icon);
       icon.style.cssText = `
@@ -722,7 +873,7 @@ document.addEventListener('DOMContentLoaded', function() {
       tabItem.appendChild(icon);
     }
 
-    // Контейнер для текста
+    
     const textContainer = document.createElement('div');
     textContainer.style.cssText = `
       flex: 1;
@@ -756,7 +907,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return tabItem;
   }
 
-  // Функция для отображения последних вкладок
+  
   async function displayRecentTabs() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -766,14 +917,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const url = new URL(tab.url);
       const hostname = url.hostname.toLowerCase();
       
-      // Проверяем домен через функцию расширения
+      
       const domainCheck = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: (hostname) => {
           if (window.lanSearchIsSuitableDomain) {
             return window.lanSearchIsSuitableDomain(hostname);
           }
-          // Fallback если функция недоступна
+          
           return hostname.includes('langame') || hostname.includes('cls');
         },
         args: [hostname]
@@ -781,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const isSuitable = domainCheck[0]?.result || false;
       
-      // Показываем только на подходящих доменах
+      
       if (!isSuitable) return;
 
       const result = await chrome.scripting.executeScript({
@@ -797,7 +948,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (recentTabs.length === 0 && favoriteTabs.length === 0) return;
 
-      // Создаем контейнер для последних вкладок
+      
       const recentTabsContainer = document.createElement('div');
       recentTabsContainer.style.cssText = `
         margin-top: 15px;
@@ -805,7 +956,7 @@ document.addEventListener('DOMContentLoaded', function() {
         border-top: 1px solid #e0e0e0;
       `;
 
-      // Секция избранных вкладок
+      
       if (favoriteTabs.length > 0) {
         const favoritesTitle = document.createElement('h4');
         favoritesTitle.textContent = ' Избранные:';
@@ -832,7 +983,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recentTabsContainer.appendChild(favoritesList);
       }
 
-      // Секция недавних вкладок
+      
       if (recentTabs.length > 0) {
         const recentTitle = document.createElement('h4');
         recentTitle.textContent = 'Недавние:';
@@ -858,7 +1009,7 @@ document.addEventListener('DOMContentLoaded', function() {
         recentTabsContainer.appendChild(tabsList);
       }
 
-      // Добавляем кнопку очистки истории
+      
       const clearBtn = document.createElement('button');
       clearBtn.textContent = 'Очистить историю';
       clearBtn.style.cssText = `
@@ -889,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       recentTabsContainer.appendChild(clearBtn);
 
-      // Вставляем после статуса
+      
       statusDiv.parentNode.insertBefore(recentTabsContainer, statusDiv.nextSibling);
 
     } catch (error) {
@@ -897,21 +1048,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Функция для извлечения версии из сообщения коммита
+  
   function extractVersionFromCommit(commitMessage) {
-    // Ищем версию в формате X.Y.Z или X.Y
+    
     const versionMatch = commitMessage.match(/(\d+\.\d+(?:\.\d+)?)/);
     return versionMatch ? versionMatch[1] : null;
   }
 
-  // Функция для сравнения версий
+  
   function compareVersions(version1, version2) {
     if (!version1 || !version2) return 0;
     
     const v1Parts = version1.split('.').map(Number);
     const v2Parts = version2.split('.').map(Number);
     
-    // Дополняем до одинаковой длины
+    
     while (v1Parts.length < v2Parts.length) v1Parts.push(0);
     while (v2Parts.length < v1Parts.length) v2Parts.push(0);
     
@@ -923,18 +1074,18 @@ document.addEventListener('DOMContentLoaded', function() {
     return 0;
   }
 
-  // Функция проверки обновлений
+  
   async function checkForUpdates() {
     try {
       checkUpdateBtn.disabled = true;
       checkUpdateBtn.textContent = 'Проверяю...';
       updateStatus.textContent = 'Проверяем наличие обновлений...';
       
-      // Получаем информацию о текущей версии расширения
+      
       const manifest = chrome.runtime.getManifest();
       const currentVersion = manifest.version;
       
-      // Получаем последний коммит с GitHub
+      
       const response = await fetch('https://api.github.com/repos/c1osed1/LanSearch/commits?per_page=1');
       
       if (!response.ok) {
@@ -949,15 +1100,15 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       const latestCommit = commits[0];
-      const latestCommitSha = latestCommit.sha.substring(0, 7); // Короткий SHA
+      const latestCommitSha = latestCommit.sha.substring(0, 7); 
       const commitDate = new Date(latestCommit.commit.author.date);
-      const commitMessage = latestCommit.commit.message.split('\n')[0]; // Первая строка сообщения
+      const commitMessage = latestCommit.commit.message.split('\n')[0]; 
       const latestVersion = extractVersionFromCommit(commitMessage);
       
-      // Получаем сохраненную информацию
+      
       const stored = await chrome.storage.local.get(['lastKnownCommit', 'lastUpdateCheck']);
       
-      // Сохраняем информацию о последнем коммите и времени проверки
+      
       await chrome.storage.local.set({
         'lastKnownCommit': {
           sha: latestCommitSha,
@@ -967,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'lastUpdateCheck': new Date().toISOString()
       });
       
-      // Форматируем даты
+      
       const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('ru-RU', {
@@ -979,12 +1130,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       };
       
-      // Проверяем, есть ли новая версия
+      
       let hasNewVersion = false;
       let versionComparison = '';
       
       if (latestVersion) {
-        // Всегда сравниваем с текущей версией из manifest
+        
         const comparison = compareVersions(latestVersion, currentVersion);
         hasNewVersion = comparison > 0;
         
@@ -999,14 +1150,14 @@ document.addEventListener('DOMContentLoaded', function() {
         versionComparison = `ℹ️ Не удалось определить версию из коммита`;
       }
       
-      // Создаем элементы программно вместо innerHTML для безопасности
+      
       updateStatus.textContent = '';
       
-      // Создаем контейнер для информации
+      
       const infoContainer = document.createElement('div');
       infoContainer.style.cssText = 'margin-bottom: 12px; font-size: 11px; line-height: 1.4;';
       
-      // Добавляем информацию о последней проверке
+      
       const lastCheckDiv = document.createElement('div');
       lastCheckDiv.style.cssText = 'margin-bottom: 6px;';
       const lastCheckStrong = document.createElement('strong');
@@ -1015,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', function() {
       lastCheckDiv.appendChild(document.createTextNode(` ${formatDate(new Date())}`));
       infoContainer.appendChild(lastCheckDiv);
       
-      // Добавляем информацию о последнем обновлении
+      
       const lastUpdateDiv = document.createElement('div');
       lastUpdateDiv.style.cssText = 'margin-bottom: 6px;';
       const lastUpdateStrong = document.createElement('strong');
@@ -1025,7 +1176,7 @@ document.addEventListener('DOMContentLoaded', function() {
       lastUpdateDiv.appendChild(document.createTextNode(`${formatDate(commitDate)} (${latestCommitSha})`));
       infoContainer.appendChild(lastUpdateDiv);
       
-      // Добавляем сообщение коммита
+      
       const commitDiv = document.createElement('div');
       commitDiv.style.cssText = 'margin-bottom: 6px;';
       const commitStrong = document.createElement('strong');
@@ -1035,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', function() {
       commitDiv.appendChild(document.createTextNode(commitMessage));
       infoContainer.appendChild(commitDiv);
       
-      // Добавляем сравнение версий
+      
       const versionDiv = document.createElement('div');
       versionDiv.style.cssText = 'margin-bottom: 8px; font-weight: 600;';
       versionDiv.textContent = versionComparison;
@@ -1043,14 +1194,14 @@ document.addEventListener('DOMContentLoaded', function() {
       
       updateStatus.appendChild(infoContainer);
       
-      // Создаем кнопку скачивания
+      
       const downloadBtn = document.createElement('button');
       downloadBtn.id = 'downloadUpdateBtn';
       downloadBtn.textContent = 'Скачать обновление';
       downloadBtn.style.cssText = 'padding: 6px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%;';
       updateStatus.appendChild(downloadBtn);
       
-      // Добавляем обработчик для кнопки скачивания
+      
       setTimeout(() => {
         const downloadBtn = document.getElementById('downloadUpdateBtn');
         if (downloadBtn) {
@@ -1062,16 +1213,16 @@ document.addEventListener('DOMContentLoaded', function() {
       
     } catch (error) {
       console.error('Ошибка проверки обновлений:', error);
-      // Создаем элементы программно вместо innerHTML для безопасности
+      
       updateStatus.textContent = '';
       
-      // Создаем контейнер для ошибки
+      
       const errorDiv = document.createElement('div');
       errorDiv.style.cssText = 'margin-bottom: 8px; color: #dc3545;';
       errorDiv.textContent = `Ошибка проверки обновлений: ${error.message}`;
       updateStatus.appendChild(errorDiv);
       
-      // Создаем кнопку скачивания
+      
       const downloadBtn = document.createElement('button');
       downloadBtn.id = 'downloadUpdateBtn';
       downloadBtn.textContent = 'Скачать обновление';
@@ -1092,17 +1243,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Обработчик кнопки проверки обновлений
+  
   checkUpdateBtn.addEventListener('click', checkForUpdates);
   
 
   
-  // Проверяем статус при загрузке
-  checkCurrentTab();
   
-  // Отображаем последние вкладки
+  
   displayRecentTabs();
   
-  // Автоматически проверяем обновления при загрузке
+  
   checkForUpdates();
 }); 

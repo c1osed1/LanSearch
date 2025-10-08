@@ -9,7 +9,7 @@
   position: relative;
   padding: 0;
   max-width: 100px;
-  margin: 2px;
+  width: 100px;
 }
 
 /* Контейнер карточки */
@@ -38,7 +38,7 @@
   font-size: 9px;
   font-weight: 600;
   text-align: center;
-  border-radius: 3px;
+  border-radius: 0 0 6px 6px;
   margin-bottom: 4px;
   text-transform: uppercase;
 }
@@ -73,6 +73,14 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
+  height: 20px;
+}
+
+/* Кнопки с иконками - ограничиваем высоту */
+.lan-search-pc-card .btn.btn-sm {
+  max-height: 20px !important;
+  padding: 2px 4px !important;
+  font-size: 8px !important;
 }
 
 .lan-search-btn.btn-primary {
@@ -102,11 +110,16 @@
   font-size: 8px !important;
   color: #495057 !important;
   background: #f8f9fa !important;
-  border-radius: 3px;
+
   margin-bottom: 2px;
   line-height: 1.2 !important;
+  max-width: 90px;
+  margin: auto;
+  display: ruby;
 }
-
+.input-group{
+    flex-wrap: nowrap;
+}
 .lan-search-pc-info .remain,
 .lan-search-pc-info .timeLock,
 .lan-search-pc-info .game_acc {
@@ -118,8 +131,12 @@
 .lan-search-pc-info .col-12 {
   padding: 0 !important;
   margin: 0 !important;
+  max-height: 15px !important;
 }
 
+.input-group-append{
+    height: 20px;
+}
 /* Поле ввода комментария */
 .lan-search-comment-input {
   width: 100%;
@@ -127,8 +144,8 @@
   border: 1px solid #ccc;
   border-radius: 3px;
   font-size: 8px;
-  margin-bottom: 2px;
   background: white;
+  height: 20px;
 }
 
 .lan-search-comment-input:focus {
@@ -141,7 +158,6 @@
   display: flex;
   align-items: center;
   padding: 2px 4px;
-  margin-bottom: 2px;
   background: #f8f9fa;
   border-radius: 3px;
   font-size: 8px;
@@ -164,12 +180,14 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  z-index: 10;
+  z-index: 5;
+  width: 20px;
+  height: 20px;
 }
 
 .lan-search-dropdown-toggle {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 3px;
   background: #17a2b8;
   color: white;
@@ -178,7 +196,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
+  font-size: 10px;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  top: 2px;
+  right: -80px;
+}
+
+.lan-search-dropdown-toggle:hover {
+  background: #138496;
+}
+
+/* Выпадающее меню - убираем все стили, оставляем оригинальные Bootstrap */
+.lan-search-dropdown .dropdown-menu {
+  /* Убираем все кастомные стили, оставляем оригинальные Bootstrap */
 }
 
 /* Темная тема */
@@ -192,8 +224,14 @@
 }
 
 [data-theme="dark"] .lan-search-pc-info {
-  background: #3a3a3a;
-  color: #fff;
+  background: #2d2d2d !important;
+  color: #fff !important;
+}
+
+[data-theme="dark"] .lan-search-pc-info .remain,
+[data-theme="dark"] .lan-search-pc-info .timeLock,
+[data-theme="dark"] .lan-search-pc-info .game_acc {
+  color: #fff !important;
 }
 
 [data-theme="dark"] .lan-search-comment-input {
@@ -245,7 +283,7 @@
 
 /* Версия агента */
 .lan-search-version {
-  font-size: 7px;
+  font-size: 9px;
   color: #6c757d;
   text-align: center;
   padding: 1px;
@@ -265,3 +303,65 @@
   background: none !important;
 }
 
+/* Скрываем блок с текстом "Заблокировать/Разблокировать" */
+.lan-search-styled .text.text-dark.font-weight-bold.text-body.fio.border {
+  display: none !important;
+}
+
+.dropdown-menu.show{
+    z-index: 10000 !important;
+}
+
+/* Скрываем кнопку дропдауна когда меню открыто */
+.lan-search-dropdown:has(.dropdown-menu.show) .lan-search-dropdown-toggle {
+    opacity: 0;
+}
+
+/* Принудительно скрываем кнопку когда меню открыто */
+.lan-search-dropdown .dropdown-menu.show ~ .lan-search-dropdown-toggle {
+    display: none !important;
+}
+
+/* Альтернативный способ - скрываем через JavaScript класс */
+.lan-search-dropdown.menu-open .lan-search-dropdown-toggle {
+    display: none !important;
+}
+
+/* Стили для оптимизации таблиц на странице /guests_search/ */
+.lan-search-table-optimized th.sorting div {
+    font-size: 11px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Сокращения для конкретных колонок */
+.lan-search-table-optimized th[aria-label*="Бонусный баланс"] div {
+    content: "Бонусы" !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Ручная группа"] div {
+    content: "Ручная Г." !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Данные документа"] div {
+    content: "Данные Д." !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Последняя авторизация"] div {
+    content: "Последн. Вход." !important;
+}
+
+.lan-search-table-optimized th[aria-label*="Дата регистрации"] div {
+    content: "Регистр." !important;
+}
+
+/* Скрытие чекбоксов ПК */
+.lan-search-hide-checkboxes .custom-control.custom-checkbox {
+    display: none !important;
+}
+
+/* Скрытие комментариев ПК */
+.lan-search-hide-comments .input-group {
+    display: none !important;
+}

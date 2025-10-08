@@ -1838,7 +1838,7 @@
     const hint = document.createElement('div');
     hint.textContent = 'Формат: 2-10, 2,5,8-12';
     hint.style.cssText = `
-      font-size: 10px;
+      font-size: 8px;
       color: #666;
       margin-bottom: 6px;
       text-align: center;
@@ -2776,7 +2776,7 @@
       return;
     }
     
-    // Ищем блок с информацией о снимках по заголовку "Снимки"
+    
     const allHeadings = doc.querySelectorAll('.alert-heading');
     let snapshotAlert = null;
     
@@ -2912,9 +2912,9 @@
   function extractSnapshotDate(statusText) {
     const match = statusText.match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
     if (match) {
-      // Убираем секунды из даты
+      
       const dateTime = match[1];
-      return dateTime.substring(0, 16); // убираем последние 3 символа (секунды)
+      return dateTime.substring(0, 16); 
     }
     return 'Не определено';
   }
@@ -2952,14 +2952,14 @@
   function addSnapshotInfoButton(latestDate) {
     console.log('Lan-Search: Создаем кнопку с датой:', latestDate);
     
-    // Удаляем существующую кнопку если есть
+    
     const existingBtn = document.getElementById('snapshotInfoBtn');
     if (existingBtn) {
       existingBtn.remove();
       console.log('Lan-Search: Удалена существующая кнопка snapshot');
     }
     
-    // Создаем кнопку с информацией о снимке
+    
     const snapshotBtn = document.createElement('a');
     snapshotBtn.id = 'snapshotInfoBtn';
     snapshotBtn.href = '#';
@@ -2967,7 +2967,7 @@
     snapshotBtn.innerHTML = `<i class="fa fa-clock-o"></i> ${latestDate}`;
     snapshotBtn.title = 'Последний снимок FreeNAS';
     
-    // Вставляем рядом с кнопкой "Проверить диски"
+    
     const checkDisksBtn = document.getElementById('checkDisksBtn');
     console.log('Lan-Search: Найдена кнопка checkDisksBtn:', checkDisksBtn);
     
@@ -2980,11 +2980,11 @@
   }
   
   function findLatestSnapshot(doc) {
-    // Ищем блок с снимками
+    
     const alertBlock = doc.querySelector('.alert.alert-info');
     if (!alertBlock) return null;
     
-    // Ищем все строки с датами
+    
     const dateRows = alertBlock.querySelectorAll('.row');
     let latestDate = null;
     let latestRow = null;
@@ -3010,13 +3010,13 @@
   }
   
   function showLatestSnapshot(snapshotRow) {
-    // Удаляем предыдущий блок, если есть
+    
     const existingBlock = document.getElementById('latestSnapshotInfo');
     if (existingBlock) {
       existingBlock.remove();
     }
     
-    // Создаем новый блок
+    
     const snapshotInfo = document.createElement('div');
     snapshotInfo.id = 'latestSnapshotInfo';
     snapshotInfo.style.cssText = `
@@ -3029,11 +3029,11 @@
       color: #0c5460;
     `;
     
-    // Извлекаем дату из строки
+    
     const dateCell = snapshotRow.querySelector('.col-4:first-child');
     const dateText = dateCell ? dateCell.textContent.trim() : 'Не определено';
     
-    // Убираем секунды из даты
+    
     const cleanDate = dateText.replace(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}):\d{2}/, '$1');
     
     snapshotInfo.innerHTML = `
@@ -3041,7 +3041,7 @@
       <div style="font-size: 11px;">${cleanDate}</div>
     `;
     
-    // Вставляем рядом с кнопкой "Проверить диски"
+    
     const checkDisksBtn = document.getElementById('checkDisksBtn');
     if (checkDisksBtn) {
       checkDisksBtn.parentNode.insertBefore(snapshotInfo, checkDisksBtn.nextSibling);
@@ -3100,8 +3100,8 @@
       const statusColor = diskData.isExcluded ? '#dc3545' : '#28a745'; 
       
       diskInfo.innerHTML = `
-        <div style="font-size: 10px; color: #666;">${diskData.snapshotDate}</div>
-        <div style="margin-top: 3px; font-size: 10px; color: ${statusColor}; font-weight: 500;">
+        <div style="font-size: 8px; color: #666;">${diskData.snapshotDate}</div>
+        <div style="margin-top: 3px; font-size: 8px; color: ${statusColor}; font-weight: 500;">
           ${substitutionStatus}
         </div>
       `;
@@ -3132,40 +3132,40 @@
   }
   
 
-  // Функции для работы со стилями карты ПК
+  
   let pcStylesCache = null;
   let pcStylesCacheTime = 0;
   
   function getPCStylesSetting(callback) {
     const now = Date.now();
     
-    // Проверяем кэш
+    
     if (pcStylesCache !== null && (now - pcStylesCacheTime) < CACHE_DURATION) {
       callback(pcStylesCache);
       return;
     }
     
     try {
-      // Проверяем chrome.storage
+      
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(['pcStyles'], function(result) {
           try {
             const enabled = result.pcStyles || false;
             
-            // Обновляем кэш
+            
             pcStylesCache = enabled;
             pcStylesCacheTime = now;
             
-            // Сохраняем в localStorage
+            
             try {
               localStorage.setItem('lanSearchPCStyles', enabled.toString());
             } catch (e) {
-              // Игнорируем ошибки localStorage
+              
             }
             
             callback(enabled);
           } catch (e) {
-            // Fallback на localStorage
+            
             const localStyles = localStorage.getItem('lanSearchPCStyles');
             const enabled = localStyles === 'true';
             
@@ -3176,7 +3176,7 @@
           }
         });
       } else {
-        // Fallback если chrome.storage недоступен
+        
         const localStyles = localStorage.getItem('lanSearchPCStyles');
         const enabled = localStyles === 'true';
         
@@ -3198,7 +3198,431 @@
     pcStylesCacheTime = 0;
   }
   
-  // Функция для внедрения CSS стилей карт ПК
+  
+  let tableOptimizationCache = null;
+  let tableOptimizationCacheTime = 0;
+  
+  
+  let hideCheckboxesCache = null;
+  let hideCheckboxesCacheTime = 0;
+  
+  
+  let hideCommentsCache = null;
+  let hideCommentsCacheTime = 0;
+  
+  function getTableOptimizationSetting(callback) {
+    const now = Date.now();
+    
+    
+    if (tableOptimizationCache !== null && (now - tableOptimizationCacheTime) < CACHE_DURATION) {
+      callback(tableOptimizationCache);
+      return;
+    }
+    
+    try {
+      
+      chrome.storage.sync.get(['tableOptimization'], function(result) {
+        if (chrome.runtime.lastError) {
+          console.log('Lan-Search: Ошибка получения настроек оптимизации таблиц из chrome.storage:', chrome.runtime.lastError);
+          
+          
+          const localOptimization = localStorage.getItem('lanSearchTableOptimization');
+          const enabled = localOptimization === 'true';
+          
+          tableOptimizationCache = enabled;
+          tableOptimizationCacheTime = now;
+          
+          callback(enabled);
+        } else {
+          const enabled = result.tableOptimization || false;
+          
+          
+          tableOptimizationCache = enabled;
+          tableOptimizationCacheTime = now;
+          
+          
+          try {
+            localStorage.setItem('lanSearchTableOptimization', enabled.toString());
+          } catch (e) {
+            console.log('Lan-Search: Не удалось сохранить настройки оптимизации таблиц в localStorage:', e);
+          }
+          
+          callback(enabled);
+        }
+      });
+    } catch (e) {
+      console.log('Lan-Search: Ошибка при получении настроек оптимизации таблиц:', e);
+      
+      
+      const localOptimization = localStorage.getItem('lanSearchTableOptimization');
+      const enabled = localOptimization === 'true';
+      
+      tableOptimizationCache = enabled;
+      tableOptimizationCacheTime = now;
+      
+      callback(enabled);
+    }
+  }
+  
+  function clearTableOptimizationCache() {
+    tableOptimizationCache = null;
+    tableOptimizationCacheTime = 0;
+  }
+  
+  function applyTableOptimization() {
+    
+    if (!window.location.pathname.includes('/guests_search/')) {
+      return;
+    }
+    
+    const tables = document.querySelectorAll('table');
+    tables.forEach(table => {
+      table.classList.add('lan-search-table-optimized');
+      
+      
+      const headers = table.querySelectorAll('th.sorting div');
+      headers.forEach(header => {
+        const text = header.textContent.trim();
+        if (text === 'Бонусный баланс') {
+          header.textContent = 'Бонусы';
+        } else if (text === 'Ручная группа') {
+          header.textContent = 'Ручная Г.';
+        } else if (text === 'Данные документа') {
+          header.textContent = 'Данные Д.';
+        } else if (text === 'Последняя авторизация') {
+          header.textContent = 'Последн. Вход.';
+        } else if (text === 'Дата регистрации') {
+          header.textContent = 'Регистр.';
+        }
+      });
+    });
+    
+    if (tables.length > 0) {
+      showNotification('Применена оптимизация таблиц', 'success', 2000);
+    }
+  }
+  
+  function removeTableOptimization() {
+    const tables = document.querySelectorAll('table.lan-search-table-optimized');
+    tables.forEach(table => {
+      table.classList.remove('lan-search-table-optimized');
+      
+      
+      const headers = table.querySelectorAll('th.sorting div');
+      headers.forEach(header => {
+        const text = header.textContent.trim();
+        if (text === 'Бонусы') {
+          header.textContent = 'Бонусный баланс';
+        } else if (text === 'Ручная Г.') {
+          header.textContent = 'Ручная группа';
+        } else if (text === 'Данные Д.') {
+          header.textContent = 'Данные документа';
+        } else if (text === 'Последн. Вход.') {
+          header.textContent = 'Последняя авторизация';
+        } else if (text === 'Регистр.') {
+          header.textContent = 'Дата регистрации';
+        }
+      });
+    });
+    
+    if (tables.length > 0) {
+      showNotification('Восстановлены оригинальные названия колонок', 'warning', 2000);
+    }
+  }
+  
+  function initTableOptimization() {
+    if (!shouldAutoActivate()) return;
+    
+    let processingOptimization = false;
+    
+    function processOptimization() {
+      if (processingOptimization) return;
+      processingOptimization = true;
+      
+      getTableOptimizationSetting(function(optimizationEnabled) {
+        console.log('Lan-Search: Оптимизация таблиц:', optimizationEnabled ? 'ВКЛЮЧЕНА' : 'ОТКЛЮЧЕНА');
+        
+        if (optimizationEnabled) {
+          applyTableOptimization();
+        } else {
+          removeTableOptimization();
+        }
+        
+        processingOptimization = false;
+      });
+    }
+    
+    
+    processOptimization();
+    
+    
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+      if (namespace === 'sync' && changes.tableOptimization) {
+        console.log('Lan-Search: Обнаружено изменение настроек оптимизации таблиц');
+        clearTableOptimizationCache();
+        processOptimization();
+      }
+    });
+  }
+  
+  
+  window.lanSearchSyncTableOptimization = function() {
+    console.log('Lan-Search: Принудительная синхронизация настроек оптимизации таблиц');
+    clearTableOptimizationCache();
+    getTableOptimizationSetting(function(enabled) {
+      if (enabled) {
+        console.log('Lan-Search: Синхронизация завершена - оптимизация таблиц ВКЛЮЧЕНА');
+        applyTableOptimization();
+      } else {
+        console.log('Lan-Search: Синхронизация завершена - оптимизация таблиц ОТКЛЮЧЕНА');
+        removeTableOptimization();
+      }
+    });
+  };
+  
+  function getHideCheckboxesSetting(callback) {
+    const now = Date.now();
+    
+    
+    if (hideCheckboxesCache !== null && (now - hideCheckboxesCacheTime) < CACHE_DURATION) {
+      callback(hideCheckboxesCache);
+      return;
+    }
+    
+    try {
+      
+      chrome.storage.sync.get(['hideCheckboxes'], function(result) {
+        if (chrome.runtime.lastError) {
+          console.log('Lan-Search: Ошибка получения настроек скрытия чекбоксов из chrome.storage:', chrome.runtime.lastError);
+          
+          
+          const localHideCheckboxes = localStorage.getItem('lanSearchHideCheckboxes');
+          const enabled = localHideCheckboxes === 'true';
+          
+          hideCheckboxesCache = enabled;
+          hideCheckboxesCacheTime = now;
+          
+          callback(enabled);
+        } else {
+          const enabled = result.hideCheckboxes || false;
+          
+          
+          hideCheckboxesCache = enabled;
+          hideCheckboxesCacheTime = now;
+          
+          
+          try {
+            localStorage.setItem('lanSearchHideCheckboxes', enabled.toString());
+          } catch (e) {
+            console.log('Lan-Search: Не удалось сохранить настройки скрытия чекбоксов в localStorage:', e);
+          }
+          
+          callback(enabled);
+        }
+      });
+    } catch (e) {
+      console.log('Lan-Search: Ошибка при получении настроек скрытия чекбоксов:', e);
+      
+      
+      const localHideCheckboxes = localStorage.getItem('lanSearchHideCheckboxes');
+      const enabled = localHideCheckboxes === 'true';
+      
+      hideCheckboxesCache = enabled;
+      hideCheckboxesCacheTime = now;
+      
+      callback(enabled);
+    }
+  }
+  
+  function clearHideCheckboxesCache() {
+    hideCheckboxesCache = null;
+    hideCheckboxesCacheTime = 0;
+  }
+  
+  function applyHideCheckboxes() {
+    
+    document.body.classList.add('lan-search-hide-checkboxes');
+    showNotification('Чекбоксы ПК скрыты', 'success', 2000);
+  }
+  
+  function removeHideCheckboxes() {
+    
+    document.body.classList.remove('lan-search-hide-checkboxes');
+    showNotification('Чекбоксы ПК показаны', 'warning', 2000);
+  }
+  
+  function initHideCheckboxes() {
+    if (!shouldAutoActivate()) return;
+    
+    let processingHideCheckboxes = false;
+    
+    function processHideCheckboxes() {
+      if (processingHideCheckboxes) return;
+      processingHideCheckboxes = true;
+      
+      getHideCheckboxesSetting(function(hideCheckboxesEnabled) {
+        console.log('Lan-Search: Скрытие чекбоксов ПК:', hideCheckboxesEnabled ? 'ВКЛЮЧЕНО' : 'ОТКЛЮЧЕНО');
+        
+        if (hideCheckboxesEnabled) {
+          applyHideCheckboxes();
+        } else {
+          removeHideCheckboxes();
+        }
+        
+        processingHideCheckboxes = false;
+      });
+    }
+    
+    
+    processHideCheckboxes();
+    
+    
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+      if (namespace === 'sync' && changes.hideCheckboxes) {
+        console.log('Lan-Search: Обнаружено изменение настроек скрытия чекбоксов');
+        clearHideCheckboxesCache();
+        processHideCheckboxes();
+      }
+    });
+  }
+  
+  
+  window.lanSearchSyncHideCheckboxes = function() {
+    console.log('Lan-Search: Принудительная синхронизация настроек скрытия чекбоксов');
+    clearHideCheckboxesCache();
+    getHideCheckboxesSetting(function(enabled) {
+      if (enabled) {
+        console.log('Lan-Search: Синхронизация завершена - скрытие чекбоксов ВКЛЮЧЕНО');
+        applyHideCheckboxes();
+      } else {
+        console.log('Lan-Search: Синхронизация завершена - скрытие чекбоксов ОТКЛЮЧЕНО');
+        removeHideCheckboxes();
+      }
+    });
+  };
+  
+  function getHideCommentsSetting(callback) {
+    const now = Date.now();
+    
+    
+    if (hideCommentsCache !== null && (now - hideCommentsCacheTime) < CACHE_DURATION) {
+      callback(hideCommentsCache);
+      return;
+    }
+    
+    try {
+      
+      chrome.storage.sync.get(['hideComments'], function(result) {
+        if (chrome.runtime.lastError) {
+          console.log('Lan-Search: Ошибка получения настроек скрытия комментариев из chrome.storage:', chrome.runtime.lastError);
+          
+          
+          const localHideComments = localStorage.getItem('lanSearchHideComments');
+          const enabled = localHideComments === 'true';
+          
+          hideCommentsCache = enabled;
+          hideCommentsCacheTime = now;
+          
+          callback(enabled);
+        } else {
+          const enabled = result.hideComments || false;
+          
+          
+          hideCommentsCache = enabled;
+          hideCommentsCacheTime = now;
+          
+          
+          try {
+            localStorage.setItem('lanSearchHideComments', enabled.toString());
+          } catch (e) {
+            console.log('Lan-Search: Не удалось сохранить настройки скрытия комментариев в localStorage:', e);
+          }
+          
+          callback(enabled);
+        }
+      });
+    } catch (e) {
+      console.log('Lan-Search: Ошибка при получении настроек скрытия комментариев:', e);
+      
+      
+      const localHideComments = localStorage.getItem('lanSearchHideComments');
+      const enabled = localHideComments === 'true';
+      
+      hideCommentsCache = enabled;
+      hideCommentsCacheTime = now;
+      
+      callback(enabled);
+    }
+  }
+  
+  function clearHideCommentsCache() {
+    hideCommentsCache = null;
+    hideCommentsCacheTime = 0;
+  }
+  
+  function applyHideComments() {
+    
+    document.body.classList.add('lan-search-hide-comments');
+    showNotification('Комментарии ПК скрыты', 'success', 2000);
+  }
+  
+  function removeHideComments() {
+    
+    document.body.classList.remove('lan-search-hide-comments');
+    showNotification('Комментарии ПК показаны', 'warning', 2000);
+  }
+  
+  function initHideComments() {
+    if (!shouldAutoActivate()) return;
+    
+    let processingHideComments = false;
+    
+    function processHideComments() {
+      if (processingHideComments) return;
+      processingHideComments = true;
+      
+      getHideCommentsSetting(function(hideCommentsEnabled) {
+        console.log('Lan-Search: Скрытие комментариев ПК:', hideCommentsEnabled ? 'ВКЛЮЧЕНО' : 'ОТКЛЮЧЕНО');
+        
+        if (hideCommentsEnabled) {
+          applyHideComments();
+        } else {
+          removeHideComments();
+        }
+        
+        processingHideComments = false;
+      });
+    }
+    
+    
+    processHideComments();
+    
+    
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+      if (namespace === 'sync' && changes.hideComments) {
+        console.log('Lan-Search: Обнаружено изменение настроек скрытия комментариев');
+        clearHideCommentsCache();
+        processHideComments();
+      }
+    });
+  }
+  
+  
+  window.lanSearchSyncHideComments = function() {
+    console.log('Lan-Search: Принудительная синхронизация настроек скрытия комментариев');
+    clearHideCommentsCache();
+    getHideCommentsSetting(function(enabled) {
+      if (enabled) {
+        console.log('Lan-Search: Синхронизация завершена - скрытие комментариев ВКЛЮЧЕНО');
+        applyHideComments();
+      } else {
+        console.log('Lan-Search: Синхронизация завершена - скрытие комментариев ОТКЛЮЧЕНО');
+        removeHideComments();
+      }
+    });
+  };
+  
+  
   function injectPCStyles() {
     if (document.getElementById('lan-search-pc-styles')) return;
     
@@ -3211,7 +3635,7 @@
     console.log('Lan-Search: Стили карт ПК внедрены');
   }
   
-  // Функция для удаления CSS стилей карт ПК
+  
   function removePCStyles() {
     const link = document.getElementById('lan-search-pc-styles');
     if (link) {
@@ -3220,7 +3644,7 @@
     }
   }
   
-  // Функция замены классов на ПК карточках
+  
   function applyPCStyles() {
     const pcForms = document.querySelectorAll('form.pc:not([data-lan-search-styled])');
     
@@ -3229,28 +3653,34 @@
     console.log('Lan-Search: Применяем стили к', pcForms.length, 'карточкам ПК');
     
     pcForms.forEach(form => {
-      // Помечаем, что стили применены
+      
       form.setAttribute('data-lan-search-styled', 'true');
       form.classList.add('lan-search-styled');
       
-      // Заменяем классы на форме
-      form.classList.add('lan-search-pc-card');
+       
+       form.classList.add('lan-search-pc-card');
+       
+       
+       const parentContainer = form.closest('.float-left.m-1');
+       if (parentContainer) {
+         parentContainer.classList.remove('m-1');
+       }
       
-      // Контейнер карточки
+      
       const container = form.querySelector('.mb-3.border.border-dark');
       if (container) {
         container.classList.add('lan-search-pc-container');
         container.classList.remove('mb-3', 'border', 'border-dark');
       }
       
-      // Номер ПК
+      
       const pcName = form.querySelector('.pc_name');
       if (pcName) {
         pcName.classList.add('lan-search-pc-number');
         pcName.classList.remove('bg-dark', 'text-white', 'p-0', 'w-100');
       }
       
-      // Статус
+      
       const status = form.querySelector('[data-type="status"]');
       if (status) {
         status.classList.add('lan-search-pc-status');
@@ -3267,49 +3697,102 @@
         status.classList.remove('bg-secondary', 'text-center');
       }
       
-      // Кнопки
-      const buttons = form.querySelectorAll('button.btn');
-      buttons.forEach(btn => {
-        btn.classList.add('lan-search-btn');
-      });
+       
+       const buttons = form.querySelectorAll('button.btn:not(.dropdown-menu button)');
+       buttons.forEach(btn => {
+         btn.classList.add('lan-search-btn');
+         
+         
+         const buttonText = btn.textContent.trim();
+         if (buttonText === 'Заблокировать') {
+           btn.textContent = 'Заблок.';
+         } else if (buttonText === 'Разблокировать') {
+           btn.textContent = 'Разблок.';
+         }
+       });
+       
+       
+       const divButtons = form.querySelectorAll('div.btn');
+       divButtons.forEach(div => {
+         
+         const buttonText = div.textContent.trim();
+         if (buttonText === 'Заблокировать') {
+           div.textContent = 'Заблок.';
+         } else if (buttonText === 'Разблокировать') {
+           div.textContent = 'Разблок.';
+         }
+       });
       
-      // Поле комментария
+      
       const commentInput = form.querySelector('.comment_input');
       if (commentInput) {
         commentInput.classList.add('lan-search-comment-input');
         commentInput.classList.remove('form-control', 'form-control-sm');
       }
       
-      // Чекбоксы
-      const checkboxContainers = form.querySelectorAll('.custom-control.custom-checkbox');
-      checkboxContainers.forEach(container => {
-        container.classList.add('lan-search-checkbox');
-        container.classList.remove('custom-control', 'custom-checkbox', 'pl-4');
-      });
+       
+       const checkboxContainers = form.querySelectorAll('.col-12.pl-4');
+       checkboxContainers.forEach(container => {
+         container.classList.remove('pl-4');
+       });
       
-      // Информация о ПК
+      
       const pcInfo = form.querySelector('.pc_info');
       if (pcInfo) {
         pcInfo.classList.add('lan-search-pc-info');
-        // Убираем инлайн стили, которые делают блок огромным
+        
         pcInfo.style.minHeight = '15px';
         pcInfo.style.padding = '2px 4px';
         pcInfo.style.fontSize = '8px';
         pcInfo.style.lineHeight = '1.2';
       }
       
-      // Дропдаун
-      const dropdown = form.querySelector('.pc-dropdow');
-      if (dropdown) {
-        dropdown.classList.add('lan-search-dropdown');
-        
-        const dropdownToggle = dropdown.querySelector('.btn-pc');
-        if (dropdownToggle) {
-          dropdownToggle.classList.add('lan-search-dropdown-toggle');
-        }
-      }
+       
+       const dropdown = form.querySelector('.pc-dropdow');
+       if (dropdown) {
+         dropdown.classList.add('lan-search-dropdown');
+         
+         const dropdownToggle = dropdown.querySelector('.btn-pc');
+         if (dropdownToggle) {
+           dropdownToggle.classList.add('lan-search-dropdown-toggle');
+           
+           dropdownToggle.classList.remove('btn', 'btn-info', 'btn-sm', 'float-left');
+         }
+         
+         
+         dropdownToggle.addEventListener('click', function(e) {
+           e.preventDefault();
+           e.stopPropagation();
+           
+           const menu = dropdown.querySelector('.dropdown-menu');
+           if (menu) {
+             
+             document.querySelectorAll('.dropdown-menu.show').forEach(otherMenu => {
+               if (otherMenu !== menu) {
+                 otherMenu.classList.remove('show');
+                 
+                 const otherDropdown = otherMenu.closest('.lan-search-dropdown');
+                 if (otherDropdown) {
+                   otherDropdown.classList.remove('menu-open');
+                 }
+               }
+             });
+             
+             
+             const isOpen = menu.classList.contains('show');
+             menu.classList.toggle('show');
+             
+             
+             if (menu.classList.contains('show')) {
+               dropdown.classList.add('menu-open');
+             } else {
+               dropdown.classList.remove('menu-open');
+             }
+           }
+         });
+       }
       
-      // Версия
+      
       const version = form.querySelector('.version');
       if (version && version.parentElement) {
         version.parentElement.classList.add('lan-search-version');
@@ -3321,7 +3804,7 @@
     }
   }
   
-  // Функция восстановления оригинальных классов
+  
   function removePCStylesFromCards() {
     const pcForms = document.querySelectorAll('form.pc[data-lan-search-styled]');
     
@@ -3330,63 +3813,91 @@
     console.log('Lan-Search: Убираем стили с', pcForms.length, 'карточек ПК');
     
     pcForms.forEach(form => {
-      // Убираем маркер
-      form.removeAttribute('data-lan-search-styled');
-      form.classList.remove('lan-search-styled', 'lan-search-pc-card');
+       
+       form.removeAttribute('data-lan-search-styled');
+       form.classList.remove('lan-search-styled', 'lan-search-pc-card');
+       
+       
+       const parentContainer = form.closest('.float-left');
+       if (parentContainer) {
+         parentContainer.classList.add('m-1');
+       }
       
-      // Контейнер карточки
+      
       const container = form.querySelector('.lan-search-pc-container');
       if (container) {
         container.classList.remove('lan-search-pc-container');
         container.classList.add('mb-3', 'border', 'border-dark');
       }
       
-      // Номер ПК
+      
       const pcName = form.querySelector('.lan-search-pc-number');
       if (pcName) {
         pcName.classList.remove('lan-search-pc-number');
         pcName.classList.add('bg-dark', 'text-white', 'p-0', 'w-100');
       }
       
-      // Статус
+      
       const status = form.querySelector('.lan-search-pc-status');
       if (status) {
         status.classList.remove('lan-search-pc-status', 'status-free', 'status-busy', 'status-connection');
         status.classList.add('bg-secondary', 'text-center');
       }
       
-      // Кнопки
-      const buttons = form.querySelectorAll('button.lan-search-btn');
-      buttons.forEach(btn => {
-        btn.classList.remove('lan-search-btn');
-      });
+       
+       const buttons = form.querySelectorAll('button.lan-search-btn:not(.dropdown-menu button)');
+       buttons.forEach(btn => {
+         btn.classList.remove('lan-search-btn');
+         
+         
+         const buttonText = btn.textContent.trim();
+         if (buttonText === 'Заблок.') {
+           btn.textContent = 'Заблокировать';
+         } else if (buttonText === 'Разблок.') {
+           btn.textContent = 'Разблокировать';
+         }
+       });
+       
+       
+       const divButtons = form.querySelectorAll('div.btn');
+       divButtons.forEach(div => {
+         
+         const buttonText = div.textContent.trim();
+         if (buttonText === 'Заблок.') {
+           div.textContent = 'Заблокировать';
+         } else if (buttonText === 'Разблок.') {
+           div.textContent = 'Разблокировать';
+         }
+       });
       
-      // Поле комментария
+      
       const commentInput = form.querySelector('.lan-search-comment-input');
       if (commentInput) {
         commentInput.classList.remove('lan-search-comment-input');
         commentInput.classList.add('form-control', 'form-control-sm');
       }
       
-      // Чекбоксы
-      const checkboxContainers = form.querySelectorAll('.lan-search-checkbox');
-      checkboxContainers.forEach(container => {
-        container.classList.remove('lan-search-checkbox');
-        container.classList.add('custom-control', 'custom-checkbox', 'pl-4');
-      });
+       
+       const checkboxContainers = form.querySelectorAll('.col-12');
+       checkboxContainers.forEach(container => {
+         
+         if (container.querySelector('.custom-control.custom-checkbox')) {
+           container.classList.add('pl-4');
+         }
+       });
       
-      // Информация о ПК
+      
       const pcInfo = form.querySelector('.lan-search-pc-info');
       if (pcInfo) {
         pcInfo.classList.remove('lan-search-pc-info');
-        // Восстанавливаем оригинальные стили
+        
         pcInfo.style.minHeight = '';
         pcInfo.style.padding = '';
         pcInfo.style.fontSize = '';
         pcInfo.style.lineHeight = '';
       }
       
-      // Дропдаун
+      
       const dropdown = form.querySelector('.lan-search-dropdown');
       if (dropdown) {
         dropdown.classList.remove('lan-search-dropdown');
@@ -3397,7 +3908,7 @@
         }
       }
       
-      // Версия
+      
       const version = form.querySelector('.lan-search-version');
       if (version) {
         version.classList.remove('lan-search-version');
@@ -3409,11 +3920,11 @@
     }
   }
   
-  // Функция инициализации стилей карт ПК
+  
   function initPCStyles() {
     if (!shouldAutoActivate()) return;
     
-    // Проверяем настройку и применяем стили
+    
     let processingStyles = false;
     
     function processStyles() {
@@ -3434,15 +3945,29 @@
       });
     }
     
-    // Применяем стили при загрузке
-    processStyles();
-    
-    // Отслеживаем добавление новых карточек ПК
+     
+     processStyles();
+     
+     
+     document.addEventListener('click', function(e) {
+       if (!e.target.closest('.lan-search-dropdown')) {
+         document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+           menu.classList.remove('show');
+           
+           const dropdown = menu.closest('.lan-search-dropdown');
+           if (dropdown) {
+             dropdown.classList.remove('menu-open');
+           }
+         });
+       }
+     });
+     
+     
     let observerTimeout;
     const observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          // Проверяем, есть ли новые карточки ПК
+          
           const hasNewPCCards = Array.from(mutation.addedNodes).some(node => {
             return node.nodeType === 1 && (
               node.classList?.contains('pc') ||
@@ -3463,7 +3988,7 @@
       subtree: true
     });
     
-    // Отслеживаем изменение настройки
+    
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener(function(changes, namespace) {
         if (namespace === 'sync' && changes.pcStyles) {
@@ -3475,7 +4000,7 @@
     }
   }
   
-  // Экспортируем функцию для вызова из popup
+  
   window.lanSearchSyncPCStyles = function() {
     console.log('Lan-Search: Принудительная синхронизация настроек стилей ПК');
     clearPCStylesCache();
@@ -3506,12 +4031,18 @@
         initPCSelection();
         initMassivePCSelection();
         initPCStyles();
+        initTableOptimization();
+        initHideCheckboxes();
+        initHideComments();
       });
     } else {
       initModalBypass();
       initPCSelection();
       initMassivePCSelection();
       initPCStyles();
+      initTableOptimization();
+      initHideCheckboxes();
+      initHideComments();
     }
   }
 
