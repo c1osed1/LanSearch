@@ -387,6 +387,12 @@
   }
 
   function shouldAutoActivate() {
+    // Отключаем расширение на странице /pc_tasks_config/ чтобы не ломать Bootstrap Select
+    if (window.location.pathname.includes('/pc_tasks_config/')) {
+      console.log('Lan-Search: Расширение отключено на странице /pc_tasks_config/ для предотвращения поломки Bootstrap Select');
+      return false;
+    }
+    
     if (window.lanSearchIsCurrentDomainSuitable) {
       return window.lanSearchIsCurrentDomainSuitable();
     }
