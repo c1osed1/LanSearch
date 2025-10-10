@@ -356,12 +356,12 @@
     content: "Регистр." !important;
 }
 
-/* Скрытие чекбоксов ПК */
-.lan-search-hide-checkboxes .custom-control.custom-checkbox {
+/* Скрытие чекбоксов ПК - только на странице /all_clubs_pc/ */
+body:has([data-page="all_clubs_pc"]) .lan-search-hide-checkboxes .custom-control.custom-checkbox {
     display: none !important;
 }
 
-/* Скрытие комментариев ПК */
-.lan-search-hide-comments .input-group {
+/* Скрытие комментариев ПК - только на странице /all_clubs_pc/ */
+body:has([data-page="all_clubs_pc"]) .lan-search-hide-comments .input-group {
     display: none !important;
 }

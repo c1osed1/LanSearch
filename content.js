@@ -3440,13 +3440,19 @@
   }
   
   function applyHideCheckboxes() {
-    
-    document.body.classList.add('lan-search-hide-checkboxes');
+    // Применяем стили только на странице /all_clubs_pc/
+    if (window.location.pathname.includes('/all_clubs_pc/')) {
+      document.body.setAttribute('data-page', 'all_clubs_pc');
+      document.body.classList.add('lan-search-hide-checkboxes');
+    }
   }
   
   function removeHideCheckboxes() {
-    
     document.body.classList.remove('lan-search-hide-checkboxes');
+    // Убираем атрибут data-page только если мы не на странице /all_clubs_pc/
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      document.body.removeAttribute('data-page');
+    }
   }
   
   function initHideCheckboxes() {
@@ -3559,13 +3565,19 @@
   }
   
   function applyHideComments() {
-    
-    document.body.classList.add('lan-search-hide-comments');
+    // Применяем стили только на странице /all_clubs_pc/
+    if (window.location.pathname.includes('/all_clubs_pc/')) {
+      document.body.setAttribute('data-page', 'all_clubs_pc');
+      document.body.classList.add('lan-search-hide-comments');
+    }
   }
   
   function removeHideComments() {
-    
     document.body.classList.remove('lan-search-hide-comments');
+    // Убираем атрибут data-page только если мы не на странице /all_clubs_pc/
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      document.body.removeAttribute('data-page');
+    }
   }
   
   function initHideComments() {
