@@ -814,6 +814,29 @@
   }
 
 
+  function handleHideStylesOnUrlChange() {
+    // Проверяем настройки скрытия и применяем/убираем стили в зависимости от URL
+    if (window.lanSearchGetHideCheckboxesSetting) {
+      window.lanSearchGetHideCheckboxesSetting(function(hideCheckboxesEnabled) {
+        if (hideCheckboxesEnabled) {
+          applyHideCheckboxes();
+        } else {
+          removeHideCheckboxes();
+        }
+      });
+    }
+    
+    if (window.lanSearchGetHideCommentsSetting) {
+      window.lanSearchGetHideCommentsSetting(function(hideCommentsEnabled) {
+        if (hideCommentsEnabled) {
+          applyHideComments();
+        } else {
+          removeHideComments();
+        }
+      });
+    }
+  }
+
   function initUrlTracking() {
     let currentUrl = window.location.href;
     
@@ -824,6 +847,8 @@
         currentUrl = newUrl;
         setTabTitleToUrl();
         
+        // НЕ обрабатываем стили скрытия при изменении URL
+        // Стили работают только локально на вкладке
       }
     };
 
@@ -1050,7 +1075,9 @@
       modalBypassCacheTime = Date.now();
       
       // Обрабатываем кнопки с новым состоянием
-      processButtons();
+      if (window.lanSearchProcessButtons) {
+        window.lanSearchProcessButtons();
+      }
     } catch (e) {
       console.log('Lan-Search: Ошибка при изменении настройки обхода модальных окон:', e);
     }
@@ -1473,6 +1500,9 @@
       });
     }
     
+    // Делаем processButtons доступной глобально
+    window.lanSearchProcessButtons = processButtons;
+    
 
     processButtons();
     
@@ -1715,12 +1745,13 @@
         addSelectionStyles();
         showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
         
-        // Сохраняем текущее состояние обхода модальных окон и отключаем его
+        // Сохраняем текущее состояние обхода модальных окон и временно восстанавливаем кнопки
         getModalBypassSetting(function(currentState) {
           savedModalBypassState = currentState;
           if (currentState) {
-            setModalBypassSetting(false);
-            console.log('Lan-Search: Обход модальных окон отключен на время режима выбора');
+            // Временно восстанавливаем кнопки без изменения настроек
+            restoreDivsToButtons();
+            console.log('Lan-Search: Кнопки временно восстановлены для режима выбора (настройки не изменены)');
           }
         });
         
@@ -2338,6 +2369,22 @@
     }
   }
   
+  function restoreHiddenElements() {
+    console.log('Lan-Search: Восстановление скрытых элементов');
+    
+    // Убираем классы скрытия
+    document.body.classList.remove('lan-search-hide-checkboxes');
+    document.body.classList.remove('lan-search-hide-comments');
+    
+    // Убираем атрибут data-page
+    document.body.removeAttribute('data-page');
+    
+    // Показываем уведомление
+    showNotification('Скрытые элементы восстановлены!', 'success', 3000);
+    
+    console.log('Lan-Search: Элементы восстановлены локально на этой вкладке');
+  }
+
   function createMassiveSelectionPanelForAllClubs() {
     
     const leftColumn = document.querySelector('.row .col-12.col-lg-6');
@@ -2541,6 +2588,38 @@
     addCompactButtonHover(invertBtn, '#ffc107', '#e0a800');
     
     
+    // Кнопка восстановления элементов
+    const restoreBtn = document.createElement('button');
+    restoreBtn.textContent = '🔄 Восстановить';
+    restoreBtn.title = 'Восстановить скрытые элементы (чекбоксы и комментарии)';
+    restoreBtn.style.cssText = `
+      flex: 1;
+      padding: 6px;
+      background: #17a2b8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    `;
+    
+    restoreBtn.addEventListener('mouseenter', () => {
+      restoreBtn.style.background = '#138496';
+      restoreBtn.style.transform = 'scale(1.02)';
+    });
+    
+    restoreBtn.addEventListener('mouseleave', () => {
+      restoreBtn.style.background = '#17a2b8';
+      restoreBtn.style.transform = 'scale(1)';
+    });
+    
+    restoreBtn.addEventListener('click', () => {
+      restoreHiddenElements();
+    });
+
     buttonsContainer.appendChild(selectBtn);
     buttonsContainer.appendChild(deselectBtn);
     
@@ -2549,6 +2628,7 @@
     quickButtons.appendChild(invertBtn);
     
     panel.appendChild(input);
+    panel.appendChild(restoreBtn);
     panel.appendChild(buttonsContainer);
     panel.appendChild(quickButtons);
     
@@ -2740,11 +2820,14 @@
     document.body.classList.remove('selection-mode');
     showNotification('Режим выбора отключен', 'warning', 2000);
     
-    // Восстанавливаем сохраненное состояние обхода модальных окон
+    // Применяем текущие настройки обхода модальных окон (не изменяем их)
     if (savedModalBypassState !== null) {
       if (savedModalBypassState) {
-        setModalBypassSetting(true);
-        console.log('Lan-Search: Обход модальных окон восстановлен');
+        // Применяем текущие настройки без их изменения
+        if (window.lanSearchProcessButtons) {
+          window.lanSearchProcessButtons();
+        }
+        console.log('Lan-Search: Применены текущие настройки обхода модальных окон');
       }
       savedModalBypassState = null;
     }
@@ -3487,6 +3570,9 @@
     if (window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.setAttribute('data-page', 'all_clubs_pc');
       document.body.classList.add('lan-search-hide-checkboxes');
+      console.log('Lan-Search: Скрытие чекбоксов ПК применено');
+    } else {
+      console.log('Lan-Search: Скрытие чекбоксов ПК не применено - не на странице /all_clubs_pc/');
     }
   }
   
@@ -3501,6 +3587,16 @@
   function initHideCheckboxes() {
     if (!shouldAutoActivate()) return;
     
+    // Проверяем, что мы на правильной странице
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      console.log('Lan-Search: Скрытие чекбоксов ПК доступно только на странице /all_clubs_pc/');
+      return;
+    }
+    
+    // НЕ применяем стили автоматически при инициализации
+    // Стили будут применяться только при явном вызове из popup
+    console.log('Lan-Search: Инициализация скрытия чекбоксов ПК (без автоматического применения)');
+    
     let processingHideCheckboxes = false;
     
     function processHideCheckboxes() {
@@ -3510,18 +3606,15 @@
       getHideCheckboxesSetting(function(hideCheckboxesEnabled) {
         console.log('Lan-Search: Скрытие чекбоксов ПК:', hideCheckboxesEnabled ? 'ВКЛЮЧЕНО' : 'ОТКЛЮЧЕНО');
         
-        if (hideCheckboxesEnabled) {
-          applyHideCheckboxes();
-        } else {
-          removeHideCheckboxes();
-        }
+        // НЕ применяем стили автоматически - только при явном вызове
+        console.log('Lan-Search: Стили скрытия чекбоксов готовы к применению (не применены автоматически)');
         
         processingHideCheckboxes = false;
       });
     }
     
     
-    processHideCheckboxes();
+    // НЕ вызываем processHideCheckboxes() автоматически
     
     
     chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -3547,6 +3640,10 @@
       }
     });
   };
+
+  // Глобальные функции для получения настроек скрытия
+  window.lanSearchGetHideCheckboxesSetting = getHideCheckboxesSetting;
+  window.lanSearchGetHideCommentsSetting = getHideCommentsSetting;
   
   function getHideCommentsSetting(callback) {
     const now = Date.now();
@@ -3612,6 +3709,9 @@
     if (window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.setAttribute('data-page', 'all_clubs_pc');
       document.body.classList.add('lan-search-hide-comments');
+      console.log('Lan-Search: Скрытие комментариев ПК применено');
+    } else {
+      console.log('Lan-Search: Скрытие комментариев ПК не применено - не на странице /all_clubs_pc/');
     }
   }
   
@@ -3626,6 +3726,16 @@
   function initHideComments() {
     if (!shouldAutoActivate()) return;
     
+    // Проверяем, что мы на правильной странице
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      console.log('Lan-Search: Скрытие комментариев ПК доступно только на странице /all_clubs_pc/');
+      return;
+    }
+    
+    // НЕ применяем стили автоматически при инициализации
+    // Стили будут применяться только при явном вызове из popup
+    console.log('Lan-Search: Инициализация скрытия комментариев ПК (без автоматического применения)');
+    
     let processingHideComments = false;
     
     function processHideComments() {
@@ -3635,18 +3745,15 @@
       getHideCommentsSetting(function(hideCommentsEnabled) {
         console.log('Lan-Search: Скрытие комментариев ПК:', hideCommentsEnabled ? 'ВКЛЮЧЕНО' : 'ОТКЛЮЧЕНО');
         
-        if (hideCommentsEnabled) {
-          applyHideComments();
-        } else {
-          removeHideComments();
-        }
+        // НЕ применяем стили автоматически - только при явном вызове
+        console.log('Lan-Search: Стили скрытия комментариев готовы к применению (не применены автоматически)');
         
         processingHideComments = false;
       });
     }
     
     
-    processHideComments();
+    // НЕ вызываем processHideComments() автоматически
     
     
     chrome.storage.onChanged.addListener(function(changes, namespace) {
