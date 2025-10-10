@@ -1032,6 +1032,30 @@
     modalBypassCacheTime = 0;
   }
 
+  
+  function setModalBypassSetting(enabled) {
+    try {
+      // Сохраняем в localStorage
+      localStorage.setItem('lanSearchModalBypass', enabled.toString());
+      
+      // Сохраняем в chrome.storage если доступен
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.set({ modalBypass: enabled }, function() {
+          console.log('Lan-Search: Настройка обхода модальных окон изменена:', enabled);
+        });
+      }
+      
+      // Обновляем кэш
+      modalBypassCache = enabled;
+      modalBypassCacheTime = Date.now();
+      
+      // Обрабатываем кнопки с новым состоянием
+      processButtons();
+    } catch (e) {
+      console.log('Lan-Search: Ошибка при изменении настройки обхода модальных окон:', e);
+    }
+  }
+
 
   function showNotification(message, type = 'success', duration = 4000) {
 
@@ -1332,7 +1356,8 @@
 
   let modalBypassCache = null;
   let modalBypassCacheTime = 0;
-  const CACHE_DURATION = 5000; 
+  const CACHE_DURATION = 5000;
+  let savedModalBypassState = null; // Сохраненное состояние обхода модальных окон перед активацией режима выбора 
   
 
   function replaceButtonsWithDivs() {
@@ -1689,6 +1714,15 @@
         selectionMode = true;
         addSelectionStyles();
         showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
+        
+        // Сохраняем текущее состояние обхода модальных окон и отключаем его
+        getModalBypassSetting(function(currentState) {
+          savedModalBypassState = currentState;
+          if (currentState) {
+            setModalBypassSetting(false);
+            console.log('Lan-Search: Обход модальных окон отключен на время режима выбора');
+          }
+        });
         
         if (window.location.pathname.includes('/all_clubs_pc/')) {
           showMassiveSelectionPanelForAllClubs();
@@ -2705,6 +2739,15 @@
     selectionMode = false;
     document.body.classList.remove('selection-mode');
     showNotification('Режим выбора отключен', 'warning', 2000);
+    
+    // Восстанавливаем сохраненное состояние обхода модальных окон
+    if (savedModalBypassState !== null) {
+      if (savedModalBypassState) {
+        setModalBypassSetting(true);
+        console.log('Lan-Search: Обход модальных окон восстановлен');
+      }
+      savedModalBypassState = null;
+    }
   }
 
   
