@@ -2878,24 +2878,63 @@
     const clubId = getClubIdFromUrl();
     console.log('Lan-Search: Проверяем диски для club_id:', clubId);
     
-    showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
-    
-    
-    fetch('/freenas_wrap/', {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => response.text())
-    .then(html => {
-      parseDisksData(html);
-    })
-    .catch(error => {
-      console.error('Lan-Search: Ошибка при проверке дисков:', error);
-      showNotification('Ошибка при проверке дисков', 'error', 3000);
-    });
+    // Находим кнопку "Проверить диски"
+    const checkDisksBtn = document.getElementById('checkDisksBtn');
+    if (checkDisksBtn) {
+      // Сохраняем оригинальный текст
+      const originalText = checkDisksBtn.innerHTML;
+      
+      // Показываем индикатор загрузки
+      checkDisksBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Проверяем...';
+      checkDisksBtn.disabled = true;
+      checkDisksBtn.style.opacity = '0.7';
+      
+      // Восстанавливаем кнопку после завершения запроса
+      const restoreButton = () => {
+        checkDisksBtn.innerHTML = originalText;
+        checkDisksBtn.disabled = false;
+        checkDisksBtn.style.opacity = '1';
+      };
+      
+      showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
+      
+      fetch('/freenas_wrap/', {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        parseDisksData(html);
+        restoreButton();
+      })
+      .catch(error => {
+        console.error('Lan-Search: Ошибка при проверке дисков:', error);
+        showNotification('Ошибка при проверке дисков', 'error', 3000);
+        restoreButton();
+      });
+    } else {
+      // Если кнопка не найдена, показываем только уведомление
+      showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
+      
+      fetch('/freenas_wrap/', {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        parseDisksData(html);
+      })
+      .catch(error => {
+        console.error('Lan-Search: Ошибка при проверке дисков:', error);
+        showNotification('Ошибка при проверке дисков', 'error', 3000);
+      });
+    }
   }
   
   function parseDisksData(html) {
@@ -2941,6 +2980,7 @@
     }
     
     addDiskInfoToPCs(rows);
+    addDiskManagementButton(rows);
     showNotification(`Найдено ${rows.length} дисков`, 'success', 2000);
   }
   
@@ -3042,10 +3082,11 @@
   }
   
   function extractSnapshotDate(statusText) {
+    // Ищем дату в формате: bigPool/reference@10.10.2025 10:31:24
     const match = statusText.match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
     if (match) {
-      
       const dateTime = match[1];
+      // Убираем секунды, оставляем только дату и время до минут
       return dateTime.substring(0, 16); 
     }
     return 'Не определено';
@@ -3263,6 +3304,213 @@
     });
   }
   
+  function addDiskManagementButton(rows) {
+    // Удаляем существующую кнопку управления дисками
+    const existingBtn = document.getElementById('diskManagementBtn');
+    if (existingBtn) {
+      existingBtn.remove();
+    }
+    
+    // Создаем кнопку управления дисками
+    const managementBtn = document.createElement('a');
+    managementBtn.id = 'diskManagementBtn';
+    managementBtn.href = '#';
+    managementBtn.className = 'btn btn-outline-warning mb-3 mr-1';
+    managementBtn.innerHTML = '<i class="fa fa-cogs"></i> Управлять дисками';
+    managementBtn.title = 'Управление состоянием подмены дисков';
+    
+    // Добавляем кнопку после кнопки проверки дисков
+    const checkDisksBtn = document.getElementById('checkDisksBtn');
+    if (checkDisksBtn) {
+      checkDisksBtn.parentNode.insertBefore(managementBtn, checkDisksBtn.nextSibling);
+    }
+    
+    // Обработчик клика - добавляем переключатели в формы ПК
+    managementBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      addDiskTogglesToPCForms(rows);
+    });
+    
+    console.log('Lan-Search: Кнопка "Управлять дисками" добавлена');
+  }
+  
+  function addDiskTogglesToPCForms(rows) {
+    // Просто добавляем переключатели к существующим формам ПК
+    const pcForms = document.querySelectorAll('form.pc');
+    pcForms.forEach(form => {
+      const uuid = form.id;
+      if (!uuid) return;
+      
+      // Удаляем существующий переключатель
+      const existingToggle = form.querySelector('.disk-toggle-container');
+      if (existingToggle) {
+        existingToggle.remove();
+      }
+      
+      // Добавляем стили для iOS переключателя
+      if (!document.getElementById('ios-toggle-styles')) {
+        const style = document.createElement('style');
+        style.id = 'ios-toggle-styles';
+        style.textContent = `
+          .disk-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+                margin-left: 20%;
+          }
+          
+          .disk-toggle-label {
+            font-size: 10px;
+            color: #666;
+            font-weight: 500;
+          }
+          
+          .ios-toggle {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 24px;
+              margin: 0;
+          
+            }
+          
+          .ios-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+          }
+          
+          .ios-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+          }
+          
+          .ios-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+          }
+          
+          .ios-toggle input:checked + .ios-toggle-slider {
+            background-color: #28a745;
+          }
+          
+          .ios-toggle input:checked + .ios-toggle-slider:before {
+            transform: translateX(16px);
+          }
+          
+          .ios-toggle input:focus + .ios-toggle-slider {
+            box-shadow: 0 0 1px #28a745;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      // Создаем контейнер переключателя
+      const toggleContainer = document.createElement('div');
+      toggleContainer.className = 'disk-toggle-container';
+      toggleContainer.setAttribute('data-uuid', uuid);
+      
+      // Создаем переключатель
+      const toggle = document.createElement('label');
+      toggle.className = 'ios-toggle';
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      
+      // Определяем начальное состояние на основе существующей информации о подмене
+      const existingDiskInfo = form.querySelector('.disk-info');
+      if (existingDiskInfo) {
+        const statusText = existingDiskInfo.textContent;
+        // Если в тексте есть "Подмена включена", то переключатель должен быть включен
+        const isSubstitutionEnabled = statusText.includes('Подмена включена');
+        checkbox.checked = isSubstitutionEnabled;
+        console.log('Lan-Search: Начальное состояние переключателя для', uuid, ':', isSubstitutionEnabled ? 'включен' : 'выключен');
+      }
+      
+      const slider = document.createElement('span');
+      slider.className = 'ios-toggle-slider';
+      
+      toggle.appendChild(checkbox);
+      toggle.appendChild(slider);
+      
+      toggleContainer.appendChild(toggle);
+      
+      // Добавляем обработчик клика
+      toggleContainer.addEventListener('click', function(e) {
+        if (e.target.type === 'checkbox') {
+          const newValue = e.target.checked;
+          
+          console.log('Lan-Search: Переключение диска для UUID:', uuid, 'Новое значение:', newValue);
+          
+          toggleDiskExclusion(uuid, newValue, this);
+        }
+      });
+      
+      // Вставляем переключатель в форму
+      const targetDiskInfo = form.querySelector('.disk-info');
+      if (targetDiskInfo) {
+        targetDiskInfo.appendChild(toggleContainer);
+      } else {
+        form.appendChild(toggleContainer);
+      }
+    });
+    
+    showNotification('Переключатели управления дисками добавлены в формы ПК', 'success', 2000);
+    console.log('Lan-Search: Переключатели управления дисками добавлены в формы ПК');
+  }
+  
+  function toggleDiskExclusion(uuid, value, container) {
+    const clubId = getClubIdFromUrl();
+    const url = `/freenas_wrap/crud.php?action=toggle_exclusion&club_id=${clubId}&machine_id=${uuid}&value=${value}`;
+    
+    console.log('Lan-Search: Отправляем запрос на переключение диска:', url);
+    
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/javascript, */*; q=0.8',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => {
+      console.log('Lan-Search: Статус ответа:', response.status);
+      
+      if (response.status === 200) {
+        showNotification(`Состояние диска обновлено: ${value ? 'включена' : 'отключена'}`, 'success', 2000);
+      } else {
+        showNotification('Ошибка при обновлении состояния диска', 'error', 3000);
+        // Возвращаем переключатель в исходное состояние
+        const checkbox = container.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          checkbox.checked = !value;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Lan-Search: Ошибка при переключении диска:', error);
+      showNotification('Ошибка сети при обновлении диска', 'error', 3000);
+      // Возвращаем переключатель в исходное состояние
+      const checkbox = container.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.checked = !value;
+      }
+    });
+  }
 
   
   let pcStylesCache = null;
