@@ -1389,7 +1389,7 @@
 
   let modalBypassCache = null;
   let modalBypassCacheTime = 0;
-  const CACHE_DURATION = 5000;
+  const CACHE_DURATION = 5000; 
   let savedModalBypassState = null; // Сохраненное состояние обхода модальных окон перед активацией режима выбора 
   
 
@@ -2390,7 +2390,7 @@
     
     console.log('Lan-Search: Элементы восстановлены локально на этой вкладке');
   }
-
+  
   function createMassiveSelectionPanelForAllClubs() {
     
     const leftColumn = document.querySelector('.row .col-12.col-lg-6');
@@ -2625,7 +2625,7 @@
     restoreBtn.addEventListener('click', () => {
       restoreHiddenElements();
     });
-
+    
     buttonsContainer.appendChild(selectBtn);
     buttonsContainer.appendChild(deselectBtn);
     
@@ -2895,9 +2895,9 @@
         checkDisksBtn.disabled = false;
         checkDisksBtn.style.opacity = '1';
       };
-      
-      showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
-      
+    
+    showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
+    
       fetch('/freenas_wrap/', {
         method: 'GET',
         headers: {
@@ -2918,22 +2918,22 @@
     } else {
       // Если кнопка не найдена, показываем только уведомление
       showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
-      
-      fetch('/freenas_wrap/', {
-        method: 'GET',
-        headers: {
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      })
-      .then(response => response.text())
-      .then(html => {
-        parseDisksData(html);
-      })
-      .catch(error => {
-        console.error('Lan-Search: Ошибка при проверке дисков:', error);
-        showNotification('Ошибка при проверке дисков', 'error', 3000);
-      });
+    
+    fetch('/freenas_wrap/', {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.text())
+    .then(html => {
+      parseDisksData(html);
+    })
+    .catch(error => {
+      console.error('Lan-Search: Ошибка при проверке дисков:', error);
+      showNotification('Ошибка при проверке дисков', 'error', 3000);
+    });
     }
   }
   
@@ -3823,7 +3823,7 @@
     // Применяем стили только на странице /all_clubs_pc/
     if (window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.setAttribute('data-page', 'all_clubs_pc');
-      document.body.classList.add('lan-search-hide-checkboxes');
+    document.body.classList.add('lan-search-hide-checkboxes');
       console.log('Lan-Search: Скрытие чекбоксов ПК применено');
     } else {
       console.log('Lan-Search: Скрытие чекбоксов ПК не применено - не на странице /all_clubs_pc/');
@@ -3962,7 +3962,7 @@
     // Применяем стили только на странице /all_clubs_pc/
     if (window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.setAttribute('data-page', 'all_clubs_pc');
-      document.body.classList.add('lan-search-hide-comments');
+    document.body.classList.add('lan-search-hide-comments');
       console.log('Lan-Search: Скрытие комментариев ПК применено');
     } else {
       console.log('Lan-Search: Скрытие комментариев ПК не применено - не на странице /all_clubs_pc/');
@@ -4429,6 +4429,538 @@
     });
   };
 
+  // WebSocket для получения данных о ПК
+  function initWebSocketPCData() {
+    console.log('Lan-Search: Проверяем путь:', window.location.pathname);
+    if (!window.location.pathname.includes('/freenas_wrap/')) {
+      console.log('Lan-Search: WebSocket инициализация пропущена - не на странице /freenas_wrap/');
+      return;
+    }
+    
+    console.log('Lan-Search: Инициализация прослушивания WebSocket сообщений');
+    
+
+    // Перехватываем fetch для получения WebSocket данных
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      return originalFetch.apply(this, args).then(response => {
+        if (response.url.includes('/wss/') || response.url.includes('websocket')) {
+          console.log('Lan-Search: Обнаружен WebSocket запрос через fetch:', response.url);
+        }
+        return response;
+      });
+    };
+    
+    // Перехватываем XMLHttpRequest для получения WebSocket данных
+    const originalXHROpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url, ...args) {
+      if (url.includes('/wss/') || url.includes('websocket')) {
+        console.log('Lan-Search: Обнаружен WebSocket запрос через XMLHttpRequest:', url);
+      }
+      return originalXHROpen.call(this, method, url, ...args);
+    };
+    
+    // Добавляем MutationObserver для отслеживания изменений в DOM
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+              const text = node.textContent;
+              if (text && text.includes('UUID') && text.includes('isLock')) {
+                console.log('Lan-Search: Найдены WebSocket данные в DOM:', text);
+                try {
+                  const data = JSON.parse(text);
+                  window.lanSearchProcessPCData(data);
+                } catch (e) {
+                  console.log('Lan-Search: Ошибка парсинга данных из DOM:', e);
+                }
+              }
+            }
+          });
+        }
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+    
+    // Перехватываем WebSocket через переопределение конструктора
+    const OriginalWebSocket = window.WebSocket;
+    window.WebSocket = function(url, protocols) {
+      const ws = new OriginalWebSocket(url, protocols);
+      
+      // Перехватываем onmessage
+      const originalOnMessage = ws.onmessage;
+      ws.onmessage = function(event) {
+        // Вызываем оригинальный обработчик
+        if (originalOnMessage) {
+          originalOnMessage.call(this, event);
+        }
+        
+        // Обрабатываем данные о ПК
+        try {
+          const data = JSON.parse(event.data);
+          console.log('Lan-Search: Получены WebSocket данные:', data);
+          window.lanSearchProcessPCData(data);
+        } catch (e) {
+          // Не JSON, пропускаем
+        }
+      };
+      
+      return ws;
+    };
+    
+    // Копируем статические свойства
+    Object.setPrototypeOf(window.WebSocket, OriginalWebSocket);
+    Object.defineProperty(window.WebSocket, 'prototype', {
+      value: OriginalWebSocket.prototype,
+      writable: false
+    });
+    
+    // Также проверяем, есть ли уже существующие WebSocket соединения
+    // Это может быть полезно, если WebSocket создается до инициализации нашего кода
+    setTimeout(() => {
+      console.log('Lan-Search: Поиск существующих WebSocket соединений...');
+      
+      // Ищем существующие WebSocket соединения в глобальных переменных
+      console.log('Lan-Search: Поиск WebSocket в window свойствах...');
+      let foundWebSockets = 0;
+      
+      for (let prop in window) {
+        try {
+          const obj = window[prop];
+          if (obj && typeof obj === 'object' && obj.constructor && obj.constructor.name === 'WebSocket') {
+            foundWebSockets++;
+            console.log('Lan-Search: Найден WebSocket:', prop, 'URL:', obj.url, 'состояние:', obj.readyState);
+            
+            if (obj.readyState === WebSocket.OPEN || obj.readyState === WebSocket.CONNECTING) {
+              console.log('Lan-Search: WebSocket активен, перехватываем onmessage');
+              // Перехватываем его onmessage
+              const originalOnMessage = obj.onmessage;
+              obj.onmessage = function(event) {
+                console.log('Lan-Search: Получено сообщение от существующего WebSocket:', event.data);
+                if (originalOnMessage) {
+                  originalOnMessage.call(this, event);
+                }
+                try {
+                  const data = JSON.parse(event.data);
+                  console.log('Lan-Search: Получены данные от существующего WebSocket:', data);
+                  window.lanSearchProcessPCData(data);
+                } catch (e) {
+                  console.log('Lan-Search: Ошибка парсинга WebSocket данных:', e);
+                }
+              };
+            }
+          }
+        } catch (e) {
+          // Игнорируем ошибки доступа к свойствам
+        }
+      }
+      
+      console.log('Lan-Search: Найдено WebSocket соединений в window:', foundWebSockets);
+      
+  // Дополнительный поиск в возможных местах
+  const possibleWebSocketLocations = [
+    'window.ws',
+    'window.websocket', 
+    'window.socket',
+    'window.connection',
+    'window.wsConnection',
+    'window.websocketConnection',
+    'window.socketConnection',
+    'window.wsInstance',
+    'window.websocketInstance',
+    'window.socketInstance',
+    'window._ws',
+    'window._websocket',
+    'window._socket',
+    'window._connection',
+    'window.ws_',
+    'window.websocket_',
+    'window.socket_',
+    'window.connection_',
+    'window.wsConn',
+    'window.websocketConn',
+    'window.socketConn',
+    'window.wsInst',
+    'window.websocketInst',
+    'window.socketInst'
+  ];
+  
+  console.log('Lan-Search: Дополнительный поиск WebSocket в возможных местах...');
+  possibleWebSocketLocations.forEach(location => {
+    try {
+      const value = eval(location);
+      if (value && value.constructor && value.constructor.name === 'WebSocket') {
+        console.log('Lan-Search: Найден WebSocket в:', location, 'URL:', value.url, 'состояние:', value.readyState);
+      }
+    } catch (e) {
+      // Игнорируем ошибки доступа
+    }
+  });
+  
+  // Поиск в объектах, которые могут содержать WebSocket
+  console.log('Lan-Search: Поиск WebSocket в объектах...');
+  const searchObjects = [
+    'window.app',
+    'window.application',
+    'window.client',
+    'window.connection',
+    'window.connector',
+    'window.manager',
+    'window.service',
+    'window.api',
+    'window.network',
+    'window.communication',
+    'window.realtime',
+    'window.live',
+    'window.stream',
+    'window.channel',
+    'window.session',
+    'window.user',
+    'window.player',
+    'window.game',
+    'window.lobby',
+    'window.room'
+  ];
+  
+  searchObjects.forEach(objPath => {
+    try {
+      const obj = eval(objPath);
+      if (obj && typeof obj === 'object') {
+        console.log('Lan-Search: Проверяем объект:', objPath);
+        for (let key in obj) {
+          try {
+            const value = obj[key];
+            if (value && value.constructor && value.constructor.name === 'WebSocket') {
+              console.log('Lan-Search: Найден WebSocket в объекте:', objPath + '.' + key, 'URL:', value.url, 'состояние:', value.readyState);
+            }
+          } catch (e) {
+            // Игнорируем ошибки доступа
+          }
+        }
+      }
+    } catch (e) {
+      // Игнорируем ошибки доступа
+    }
+  });
+      
+      // Также перехватываем addEventListener для WebSocket
+      if (!EventTarget.prototype._lanSearchWebSocketAddEventListenerIntercepted) {
+        const originalAddEventListener = EventTarget.prototype.addEventListener;
+        EventTarget.prototype.addEventListener = function(type, listener, options) {
+        if (type === 'message' && this.constructor && this.constructor.name === 'WebSocket') {
+          console.log('Lan-Search: Перехватываем addEventListener для WebSocket');
+      const wrappedListener = function(event) {
+        console.log('Lan-Search: Получено сообщение через addEventListener:', event.data);
+        
+        // Проверяем тип данных перед парсингом
+        let dataToProcess = null;
+        
+        if (typeof event.data === 'string') {
+          try {
+            dataToProcess = JSON.parse(event.data);
+          } catch (e) {
+            console.log('Lan-Search: Ошибка парсинга строки через addEventListener:', e);
+          }
+        } else if (typeof event.data === 'object' && event.data !== null) {
+          // Если это уже объект, используем его напрямую
+          dataToProcess = event.data;
+        }
+        
+        if (dataToProcess && dataToProcess.UUID && (dataToProcess.isLock !== undefined || dataToProcess.tehnicalTime !== undefined || dataToProcess.status_pc)) {
+          console.log('Lan-Search: Обрабатываем данные через addEventListener:', dataToProcess);
+          if (typeof window.lanSearchProcessPCData === 'function') {
+            window.lanSearchProcessPCData(dataToProcess);
+          }
+        }
+        
+        return listener.call(this, event);
+      };
+          return originalAddEventListener.call(this, type, wrappedListener, options);
+        }
+        return originalAddEventListener.call(this, type, listener, options);
+        };
+        EventTarget.prototype._lanSearchWebSocketAddEventListenerIntercepted = true;
+      }
+    }, 1000);
+    
+  }
+  
+  
+  
+// Делаем функцию глобально доступной сразу
+window.lanSearchProcessPCData = function processPCData(data) {
+  console.log('Lan-Search: === НАЧАЛО processPCData ===');
+  console.log('Lan-Search: Получены данные:', data);
+  
+  // Проверяем, что мы на правильной странице
+  if (!window.location.pathname.includes('/freenas_wrap/') && !window.location.pathname.includes('/pc_tasks/')) {
+    console.log('Lan-Search: Обработка данных ПК отключена для страницы:', window.location.pathname);
+    return;
+  }
+  
+  console.log('Lan-Search: Обрабатываем данные о ПК:', data);
+    
+    if (!data.UUID) {
+      console.log('Lan-Search: Нет UUID в данных');
+      return;
+    }
+    
+    // Проверяем, не обрабатывали ли мы уже эти данные
+    const dataKey = `${data.UUID}_${data.isLock}_${data.guest_id}_${data.tehnicalTime}_${data.ManualUnlock}_${data.status_pc}`;
+    if (window._lanSearchProcessedData && window._lanSearchProcessedData[dataKey]) {
+      console.log('Lan-Search: Данные уже обработаны для UUID:', data.UUID);
+      return;
+    }
+    
+    // Сохраняем ключ обработанных данных
+    if (!window._lanSearchProcessedData) {
+      window._lanSearchProcessedData = {};
+    }
+    window._lanSearchProcessedData[dataKey] = true;
+    
+    // Ищем строку таблицы с данным UUID
+    console.log('Lan-Search: Ищем строку для UUID:', data.UUID);
+    
+    // Сначала пробуем найти td с data-uuid
+    const uuidCell = document.querySelector(`td[data-uuid="${data.UUID}"]`);
+    if (uuidCell) {
+      const row = uuidCell.closest('tr');
+      if (row) {
+        console.log('Lan-Search: Найдена строка через td[data-uuid]');
+        return processPCDataWithRow(data, row);
+      }
+    }
+    
+    // Если не нашли, пробуем через tr:has (может не поддерживаться)
+    const row = document.querySelector(`tr:has(td[data-uuid="${data.UUID}"])`);
+    if (row) {
+      console.log('Lan-Search: Найдена строка через tr:has');
+      return processPCDataWithRow(data, row);
+    }
+    
+    console.log('Lan-Search: Не найдена строка для UUID:', data.UUID);
+    console.log('Lan-Search: Всего td с data-uuid:', document.querySelectorAll('td[data-uuid]').length);
+    console.log('Lan-Search: Всего строк в таблице:', document.querySelectorAll('tr').length);
+    
+    // Показываем все найденные UUID для отладки
+    const allUuidCells = document.querySelectorAll('td[data-uuid]');
+    console.log('Lan-Search: Найденные UUID в таблице:', Array.from(allUuidCells).map(td => td.getAttribute('data-uuid')));
+    
+    // Пробуем найти строку по частичному совпадению UUID
+    const partialMatch = Array.from(allUuidCells).find(td => 
+      td.getAttribute('data-uuid') && td.getAttribute('data-uuid').includes(data.UUID.substring(0, 8))
+    );
+    if (partialMatch) {
+      console.log('Lan-Search: Найдено частичное совпадение UUID');
+      const row = partialMatch.closest('tr');
+      if (row) {
+        return processPCDataWithRow(data, row);
+      }
+    }
+    
+    console.log('Lan-Search: === КОНЕЦ processPCData (строка не найдена) ===');
+  }
+  
+  function processPCDataWithRow(data, row) {
+    console.log('Lan-Search: Обрабатываем данные для строки:', data.UUID);
+    console.log('Lan-Search: Параметры:', {
+      status_pc: data.status_pc,
+      tehnicalTime: data.tehnicalTime,
+      ManualUnlock: data.ManualUnlock,
+      isLock: data.isLock,
+      guest_id: data.guest_id
+    });
+    
+    // Определяем статус ПК по техническим параметрам
+    let statusText = '';
+    let statusClass = '';
+    
+    if (data.status_pc === 'offline') {
+      statusText = 'Офлайн';
+      statusClass = 'bg-dark-light';
+    } else if (data.tehnicalTime) {
+      statusText = 'Тех.режим';
+      statusClass = 'bg-info';
+    } else if (data.ManualUnlock) {
+      statusText = 'Руч.Разлок';
+      statusClass = 'bg-warning';
+    } else if (data.isLock && data.guest_id === 0) {
+      statusText = 'Свободен';
+      statusClass = 'bg-success';
+    } else if (data.guest_id > 0) {
+      statusText = 'Занят';
+      statusClass = 'bg-warning';
+    } else {
+      statusText = 'Неизвестно';
+    }
+    
+    console.log('Lan-Search: Определен статус:', statusText, 'класс:', statusClass);
+    
+    // Обновляем первую колонку (sorting_1) с информацией о состоянии
+    const sortingCell = row.querySelector('td.sorting_1');
+    if (sortingCell) {
+      console.log('Lan-Search: Найдена ячейка sorting_1, обновляем текст');
+      sortingCell.textContent = statusText;
+      console.log('Lan-Search: Обновлен статус ПК', data.UUID, ':', statusText);
+    } else {
+      console.log('Lan-Search: Не найдена ячейка sorting_1 в строке');
+      console.log('Lan-Search: Всего ячеек в строке:', row.querySelectorAll('td').length);
+      console.log('Lan-Search: Классы ячеек:', Array.from(row.querySelectorAll('td')).map(td => td.className));
+    }
+    
+    // Обновляем класс строки
+    row.className = row.className.replace(/bg-\w+/g, '').trim() + ' ' + statusClass;
+    
+    console.log('Lan-Search: Обновлена строка ПК', data.UUID, 'статус:', statusText, 'класс:', statusClass);
+    console.log('Lan-Search: === КОНЕЦ processPCDataWithRow (успешно) ===');
+  }
+  
+  function updatePCStatusInTable(uuid, status) {
+    // Находим строку таблицы по UUID
+    const row = document.querySelector(`tr[id^="pcID-"] td[data-uuid="${uuid}"]`);
+    if (!row) return;
+    
+    const tr = row.closest('tr');
+    if (!tr) return;
+    
+    // Обновляем статус в первой колонке
+    const statusCell = tr.querySelector('td.sorting_1');
+    if (statusCell) {
+      let statusText = '';
+      let statusClass = '';
+      
+      switch (status) {
+        case 'online':
+          statusText = 'Онлайн';
+          statusClass = 'bg-success';
+          break;
+        case 'offline':
+          statusText = 'Офлайн';
+          statusClass = 'bg-dark-light';
+          break;
+        case 'technical':
+          statusText = 'Тех.режим';
+          statusClass = 'bg-info';
+          break;
+        case 'manual_unlock':
+          statusText = 'Руч.Разлок';
+          statusClass = 'bg-warning';
+          break;
+        default:
+          statusText = status;
+      }
+      
+      statusCell.textContent = statusText;
+      
+      // Обновляем классы строки
+      tr.className = tr.className.replace(/bg-\w+/g, '');
+      if (statusClass) {
+        tr.classList.add(statusClass);
+      }
+    }
+  }
+  
+  function updatePCDetailedInfo(data) {
+    console.log('Lan-Search: Обновляем детальную информацию для UUID:', data.UUID);
+    
+    // Находим строку таблицы по UUID
+    const row = document.querySelector(`tr[id^="pcID-"] td[data-uuid="${data.UUID}"]`);
+    if (!row) {
+      console.log('Lan-Search: Строка таблицы не найдена для UUID:', data.UUID);
+      return;
+    }
+    
+    const tr = row.closest('tr');
+    if (!tr) {
+      console.log('Lan-Search: TR элемент не найден для UUID:', data.UUID);
+      return;
+    }
+    
+    console.log('Lan-Search: Найдена строка таблицы для UUID:', data.UUID);
+    
+    // Обновляем статус блокировки
+    const statusCell = tr.querySelector('td.sorting_1');
+    if (statusCell) {
+      let statusText = '';
+      let statusClass = '';
+      
+      // Определяем статус на основе isLock и ManualUnlock
+      if (data.isLock) {
+        if (data.ManualUnlock) {
+          statusText = 'Ручная разблокировка';
+          statusClass = 'bg-info';
+        } else {
+          statusText = 'Заблокирован';
+          statusClass = 'bg-warning';
+        }
+      } else {
+        statusText = 'Разблокирован';
+        statusClass = 'bg-success';
+      }
+      
+      console.log('Lan-Search: Обновляем статус:', statusText, 'класс:', statusClass);
+      statusCell.textContent = statusText;
+      
+      // Обновляем классы строки
+      tr.className = tr.className.replace(/bg-\w+/g, '');
+      if (statusClass) {
+        tr.classList.add(statusClass);
+      }
+    }
+    
+    // Добавляем информацию о техническом времени
+    if (data.tehnicalTime !== undefined) {
+      console.log('Lan-Search: Обновляем тех.время для UUID:', data.UUID, 'значение:', data.tehnicalTime);
+      
+      const statusColumn = tr.querySelector('td:nth-child(3)');
+      if (statusColumn) {
+        // Удаляем старую информацию о тех.времени
+        const oldTechTime = statusColumn.querySelector('.tech-time-info');
+        if (oldTechTime) {
+          oldTechTime.remove();
+        }
+        
+        const techTimeInfo = document.createElement('div');
+        techTimeInfo.style.cssText = 'font-size: 10px; color: #666; margin-top: 2px;';
+        techTimeInfo.textContent = `Тех.режим: ${data.tehnicalTime ? 'ВКЛ' : 'ВЫКЛ'}`;
+        techTimeInfo.className = 'tech-time-info';
+        statusColumn.appendChild(techTimeInfo);
+        
+        console.log('Lan-Search: Добавлена информация о тех.режиме:', data.tehnicalTime ? 'ВКЛ' : 'ВЫКЛ');
+      }
+    }
+    
+    // Добавляем информацию о ручной разблокировке
+    if (data.ManualUnlock !== undefined) {
+      console.log('Lan-Search: Обновляем ручную разблокировку для UUID:', data.UUID, 'значение:', data.ManualUnlock);
+      
+      const statusColumn = tr.querySelector('td:nth-child(3)');
+      if (statusColumn) {
+        // Удаляем старую информацию о ручной разблокировке
+        const oldManualUnlock = statusColumn.querySelector('.manual-unlock-info');
+        if (oldManualUnlock) {
+          oldManualUnlock.remove();
+        }
+        
+        if (data.ManualUnlock) {
+          const manualUnlockInfo = document.createElement('div');
+          manualUnlockInfo.style.cssText = 'font-size: 10px; color: #007bff; margin-top: 2px; font-weight: bold;';
+          manualUnlockInfo.textContent = 'Ручная разблокировка';
+          manualUnlockInfo.className = 'manual-unlock-info';
+          statusColumn.appendChild(manualUnlockInfo);
+          
+          console.log('Lan-Search: Добавлена информация о ручной разблокировке');
+        }
+      }
+    }
+  }
+
   if (shouldAutoActivate()) {
     console.log('Lan-Search: Инициализация обхода модальных окон на домене:', window.location.hostname);
     
@@ -4446,6 +4978,7 @@
         initTableOptimization();
         initHideCheckboxes();
         initHideComments();
+        initWebSocketPCData();
       });
     } else {
       initModalBypass();
@@ -4455,7 +4988,750 @@
       initTableOptimization();
       initHideCheckboxes();
       initHideComments();
+      initWebSocketPCData();
     }
   }
 
 })(); 
+
+// Автоматическая проверка WebSocket каждые 3 секунды
+let websocketCheckInterval = null;
+
+function startWebSocketMonitoring() {
+  // Проверяем, что мы на правильной странице
+  if (!window.location.pathname.includes('/freenas_wrap/') && !window.location.pathname.includes('/pc_tasks/')) {
+    console.log('Lan-Search: WebSocket мониторинг отключен для страницы:', window.location.pathname);
+    return;
+  }
+  
+  console.log('Lan-Search: Запуск мониторинга WebSocket...');
+  
+  // Проверяем WebSocket соединения сразу
+  console.log('Lan-Search: Проверка WebSocket соединений...');
+  checkWebSocketConnections();
+}
+
+function checkWebSocketConnections() {
+  // Ищем WebSocket соединения в глобальных переменных
+  let foundConnections = 0;
+  
+  console.log('Lan-Search: Начинаем поиск WebSocket соединений...');
+  
+  // Расширенный поиск WebSocket соединений
+  const searchInObject = (obj, path = '') => {
+    if (!obj || typeof obj !== 'object') return;
+    
+    try {
+      // Проверяем сам объект
+      if (obj.constructor && obj.constructor.name === 'WebSocket') {
+        foundConnections++;
+        console.log('Lan-Search: Найден WebSocket:', path, 'URL:', obj.url, 'состояние:', obj.readyState);
+        
+        if (obj.readyState === WebSocket.OPEN || obj.readyState === WebSocket.CONNECTING) {
+          console.log('Lan-Search: WebSocket активен, перехватываем onmessage');
+          
+          // Перехватываем onmessage если еще не перехвачен
+          if (!obj._lanSearchIntercepted) {
+            const originalOnMessage = obj.onmessage;
+            obj.onmessage = function(event) {
+              console.log('Lan-Search: Получено сообщение от WebSocket:', event.data);
+              if (originalOnMessage) {
+                originalOnMessage.call(this, event);
+              }
+              try {
+                const data = JSON.parse(event.data);
+                if (data.UUID && (data.isLock !== undefined || data.tehnicalTime !== undefined || data.status_pc)) {
+                  console.log('Lan-Search: Обрабатываем WebSocket данные:', data);
+                  if (typeof window.lanSearchProcessPCData === 'function') {
+                    window.lanSearchProcessPCData(data);
+                  }
+                }
+              } catch (e) {
+                console.log('Lan-Search: Ошибка парсинга WebSocket данных:', e);
+              }
+            };
+            obj._lanSearchIntercepted = true;
+            console.log('Lan-Search: WebSocket перехвачен:', path);
+          }
+        } else {
+          console.log('Lan-Search: WebSocket неактивен:', path, 'состояние:', obj.readyState);
+        }
+      }
+      
+      // Рекурсивно ищем в свойствах объекта (ограничиваем глубину)
+      if (path.split('.').length < 3) {
+        for (let key in obj) {
+          try {
+            if (obj.hasOwnProperty(key) && typeof obj[key] === 'object') {
+              searchInObject(obj[key], path ? `${path}.${key}` : key);
+            }
+          } catch (e) {
+            // Игнорируем ошибки доступа
+          }
+        }
+      }
+    } catch (e) {
+      // Игнорируем ошибки
+    }
+  };
+  
+  // Ищем в window и его основных объектах
+  searchInObject(window, 'window');
+  
+  // Ищем в document
+  searchInObject(document, 'document');
+  
+  // Ищем в iframe
+  try {
+    const iframes = document.querySelectorAll('iframe');
+    iframes.forEach((iframe, index) => {
+      try {
+        if (iframe.contentWindow) {
+          searchInObject(iframe.contentWindow, `iframe[${index}]`);
+        }
+      } catch (e) {
+        // Игнорируем ошибки доступа к iframe
+      }
+    });
+  } catch (e) {
+    // Игнорируем ошибки
+  }
+  
+  // Ищем в основных глобальных объектах
+  const globalObjects = ['navigator', 'screen', 'location', 'history', 'localStorage', 'sessionStorage'];
+  globalObjects.forEach(objName => {
+    try {
+      if (window[objName]) {
+        searchInObject(window[objName], objName);
+      }
+    } catch (e) {
+      // Игнорируем ошибки
+    }
+  });
+  
+  // Также перехватываем все новые WebSocket через переопределение конструктора
+  if (!window._lanSearchWebSocketIntercepted) {
+    const OriginalWebSocket = window.WebSocket;
+    window.WebSocket = function(url, protocols) {
+      console.log('Lan-Search: Создается новое WebSocket соединение:', url);
+      console.log('Lan-Search: WebSocket протоколы:', protocols);
+      console.log('Lan-Search: WebSocket стек вызовов:', new Error().stack);
+      
+        // Проверяем, содержит ли URL wss://
+        if (url.includes('wss://')) {
+          console.log('Lan-Search: Найдено WebSocket соединение с wss://:', url);
+          console.log('Lan-Search: WebSocket протокол:', url.split('://')[0]);
+          console.log('Lan-Search: WebSocket хост:', url.split('://')[1]);
+        }
+      
+      const ws = new OriginalWebSocket(url, protocols);
+      
+      // Перехватываем все события WebSocket
+      const originalOnMessage = ws.onmessage;
+      const originalOnOpen = ws.onopen;
+      const originalOnClose = ws.onclose;
+      const originalOnError = ws.onerror;
+      
+      ws.onmessage = function(event) {
+        console.log('Lan-Search: Получено сообщение от нового WebSocket:', event.data);
+        if (originalOnMessage) {
+          originalOnMessage.call(this, event);
+        }
+        try {
+          const data = JSON.parse(event.data);
+          if (data.UUID && (data.isLock !== undefined || data.tehnicalTime !== undefined || data.status_pc)) {
+            console.log('Lan-Search: Обрабатываем данные от нового WebSocket:', data);
+            if (typeof window.lanSearchProcessPCData === 'function') {
+              window.lanSearchProcessPCData(data);
+            }
+          }
+        } catch (e) {
+          console.log('Lan-Search: Ошибка парсинга данных от нового WebSocket:', e);
+        }
+      };
+      
+      ws.onopen = function(event) {
+        console.log('Lan-Search: WebSocket соединение открыто:', ws.url);
+        if (originalOnOpen) {
+          originalOnOpen.call(this, event);
+        }
+      };
+      
+      ws.onclose = function(event) {
+        console.log('Lan-Search: WebSocket соединение закрыто:', ws.url, 'код:', event.code, 'причина:', event.reason);
+        if (originalOnClose) {
+          originalOnClose.call(this, event);
+        }
+      };
+      
+      ws.onerror = function(event) {
+        console.log('Lan-Search: WebSocket ошибка:', ws.url, 'событие:', event);
+        if (originalOnError) {
+          originalOnError.call(this, event);
+        }
+      };
+      
+      return ws;
+    };
+    
+    // Копируем статические свойства
+    Object.setPrototypeOf(window.WebSocket, OriginalWebSocket);
+    Object.defineProperty(window.WebSocket, 'prototype', {
+      value: OriginalWebSocket.prototype,
+      writable: false
+    });
+    
+    window._lanSearchWebSocketIntercepted = true;
+    console.log('Lan-Search: WebSocket конструктор перехвачен');
+  }
+  
+  console.log('Lan-Search: Поиск завершен. Найдено WebSocket соединений:', foundConnections);
+  
+  if (foundConnections === 0) {
+    console.log('Lan-Search: WebSocket соединения не найдены в глобальных переменных');
+    console.log('Lan-Search: Пытаемся найти WebSocket URL и подключиться...');
+    
+    // Пытаемся найти WebSocket URL и подключиться
+    findAndConnectToWebSocket();
+  } else {
+    console.log('Lan-Search: Найдено WebSocket соединений:', foundConnections);
+  }
+}
+
+// Функция для поиска WebSocket URL и подключения
+function findAndConnectToWebSocket() {
+  console.log('Lan-Search: Поиск WebSocket URL...');
+  
+  // Ограничиваем количество попыток подключения
+  if (window._lanSearchConnectionAttempts && window._lanSearchConnectionAttempts > 5) {
+    console.log('Lan-Search: Превышено максимальное количество попыток подключения');
+    return;
+  }
+  
+  if (!window._lanSearchConnectionAttempts) {
+    window._lanSearchConnectionAttempts = 0;
+  }
+  
+  // Пытаемся подключиться по принципу оригинала
+  console.log('Lan-Search: Пытаемся подключиться по принципу оригинала...');
+  connectToWebSocket();
+  window._lanSearchConnectionAttempts++;
+}
+
+// Функция для подключения к WebSocket (по принципу оригинала)
+function connectToWebSocket() {
+  try {
+    // Получаем domain из мета-тега (как в оригинале)
+    const domain = document.querySelector('meta[name="domain"]')?.getAttribute('content');
+    if (!domain) {
+      console.log('Lan-Search: Не найден мета-тег domain, используем fallback');
+      return;
+    }
+    
+    // Получаем session_id
+    const sessionId = session_id();
+    if (!sessionId) {
+      console.log('Lan-Search: Не найден session_id в cookies');
+      return;
+    }
+    
+    // Создаем URL для WebSocket (как в оригинале)
+    const wsUrl = `wss://${domain}/wss/?client_guid=${sessionId}&type_client=browser`;
+    console.log('Lan-Search: Подключаемся к WebSocket:', wsUrl);
+    
+    // Используем оригинальный WebSocket конструктор
+    const OriginalWebSocket = window._lanSearchOriginalWebSocket || window.WebSocket;
+    const ws = new OriginalWebSocket(wsUrl);
+    
+    ws.onopen = function(event) {
+      console.log('Lan-Search: Успешно подключились к WebSocket:', wsUrl);
+      window._lanSearchWebSocket = ws; // Сохраняем соединение
+      
+      // Запрашиваем состояние всех ПК сразу после подключения
+      requestAllPCStatus();
+    };
+    
+    ws.onmessage = function(event) {
+      console.log('Lan-Search: Получено сообщение от WebSocket:', event.data);
+      try {
+        const data = JSON.parse(event.data);
+        
+        // Обрабатываем данные о ПК (как в оригинале)
+        if (data.status_pc !== undefined) {
+          console.log('Lan-Search: Получены данные о статусе ПК:', data);
+          if (typeof window.lanSearchProcessPCData === 'function') {
+            window.lanSearchProcessPCData(data);
+          }
+          return;
+        }
+        
+        // Обрабатываем команды (как в оригинале)
+        switch (data.command) {
+          case "showConfig":
+            console.log('Lan-Search: Получен ответ на команду showConfig:', data);
+            console.log('Lan-Search: Вызываем processPCData для данных:', data);
+            if (typeof window.lanSearchProcessPCData === 'function') {
+              window.lanSearchProcessPCData(data);
+            } else {
+              console.log('Lan-Search: window.lanSearchProcessPCData не является функцией!');
+            }
+            break;
+        }
+        
+      } catch (e) {
+        console.log('Lan-Search: Ошибка парсинга WebSocket данных:', e);
+      }
+    };
+    
+    ws.onclose = function(event) {
+      console.log('Lan-Search: WebSocket соединение закрыто:', wsUrl, 'код:', event.code, 'причина:', event.reason);
+      // Автоматическое переподключение сразу
+      console.log('Lan-Search: Переподключаемся к WebSocket...');
+      connectToWebSocket();
+    };
+    
+    ws.onerror = function(event) {
+      console.log('Lan-Search: WebSocket ошибка:', wsUrl, 'событие:', event);
+      ws.close();
+    };
+    
+  } catch (e) {
+    console.log('Lan-Search: Ошибка создания WebSocket:', e);
+  }
+}
+
+// Функция для получения session_id (как в оригинале)
+function session_id() {
+  return /SESS\w*ID=([^;]+)/i.test(document.cookie) ? RegExp.$1 : false;
+}
+
+// Функция для отправки команд к ПК через WebSocket (по принципу оригинала)
+function sendPCCommand(uuid, command = 'showConfig') {
+  if (!window._lanSearchWebSocket || window._lanSearchWebSocket.readyState !== WebSocket.OPEN) {
+    console.log('Lan-Search: WebSocket соединение не активно, не можем отправить команду');
+    return false;
+  }
+  
+  const message = {
+    client_guid: uuid,
+    type: "command_api",
+    command: command,
+    who_send: session_id(),
+    need_return: true
+  };
+  
+  console.log('Lan-Search: Отправляем команду к ПК:', uuid, 'команда:', command);
+  console.log('Lan-Search: Сообщение:', message);
+  
+  try {
+    window._lanSearchWebSocket.send(JSON.stringify(message));
+    console.log('Lan-Search: Команда отправлена успешно');
+    return true;
+  } catch (e) {
+    console.log('Lan-Search: Ошибка отправки команды:', e);
+    return false;
+  }
+}
+
+// Функция для получения состояния всех ПК
+function requestAllPCStatus() {
+  console.log('Lan-Search: Запрашиваем состояние ПК с пустым состоянием...');
+  
+  // Ищем все строки таблицы с ПК - ищем по td с data-uuid
+  const pcRows = document.querySelectorAll('tr:has(td[data-uuid])');
+  console.log('Lan-Search: Найдено строк ПК:', pcRows.length);
+  
+  // Если не нашли, пробуем другой способ
+  if (pcRows.length === 0) {
+    const allRows = document.querySelectorAll('tr');
+    console.log('Lan-Search: Всего строк в таблице:', allRows.length);
+    
+    // Ищем строки, которые содержат td с data-uuid
+    allRows.forEach((row, index) => {
+      const uuidCell = row.querySelector('td[data-uuid]');
+      if (uuidCell) {
+        console.log('Lan-Search: Найдена строка с UUID:', uuidCell.getAttribute('data-uuid'), 'в строке', index);
+      }
+    });
+  }
+  
+  let emptyPCs = [];
+  
+  pcRows.forEach((row, index) => {
+      // Получаем UUID из td внутри строки
+      const uuidCell = row.querySelector('td[data-uuid]');
+      if (!uuidCell) return;
+      
+      const uuid = uuidCell.getAttribute('data-uuid');
+      if (!uuid) return;
+      
+      // Проверяем, есть ли пустая ячейка sorting_1 (первая колонка)
+      const sortingCell = row.querySelector('td.sorting_1');
+      if (sortingCell && sortingCell.textContent.trim() === '') {
+        console.log('Lan-Search: Найден ПК с пустым состоянием:', uuid);
+        emptyPCs.push({uuid, index});
+      } else {
+        console.log('Lan-Search: ПК', uuid, 'уже имеет состояние:', sortingCell ? sortingCell.textContent.trim() : 'не найдена ячейка');
+      }
+    });
+    
+    console.log('Lan-Search: Найдено ПК с пустым состоянием:', emptyPCs.length);
+    
+    // Отправляем команды только к ПК с пустым состоянием
+    emptyPCs.forEach((pc, index) => {
+      console.log('Lan-Search: Запрашиваем состояние ПК:', pc.uuid);
+      sendPCCommand(pc.uuid, 'showConfig');
+    });
+    
+    if (emptyPCs.length === 0) {
+      console.log('Lan-Search: Все ПК уже имеют состояние, запрос не нужен');
+    } else {
+      console.log(`Lan-Search: Запрашиваем состояние ${emptyPCs.length} ПК с пустым состоянием`);
+    }
+}
+
+// Функция для добавления кнопки запроса состояния ПК
+function addPCStatusButton() {
+  // Проверяем, есть ли уже кнопка
+  if (document.getElementById('lanSearchPCStatusBtn')) {
+    return;
+  }
+  
+  // Создаем кнопку
+  const statusBtn = document.createElement('button');
+  statusBtn.id = 'lanSearchPCStatusBtn';
+  statusBtn.className = 'btn btn-info mb-3 mr-2';
+  statusBtn.innerHTML = '<i class="fa fa-refresh"></i> Запросить состояние ПК';
+  statusBtn.title = 'Запросить актуальное состояние всех ПК через WebSocket';
+  
+  // Добавляем обработчик события
+  statusBtn.addEventListener('click', function(e) {
+    e.preventDefault();
+    console.log('Lan-Search: Ручной запрос состояния ПК');
+    requestAllPCStatus();
+    // Убираем showNotification, так как функция уже показывает alert
+  });
+  
+  // Ищем место для вставки кнопки
+  const checkDisksBtn = document.getElementById('checkDisksBtn');
+  if (checkDisksBtn) {
+    checkDisksBtn.parentNode.insertBefore(statusBtn, checkDisksBtn.nextSibling);
+  } else {
+    // Если кнопка "Проверить диски" не найдена, добавляем в начало страницы
+    const container = document.querySelector('.container-fluid') || document.body;
+    container.insertBefore(statusBtn, container.firstChild);
+  }
+  
+  console.log('Lan-Search: Кнопка запроса состояния ПК добавлена');
+}
+
+// Функция для тестирования поиска ПК (можно вызвать из консоли)
+window.testPCSearch = function() {
+  console.log('Lan-Search: Тестирование поиска ПК...');
+  
+  const selectors = [
+    'form.pc',
+    'tr[data-uuid]',
+    'td[data-uuid]',
+    '[data-uuid]',
+    'tr:has([data-uuid])',
+    'tr:has(td[data-uuid])',
+    'input[id*="03000200-0400-0500-0006-000700080009"]',
+    'input[type="checkbox"][id]'
+  ];
+  
+  selectors.forEach(selector => {
+    try {
+      const elements = document.querySelectorAll(selector);
+      console.log('Lan-Search: Селектор "' + selector + '":', elements.length, 'элементов');
+      if (elements.length > 0) {
+        elements.forEach((el, i) => {
+          console.log('Lan-Search: Элемент', i + ':', el);
+          console.log('Lan-Search: - ID:', el.id);
+          console.log('Lan-Search: - data-uuid:', el.getAttribute('data-uuid'));
+          console.log('Lan-Search: - innerHTML:', el.innerHTML.substring(0, 100) + '...');
+        });
+      }
+    } catch (e) {
+      console.log('Lan-Search: Ошибка с селектором "' + selector + '":', e);
+    }
+  });
+};
+
+// Функция для тестирования поиска пустых ПК (можно вызвать из консоли)
+window.testEmptyPCs = function() {
+  console.log('Lan-Search: Тестирование поиска пустых ПК...');
+  
+  // Пробуем разные селекторы
+  const selectors = [
+    'tr:has(td[data-uuid])',
+    'tr[data-uuid]',
+    'tr'
+  ];
+  
+  let pcRows = [];
+  for (const selector of selectors) {
+    try {
+      pcRows = document.querySelectorAll(selector);
+      console.log('Lan-Search: Селектор "' + selector + '":', pcRows.length, 'строк');
+      if (pcRows.length > 0) break;
+    } catch (e) {
+      console.log('Lan-Search: Ошибка с селектором "' + selector + '":', e);
+    }
+  }
+  
+  let emptyPCs = [];
+  let filledPCs = [];
+  
+  pcRows.forEach((row, index) => {
+    // Ищем td с data-uuid внутри строки
+    const uuidCell = row.querySelector('td[data-uuid]');
+    if (!uuidCell) return;
+    
+    const uuid = uuidCell.getAttribute('data-uuid');
+    if (!uuid) return;
+    
+    const sortingCell = row.querySelector('td.sorting_1');
+    if (sortingCell && sortingCell.textContent.trim() === '') {
+      console.log('Lan-Search: ПУСТОЙ ПК:', uuid);
+      emptyPCs.push({uuid, index});
+    } else {
+      console.log('Lan-Search: ЗАПОЛНЕННЫЙ ПК:', uuid, 'состояние:', sortingCell ? sortingCell.textContent.trim() : 'не найдена ячейка');
+      filledPCs.push({uuid, index});
+    }
+  });
+  
+  console.log('Lan-Search: Итого пустых ПК:', emptyPCs.length);
+  console.log('Lan-Search: Итого заполненных ПК:', filledPCs.length);
+  
+  return {emptyPCs, filledPCs};
+};
+
+// Функция для простого тестирования поиска строк (можно вызвать из консоли)
+window.testTableRows = function() {
+  console.log('Lan-Search: Тестирование поиска строк таблицы...');
+  
+  const allRows = document.querySelectorAll('tr');
+  console.log('Lan-Search: Всего строк в таблице:', allRows.length);
+  
+  allRows.forEach((row, index) => {
+    const uuidCell = row.querySelector('td[data-uuid]');
+    if (uuidCell) {
+      const uuid = uuidCell.getAttribute('data-uuid');
+      const sortingCell = row.querySelector('td.sorting_1');
+      const sortingContent = sortingCell ? sortingCell.textContent.trim() : 'не найдена';
+      
+      console.log('Lan-Search: Строка', index + ':', {
+        uuid: uuid,
+        sortingContent: sortingContent,
+        isEmpty: sortingContent === '',
+        row: row
+      });
+    }
+  });
+};
+
+// Сохраняем оригинальный WebSocket конструктор
+if (!window._lanSearchOriginalWebSocket) {
+  window._lanSearchOriginalWebSocket = window.WebSocket;
+  console.log('Lan-Search: Оригинальный WebSocket конструктор сохранен');
+}
+
+// Простой и надежный перехват WebSocket через переопределение конструктора
+if (!window._lanSearchWebSocketConstructorIntercepted) {
+  console.log('Lan-Search: Перехватываем WebSocket конструктор...');
+  
+  const OriginalWebSocket = window._lanSearchOriginalWebSocket;
+  
+  window.WebSocket = function(url, protocols) {
+    console.log('Lan-Search: Создается WebSocket соединение:', url);
+    console.log('Lan-Search: WebSocket протоколы:', protocols);
+    
+    // Создаем WebSocket
+    const ws = new OriginalWebSocket(url, protocols);
+    
+    // Перехватываем все события
+    const originalOnMessage = ws.onmessage;
+    const originalOnOpen = ws.onopen;
+    const originalOnClose = ws.onclose;
+    const originalOnError = ws.onerror;
+    
+    ws.onmessage = function(event) {
+      console.log('Lan-Search: Получено сообщение от WebSocket:', event.data);
+      
+      // Вызываем оригинальный обработчик
+      if (originalOnMessage) {
+        originalOnMessage.call(this, event);
+      }
+      
+      // Обрабатываем данные
+      try {
+        const data = JSON.parse(event.data);
+        if (data.UUID && (data.isLock !== undefined || data.tehnicalTime !== undefined || data.status_pc)) {
+          console.log('Lan-Search: Обрабатываем WebSocket данные:', data);
+          if (typeof window.lanSearchProcessPCData === 'function') {
+            window.lanSearchProcessPCData(data);
+          }
+        }
+      } catch (e) {
+        console.log('Lan-Search: Ошибка парсинга WebSocket данных:', e);
+      }
+    };
+    
+    ws.onopen = function(event) {
+      console.log('Lan-Search: WebSocket соединение открыто:', ws.url);
+      if (originalOnOpen) {
+        originalOnOpen.call(this, event);
+      }
+    };
+    
+    ws.onclose = function(event) {
+      console.log('Lan-Search: WebSocket соединение закрыто:', ws.url, 'код:', event.code);
+      if (originalOnClose) {
+        originalOnClose.call(this, event);
+      }
+    };
+    
+    ws.onerror = function(event) {
+      console.log('Lan-Search: WebSocket ошибка:', ws.url, 'событие:', event);
+      if (originalOnError) {
+        originalOnError.call(this, event);
+      }
+    };
+    
+    return ws;
+  };
+  
+  // Копируем статические свойства
+  Object.setPrototypeOf(window.WebSocket, OriginalWebSocket);
+  Object.defineProperty(window.WebSocket, 'prototype', {
+    value: OriginalWebSocket.prototype,
+    writable: false
+  });
+  
+  window._lanSearchWebSocketConstructorIntercepted = true;
+  console.log('Lan-Search: WebSocket конструктор перехвачен');
+}
+
+// Перехват на уровне сети
+if (!window._lanSearchNetworkIntercepted) {
+  // Перехватываем fetch
+  const originalFetch = window.fetch;
+  window.fetch = function(...args) {
+    return originalFetch.apply(this, args).then(response => {
+        if (response.url.includes('wss://') || response.url.includes('websocket') || response.url.includes('/wss/')) {
+          console.log('Lan-Search: Обнаружен WebSocket запрос через fetch:', response.url);
+          console.log('Lan-Search: Fetch статус:', response.status);
+          console.log('Lan-Search: Fetch тип:', response.type);
+        }
+      return response;
+    });
+  };
+  
+  // Перехватываем XMLHttpRequest
+  const originalXHROpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url, ...args) {
+      if (url.includes('wss://') || url.includes('websocket') || url.includes('/wss/')) {
+        console.log('Lan-Search: Обнаружен WebSocket запрос через XMLHttpRequest:', url);
+        console.log('Lan-Search: XMLHttpRequest метод:', method);
+        console.log('Lan-Search: XMLHttpRequest URL:', url);
+      }
+    return originalXHROpen.call(this, method, url, ...args);
+  };
+  
+  // Перехватываем все события на странице
+  if (!EventTarget.prototype._lanSearchAddEventListenerIntercepted) {
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+    EventTarget.prototype.addEventListener = function(type, listener, options) {
+    if (type === 'message') {
+      console.log('Lan-Search: Перехватываем addEventListener для message:', this.constructor.name);
+      const wrappedListener = function(event) {
+        console.log('Lan-Search: Получено сообщение через addEventListener:', event.data);
+        
+        // Проверяем тип данных перед парсингом
+        let dataToProcess = null;
+        
+        if (typeof event.data === 'string') {
+          try {
+            dataToProcess = JSON.parse(event.data);
+          } catch (e) {
+            console.log('Lan-Search: Ошибка парсинга строки через addEventListener:', e);
+          }
+        } else if (typeof event.data === 'object' && event.data !== null) {
+          // Если это уже объект, используем его напрямую
+          dataToProcess = event.data;
+        }
+        
+        if (dataToProcess && dataToProcess.UUID && (dataToProcess.isLock !== undefined || dataToProcess.tehnicalTime !== undefined || dataToProcess.status_pc)) {
+          console.log('Lan-Search: Обрабатываем данные через addEventListener:', dataToProcess);
+          if (typeof window.lanSearchProcessPCData === 'function') {
+            window.lanSearchProcessPCData(dataToProcess);
+          }
+        }
+        
+        return listener.call(this, event);
+      };
+      return originalAddEventListener.call(this, type, wrappedListener, options);
+    }
+    return originalAddEventListener.call(this, type, listener, options);
+    };
+    EventTarget.prototype._lanSearchAddEventListenerIntercepted = true;
+  }
+  
+  // Перехватываем все события на window
+  if (!window._lanSearchWindowAddEventListenerIntercepted) {
+    const originalWindowAddEventListener = window.addEventListener;
+    window.addEventListener = function(type, listener, options) {
+    if (type === 'message') {
+      console.log('Lan-Search: Перехватываем window.addEventListener для message');
+      const wrappedListener = function(event) {
+        console.log('Lan-Search: Получено сообщение через window.addEventListener:', event.data);
+        
+        // Проверяем тип данных перед парсингом
+        let dataToProcess = null;
+        
+        if (typeof event.data === 'string') {
+          try {
+            dataToProcess = JSON.parse(event.data);
+          } catch (e) {
+            console.log('Lan-Search: Ошибка парсинга строки через window.addEventListener:', e);
+          }
+        } else if (typeof event.data === 'object' && event.data !== null) {
+          // Если это уже объект, используем его напрямую
+          dataToProcess = event.data;
+        }
+        
+        if (dataToProcess && dataToProcess.UUID && (dataToProcess.isLock !== undefined || dataToProcess.tehnicalTime !== undefined || dataToProcess.status_pc)) {
+          console.log('Lan-Search: Обрабатываем данные через window.addEventListener:', dataToProcess);
+          if (typeof window.lanSearchProcessPCData === 'function') {
+            window.lanSearchProcessPCData(dataToProcess);
+          }
+        }
+        
+        return listener.call(this, event);
+      };
+      return originalWindowAddEventListener.call(this, type, wrappedListener, options);
+    }
+    return originalWindowAddEventListener.call(this, type, listener, options);
+    };
+    window._lanSearchWindowAddEventListenerIntercepted = true;
+  }
+  
+  window._lanSearchNetworkIntercepted = true;
+  console.log('Lan-Search: Сетевой перехват активирован');
+}
+
+
+
+// Запускаем WebSocket мониторинг для страниц /freenas_wrap/ и /pc_tasks/
+if (window.location.pathname.includes('/freenas_wrap/') || window.location.pathname.includes('/pc_tasks/')) {
+  console.log('Lan-Search: WebSocket мониторинг активирован для:', window.location.pathname);
+  
+  // Запускаем мониторинг сразу
+  startWebSocketMonitoring();
+
+  // Добавляем кнопку запроса состояния ПК сразу
+  addPCStatusButton();
+} else {
+  console.log('Lan-Search: WebSocket мониторинг отключен для страницы:', window.location.pathname);
+} 
