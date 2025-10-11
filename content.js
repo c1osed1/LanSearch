@@ -464,8 +464,27 @@
     }
   }
 
+  // Инициализация поиска гостей на главной странице
+  function initGuestSearch() {
+    if (shouldAutoActivate()) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          setTimeout(initGuestSearchOnMainPage, 1000);
+        });
+      } else {
+        setTimeout(initGuestSearchOnMainPage, 1000);
+      }
+    }
+  }
+
+  // Запускаем инициализацию поиска гостей
+  initGuestSearch();
+
 
   window.lanSearchInit = init;
+  
+  // Экспортируем функцию для принудительной инициализации поиска гостей
+  window.lanSearchInitGuestSearch = initGuestSearchOnMainPage;
   
   
   window.initFavoritesDragDrop = initFavoritesDragDrop;
@@ -502,6 +521,957 @@
 
     if (window.recentTabsManager) {
       window.recentTabsManager.startTracking(menuRoot);
+    }
+  }
+
+  // Функция для создания блока поиска гостей
+  function createGuestSearchBlock() {
+    const container = document.createElement('div');
+    container.id = 'guestSearchContainer';
+    container.className = 'card mb-3';
+    container.style.cssText = `
+      margin-top: 15px;
+      padding: 15px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: var(--bg-secondary, #ffffff);
+    `;
+
+    container.innerHTML = `
+      <div class="card-header">
+        <h5 class="mb-0">
+          <i class="fa fa-search"></i> Поиск гостей
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-12">
+            <div class="input-group">
+              <input style="min-height: 38px;" type="text" id="guestSearchInput" class="form-control" placeholder="Введите номер телефона, ФИО или email гостя..." />
+              <div class="input-group-append">
+                <button class="btn btn-primary" type="button" id="searchGuestBtn" style="min-height: 38px; padding: 8px 16px;">
+                  <i class="fa fa-search"></i> Найти
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="guestSearchResults" style="display: none;">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Телефон</th>
+                  <th>Email</th>
+                  <th>Баланс</th>
+                  <th>Бонусы</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="guestSearchResultsBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div id="guestSearchNoResults" style="display: none;" class="alert alert-info">
+          <i class="fa fa-info-circle"></i> Гости не найдены
+        </div>
+      </div>
+    `;
+
+    // Добавляем модальное окно для пополнения баланса
+    const modal = document.createElement('div');
+    modal.id = 'addBalanceModal';
+    modal.className = 'modal fade';
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('role', 'dialog');
+        modal.innerHTML = `
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Пополнить баланс</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <form name="addBalanceForm">
+                  <input type="hidden" name="guest_id" value="">
+                  <div class="form-group mb-2">
+                    <label for="balanceAmount">Сумма:</label>
+                    <input tabindex="0" type="number" class="form-control" max="999999" step="0.01" name="balance" placeholder="пополнить" autocomplete="off" required>
+                  </div>
+                  <button tabindex="1" type="submit" class="btn btn-primary mb-2 pull-right">Сохранить</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        `;
+
+    // Добавляем модальное окно в body
+    document.body.appendChild(modal);
+
+    // Создаем модальное окно для бонусов
+    const bonusModal = document.createElement('div');
+    bonusModal.id = 'addBonusModal';
+    bonusModal.className = 'modal fade';
+    bonusModal.setAttribute('tabindex', '-1');
+    bonusModal.setAttribute('role', 'dialog');
+        bonusModal.innerHTML = `
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Управление бонусами</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <form name="addBonusForm">
+                  <input type="hidden" name="guest_id" value="">
+                  <input type="hidden" name="action" value="">
+                  <div class="form-group mb-2">
+                    <label for="bonusAmount">Сумма бонусов:</label>
+                    <input tabindex="0" type="number" class="form-control" max="999999" step="0.01" name="bonus_balance" placeholder="сумма" autocomplete="off" required>
+                  </div>
+                  <button tabindex="1" type="submit" class="btn btn-primary mb-2 pull-right">Сохранить</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        `;
+
+    // Добавляем модальное окно для бонусов в body
+    document.body.appendChild(bonusModal);
+
+    return container;
+  }
+
+  // Функция для поиска гостей
+  async function searchGuests(query) {
+    if (!query || query.trim().length < 3) {
+      showNotification('Введите минимум 3 символа для поиска', 'warning');
+      return;
+    }
+
+    try {
+      const response = await fetch('/guests_search/search.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include',
+        body: new URLSearchParams({
+          'draw': '1',
+          'columns[0][data]': '0',
+          'columns[0][name]': '',
+          'columns[0][searchable]': 'true',
+          'columns[0][orderable]': 'true',
+          'columns[0][search][value]': '',
+          'columns[0][search][regex]': 'false',
+          'columns[1][data]': '1',
+          'columns[1][name]': '',
+          'columns[1][searchable]': 'true',
+          'columns[1][orderable]': 'true',
+          'columns[1][search][value]': '',
+          'columns[1][search][regex]': 'false',
+          'columns[2][data]': '2',
+          'columns[2][name]': '',
+          'columns[2][searchable]': 'true',
+          'columns[2][orderable]': 'true',
+          'columns[2][search][value]': '',
+          'columns[2][search][regex]': 'false',
+          'columns[3][data]': '3',
+          'columns[3][name]': '',
+          'columns[3][searchable]': 'true',
+          'columns[3][orderable]': 'true',
+          'columns[3][search][value]': '',
+          'columns[3][search][regex]': 'false',
+          'columns[4][data]': '4',
+          'columns[4][name]': '',
+          'columns[4][searchable]': 'true',
+          'columns[4][orderable]': 'true',
+          'columns[4][search][value]': '',
+          'columns[4][search][regex]': 'false',
+          'columns[5][data]': '5',
+          'columns[5][name]': '',
+          'columns[5][searchable]': 'true',
+          'columns[5][orderable]': 'true',
+          'columns[5][search][value]': '',
+          'columns[5][search][regex]': 'false',
+          'columns[6][data]': '6',
+          'columns[6][name]': '',
+          'columns[6][searchable]': 'true',
+          'columns[6][orderable]': 'true',
+          'columns[6][search][value]': '',
+          'columns[6][search][regex]': 'false',
+          'columns[7][data]': '7',
+          'columns[7][name]': '',
+          'columns[7][searchable]': 'true',
+          'columns[7][orderable]': 'true',
+          'columns[7][search][value]': '',
+          'columns[7][search][regex]': 'false',
+          'columns[8][data]': '8',
+          'columns[8][name]': '',
+          'columns[8][searchable]': 'true',
+          'columns[8][orderable]': 'true',
+          'columns[8][search][value]': '',
+          'columns[8][search][regex]': 'false',
+          'columns[9][data]': '9',
+          'columns[9][name]': '',
+          'columns[9][searchable]': 'true',
+          'columns[9][orderable]': 'false',
+          'columns[9][search][value]': '',
+          'columns[9][search][regex]': 'false',
+          'columns[10][data]': '10',
+          'columns[10][name]': '',
+          'columns[10][searchable]': 'true',
+          'columns[10][orderable]': 'false',
+          'columns[10][search][value]': '',
+          'columns[10][search][regex]': 'false',
+          'columns[11][data]': '11',
+          'columns[11][name]': '',
+          'columns[11][searchable]': 'true',
+          'columns[11][orderable]': 'true',
+          'columns[11][search][value]': '',
+          'columns[11][search][regex]': 'false',
+          'columns[12][data]': '12',
+          'columns[12][name]': '',
+          'columns[12][searchable]': 'true',
+          'columns[12][orderable]': 'true',
+          'columns[12][search][value]': '',
+          'columns[12][search][regex]': 'false',
+          'columns[13][data]': '13',
+          'columns[13][name]': '',
+          'columns[13][searchable]': 'true',
+          'columns[13][orderable]': 'true',
+          'columns[13][search][value]': '',
+          'columns[13][search][regex]': 'false',
+          'columns[14][data]': '14',
+          'columns[14][name]': '',
+          'columns[14][searchable]': 'true',
+          'columns[14][orderable]': 'false',
+          'columns[14][search][value]': '',
+          'columns[14][search][regex]': 'false',
+          'order[0][column]': '0',
+          'order[0][dir]': 'asc',
+          'start': '0',
+          'length': '10',
+          'search[value]': query,
+          'search[regex]': 'false',
+          'guests_group': '0',
+          'last_visit_from': '',
+          'last_visit_to': '',
+          'date_insert_from': '',
+          'date_insert_to': '',
+          'balance_from': '',
+          'balance_to': '',
+          'bonus_balance_from': '',
+          'bonus_balance_to': '',
+          'guests_group_hand': '0'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Ошибка при поиске гостей:', error);
+      showNotification('Ошибка при поиске гостей', 'error');
+      return null;
+    }
+  }
+
+  // Функция для отображения результатов поиска
+  function displayGuestSearchResults(data) {
+    const resultsContainer = document.getElementById('guestSearchResults');
+    const noResultsContainer = document.getElementById('guestSearchNoResults');
+    const resultsBody = document.getElementById('guestSearchResultsBody');
+
+    if (!data || !data.data || data.data.length === 0) {
+      resultsContainer.style.display = 'none';
+      noResultsContainer.style.display = 'block';
+      return;
+    }
+
+    resultsContainer.style.display = 'block';
+    noResultsContainer.style.display = 'none';
+
+    resultsBody.innerHTML = '';
+
+    data.data.forEach(guest => {
+      const row = document.createElement('tr');
+      
+      // Извлекаем данные из HTML
+      const nameMatch = guest[0]?.match(/onclick="showGuestAnketa\((\d+)\)">([^<]+)<\/div>/);
+      const phoneMatch = guest[3]?.match(/onclick="showGuestAnketa\((\d+)\)">([^<]+)<\/div>/);
+      const guestId = nameMatch ? nameMatch[1] : (phoneMatch ? phoneMatch[1] : '');
+      const name = nameMatch ? nameMatch[2] : guest[0]?.replace(/<[^>]*>/g, '') || '';
+      const phone = phoneMatch ? phoneMatch[2] : guest[3]?.replace(/<[^>]*>/g, '') || '';
+      const email = guest[4] || '';
+      const balance = guest[6] || '0';
+      const bonusBalance = guest[7] || '0';
+
+      row.innerHTML = `
+        <td>${name}</td>
+        <td>${phone}</td>
+        <td>${email}</td>
+        <td>${balance}</td>
+        <td>${bonusBalance}</td>
+        <td>
+          <button class="btn btn-outline-success btn-sm addBalance" data-guest-id="${guestId}" title="Пополнить баланс">
+            <i class="fa fa-plus"></i>
+          </button>
+          <button class="btn btn-outline-danger btn-sm subBalance" data-guest-id="${guestId}" title="Списать баланс">
+            <i class="fa fa-minus"></i>
+          </button>
+          <button class="btn btn-success btn-sm addBonusBalance" data-guest-id="${guestId}" title="Добавить бонусы">
+            <i class="fa fa-gift"></i>
+          </button>
+          <button class="btn btn-danger btn-sm subBonusBalance" data-guest-id="${guestId}" title="Списать бонусы">
+            <i class="fa fa-gift"></i>
+          </button>
+        </td>
+      `;
+
+      resultsBody.appendChild(row);
+    });
+  }
+
+  // Функция для инициализации поиска гостей на главной странице
+  function initGuestSearchOnMainPage() {
+    console.log('Lan-Search: Инициализация поиска гостей на главной странице');
+    
+    // Проверяем, что мы на главной странице
+    if (window.location.pathname !== '/' && window.location.pathname !== '/dashboard/') {
+      console.log('Lan-Search: Не главная страница, пропускаем');
+      return;
+    }
+
+    // Проверяем, что блок поиска гостей еще не добавлен
+    if (document.getElementById('guestSearchContainer')) {
+      console.log('Lan-Search: Блок поиска гостей уже существует');
+      return;
+    }
+
+    // Ищем контейнер с recentTabsContainer
+    const recentTabsContainer = document.getElementById('recentTabsContainer');
+    let insertTarget = null;
+    
+    if (recentTabsContainer) {
+      console.log('Lan-Search: recentTabsContainer найден, создаем блок поиска гостей');
+      insertTarget = recentTabsContainer.parentNode;
+      insertTarget.insertBefore(createGuestSearchBlock(), recentTabsContainer.nextSibling);
+    } else {
+      // Альтернативный способ - ищем контейнер с langameSubscriptionWrapper
+      const langameWrapper = document.getElementById('langameSubscriptionWrapper');
+      if (langameWrapper) {
+        console.log('Lan-Search: recentTabsContainer не найден, используем langameSubscriptionWrapper');
+        insertTarget = langameWrapper.parentNode;
+        insertTarget.insertBefore(createGuestSearchBlock(), langameWrapper.nextSibling);
+      } else {
+        // Последний вариант - ищем container-fluid
+        const containerFluid = document.querySelector('.container-fluid');
+        if (containerFluid) {
+          console.log('Lan-Search: Используем container-fluid как fallback');
+          insertTarget = containerFluid;
+          insertTarget.appendChild(createGuestSearchBlock());
+        } else {
+          console.log('Lan-Search: Не удалось найти подходящий контейнер');
+          return;
+        }
+      }
+    }
+    
+    console.log('Lan-Search: Блок поиска гостей добавлен');
+
+    // Добавляем обработчики событий
+    const searchInput = document.getElementById('guestSearchInput');
+    const searchBtn = document.getElementById('searchGuestBtn');
+
+    if (searchInput && searchBtn) {
+      const performSearch = async () => {
+        const query = searchInput.value.trim();
+        if (!query) return;
+
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Поиск...';
+
+        try {
+          const results = await searchGuests(query);
+          if (results) {
+            displayGuestSearchResults(results);
+          }
+        } finally {
+          searchBtn.disabled = false;
+          searchBtn.innerHTML = '<i class="fa fa-search"></i> Найти';
+        }
+      };
+
+      searchBtn.addEventListener('click', performSearch);
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          performSearch();
+        }
+      });
+    }
+
+    // Добавляем обработчики для кнопок управления балансом
+    setTimeout(() => {
+      addBalanceHandlers();
+    }, 100);
+    
+    // Скрываем блок партнеров
+    const partnersDiv = document.getElementById('partners_div');
+    if (partnersDiv) {
+      partnersDiv.style.display = 'none';
+    }
+  }
+
+  // Функция для добавления обработчиков кнопок управления балансом
+  function addBalanceHandlers() {
+    // Обработчики для кнопок пополнения/списания баланса
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.addBalance')) {
+        const guestId = e.target.closest('.addBalance').dataset.guestId;
+        if (guestId) {
+          showAddBalanceModal(guestId);
+        }
+      } else if (e.target.closest('.subBalance')) {
+        const guestId = e.target.closest('.subBalance').dataset.guestId;
+        if (guestId) {
+          showAddBalanceModal(guestId, 'sub');
+        }
+      } else if (e.target.closest('.addBonusBalance')) {
+        const guestId = e.target.closest('.addBonusBalance').dataset.guestId;
+        if (guestId) {
+          showAddBonusModal(guestId, 'add');
+        }
+      } else if (e.target.closest('.subBonusBalance')) {
+        const guestId = e.target.closest('.subBonusBalance').dataset.guestId;
+        if (guestId) {
+          showAddBonusModal(guestId, 'sub');
+        }
+      }
+    });
+  }
+
+  // Функция для показа модального окна пополнения баланса
+  function showAddBalanceModal(guestId, action = 'add') {
+    const modal = document.getElementById('addBalanceModal');
+    if (!modal) {
+      console.error('Модальное окно addBalanceModal не найдено');
+      return;
+    }
+
+    // Устанавливаем ID гостя
+    const guestIdInput = modal.querySelector('input[name="guest_id"]');
+    if (guestIdInput) {
+      guestIdInput.value = guestId;
+    }
+
+    // Обновляем заголовок модального окна
+    const title = modal.querySelector('.modal-title');
+    if (title) {
+      title.textContent = action === 'sub' ? 'Списать баланс' : 'Пополнить баланс';
+    }
+
+    // Очищаем форму
+    const form = modal.querySelector('form');
+    if (form) {
+      form.reset();
+      guestIdInput.value = guestId; // Устанавливаем ID заново после reset
+    }
+
+    // Показываем модальное окно
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $(modal).modal('show');
+    } else {
+      // Fallback для случаев, когда jQuery не доступен
+      modal.style.display = 'block';
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+      
+      // Создаем и добавляем затемнение фона
+      let backdrop = document.querySelector('.modal-backdrop');
+      if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+      }
+      backdrop.style.display = 'block';
+      backdrop.classList.add('show');
+    }
+
+    // Обработчик отправки формы
+    if (form) {
+      // Удаляем старые обработчики
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+      
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Блокируем кнопку отправки
+        const submitBtn = newForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Отправка...';
+        }
+        
+        try {
+          await submitAddBalanceForm(guestId, new FormData(newForm), action);
+        } finally {
+          // Разблокируем кнопку
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Сохранить';
+          }
+        }
+      });
+    }
+  }
+
+  // Функция для показа модального окна управления бонусами
+  function showAddBonusModal(guestId, action) {
+    const modal = document.getElementById('addBonusModal');
+    if (!modal) {
+      console.error('Модальное окно addBonusModal не найдено');
+      return;
+    }
+
+    // Устанавливаем ID гостя и действие
+    const guestIdInput = modal.querySelector('input[name="guest_id"]');
+    const actionInput = modal.querySelector('input[name="action"]');
+    if (guestIdInput) {
+      guestIdInput.value = guestId;
+    }
+    if (actionInput) {
+      actionInput.value = action;
+    }
+
+    // Обновляем заголовок в зависимости от действия
+    const title = modal.querySelector('.modal-title');
+    if (title) {
+      title.textContent = action === 'add' ? 'Добавить бонусы' : 'Списать бонусы';
+    }
+
+    // Очищаем форму
+    const form = modal.querySelector('form');
+    if (form) {
+      form.reset();
+      guestIdInput.value = guestId; // Устанавливаем ID заново после reset
+      actionInput.value = action; // Устанавливаем действие заново после reset
+    }
+
+    // Показываем модальное окно
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $(modal).modal('show');
+    } else {
+      // Fallback для случаев, когда jQuery не доступен
+      modal.style.display = 'block';
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+      
+      // Создаем и добавляем затемнение фона
+      let backdrop = document.querySelector('.modal-backdrop');
+      if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        document.body.appendChild(backdrop);
+      }
+      backdrop.style.display = 'block';
+      backdrop.classList.add('show');
+    }
+
+    // Обработчик отправки формы
+    if (form) {
+      // Удаляем старые обработчики
+      const newForm = form.cloneNode(true);
+      form.parentNode.replaceChild(newForm, form);
+      
+      newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        // Блокируем кнопку отправки
+        const submitBtn = newForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Отправка...';
+        }
+        
+        try {
+          await submitAddBonusForm(guestId, action, new FormData(newForm));
+        } finally {
+          // Разблокируем кнопку
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Сохранить';
+          }
+        }
+      });
+    }
+  }
+
+  // Функция для показа модального окна управления балансом
+  function showBalanceModal(guestId, action) {
+    const modalId = `balanceModal_${guestId}_${action}`;
+    let modal = document.getElementById(modalId);
+    
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = modalId;
+      modal.className = 'modal fade';
+      modal.setAttribute('tabindex', '-1');
+      modal.setAttribute('role', 'dialog');
+      modal.innerHTML = `
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">${action === 'add' ? 'Пополнить баланс' : 'Списать баланс'}</h5>
+              <button type="button" class="close" data-dismiss="modal">
+                <span>&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form name="balanceForm_${guestId}">
+                <input type="hidden" name="guest_id" value="${guestId}">
+                ${action === 'sub' ? '<input type="hidden" name="subBalance" value="1">' : ''}
+                <div class="form-group">
+                  <label>Сумма:</label>
+                  <input type="number" class="form-control" name="balance" step="0.01" max="999999" placeholder="${action === 'add' ? 'пополнить' : 'списать'}" required>
+                </div>
+                <div class="form-group">
+                  <label>Комментарий:</label>
+                  <textarea class="form-control" name="comment" rows="2" placeholder="Комментарий"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    // Показываем модальное окно
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $(modal).modal('show');
+    } else {
+      // Fallback для случаев, когда jQuery не доступен
+      modal.style.display = 'block';
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    // Обработчик отправки формы
+    const form = modal.querySelector('form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitBalanceForm(guestId, action, new FormData(form));
+    });
+  }
+
+  // Функция для показа модального окна управления бонусами
+  function showBonusModal(guestId, action) {
+    const modalId = `bonusModal_${guestId}_${action}`;
+    let modal = document.getElementById(modalId);
+    
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = modalId;
+      modal.className = 'modal fade';
+      modal.setAttribute('tabindex', '-1');
+      modal.setAttribute('role', 'dialog');
+      modal.innerHTML = `
+        <div class="modal-dialog modal-sm">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">${action === 'add' ? 'Добавить бонусы' : 'Списать бонусы'}</h5>
+              <button type="button" class="close" data-dismiss="modal">
+                <span>&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form name="bonusForm_${guestId}">
+                <input type="hidden" name="guest_id" value="${guestId}">
+                <div class="form-group">
+                  <label>Сумма бонусов:</label>
+                  <input type="number" class="form-control" name="bonus_balance" step="0.01" max="999999" placeholder="${action === 'add' ? 'добавить' : 'списать'}" required>
+                </div>
+                <div class="form-group">
+                  <label>Комментарий:</label>
+                  <textarea class="form-control" name="comment" rows="2" placeholder="Комментарий"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    // Показываем модальное окно
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $(modal).modal('show');
+    } else {
+      // Fallback для случаев, когда jQuery не доступен
+      modal.style.display = 'block';
+      modal.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    // Обработчик отправки формы
+    const form = modal.querySelector('form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await submitBonusForm(guestId, action, new FormData(form));
+    });
+  }
+
+  // Функция для получения куки
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  // Функция для отправки формы пополнения баланса
+  async function submitAddBalanceForm(guestId, formData, action = 'add') {
+    try {
+      const balance = formData.get('balance');
+      const sum = action === 'sub' ? -parseFloat(balance) : parseFloat(balance);
+
+      // Получаем токен авторизации из куки
+      const authToken = getCookie('auth_token') || getCookie('token') || getCookie('access_token');
+      
+      const headers = {
+        'content-type': 'application/json'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(`/master_api/guests/${guestId}/balance`, {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          type: 'balance',
+          sum: sum
+        })
+      });
+
+      if (response.ok) {
+        showNotification(`${action === 'sub' ? 'Баланс списан' : 'Баланс пополнен'} успешно`, 'success');
+        // Закрываем модальное окно
+        const addBalanceModal = document.getElementById('addBalanceModal');
+        if (addBalanceModal) {
+          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $('#addBalanceModal').modal('hide');
+          } else {
+            addBalanceModal.style.display = 'none';
+            addBalanceModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Убираем затемнение фона
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+              backdrop.style.display = 'none';
+              backdrop.classList.remove('show');
+            }
+          }
+        }
+        // Обновляем результаты поиска
+        const searchInput = document.getElementById('guestSearchInput');
+        if (searchInput && searchInput.value.trim()) {
+          const results = await searchGuests(searchInput.value.trim());
+          if (results) {
+            displayGuestSearchResults(results);
+          }
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error_code === 9) {
+          showNotification('Ошибка авторизации. Пожалуйста, войдите в систему заново', 'error');
+        } else if (errorData.error_code === 4) {
+          showNotification('Недостаточно средств для списания указанной суммы', 'error');
+        } else {
+          showNotification(errorData.error_message || 'Ошибка при пополнении баланса', 'error');
+        }
+        throw new Error(errorData.error_message || 'Ошибка при пополнении баланса');
+      }
+    } catch (error) {
+      console.error('Ошибка при пополнении баланса:', error);
+      if (!error.message.includes('Ошибка при пополнении баланса')) {
+        showNotification('Ошибка при пополнении баланса', 'error');
+      }
+    }
+  }
+
+  // Функция для отправки формы баланса
+  async function submitBalanceForm(guestId, action, formData) {
+    try {
+      const response = await fetch('/guests_search/balance_update.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        credentials: 'include',
+        body: new URLSearchParams(formData)
+      });
+
+      if (response.ok) {
+        showNotification(`${action === 'add' ? 'Баланс пополнен' : 'Баланс списан'} успешно`, 'success');
+        // Закрываем модальное окно
+        const balanceModal = document.getElementById(`balanceModal_${guestId}_${action}`);
+        if (balanceModal) {
+          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $(`#balanceModal_${guestId}_${action}`).modal('hide');
+          } else {
+            balanceModal.style.display = 'none';
+            balanceModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+          }
+        }
+        // Обновляем результаты поиска
+        const searchInput = document.getElementById('guestSearchInput');
+        if (searchInput && searchInput.value.trim()) {
+          const results = await searchGuests(searchInput.value.trim());
+          if (results) {
+            displayGuestSearchResults(results);
+          }
+        }
+      } else {
+        throw new Error('Ошибка при обновлении баланса');
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении баланса:', error);
+      showNotification('Ошибка при обновлении баланса', 'error');
+    }
+  }
+
+  // Функция для отправки формы бонусов
+  async function submitAddBonusForm(guestId, action, formData) {
+    try {
+      const bonusBalance = formData.get('bonus_balance');
+      const sum = action === 'add' ? parseFloat(bonusBalance) : -parseFloat(bonusBalance);
+
+      // Получаем токен авторизации из куки
+      const authToken = getCookie('auth_token') || getCookie('token') || getCookie('access_token');
+      
+      const headers = {
+        'content-type': 'application/json'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(`/master_api/guests/${guestId}/balance`, {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          type: 'bonus_balance',
+          sum: sum
+        })
+      });
+
+      if (response.ok) {
+        showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
+        // Закрываем модальное окно
+        const addBonusModal = document.getElementById('addBonusModal');
+        if (addBonusModal) {
+          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $('#addBonusModal').modal('hide');
+          } else {
+            addBonusModal.style.display = 'none';
+            addBonusModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Убираем затемнение фона
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+              backdrop.style.display = 'none';
+              backdrop.classList.remove('show');
+            }
+          }
+        }
+        // Обновляем результаты поиска
+        const searchInput = document.getElementById('guestSearchInput');
+        if (searchInput && searchInput.value.trim()) {
+          const results = await searchGuests(searchInput.value.trim());
+          if (results) {
+            displayGuestSearchResults(results);
+          }
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        if (errorData.error_code === 9) {
+          showNotification('Ошибка авторизации. Пожалуйста, войдите в систему заново', 'error');
+        } else if (errorData.error_code === 4) {
+          showNotification('Недостаточно бонусов для списания указанной суммы', 'error');
+        } else {
+          showNotification(errorData.error_message || 'Ошибка при обновлении бонусов', 'error');
+        }
+        throw new Error(errorData.error_message || 'Ошибка при обновлении бонусов');
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении бонусов:', error);
+      if (!error.message.includes('Ошибка при обновлении бонусов')) {
+        showNotification('Ошибка при обновлении бонусов', 'error');
+      }
+    }
+  }
+
+  // Функция для отправки формы бонусов
+  async function submitBonusForm(guestId, action, formData) {
+    try {
+      const response = await fetch('/guests_search/bonus_update.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        credentials: 'include',
+        body: new URLSearchParams(formData)
+      });
+
+      if (response.ok) {
+        showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
+        // Закрываем модальное окно
+        const bonusModal = document.getElementById(`bonusModal_${guestId}_${action}`);
+        if (bonusModal) {
+          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $(`#bonusModal_${guestId}_${action}`).modal('hide');
+          } else {
+            bonusModal.style.display = 'none';
+            bonusModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+          }
+        }
+        // Обновляем результаты поиска
+        const searchInput = document.getElementById('guestSearchInput');
+        if (searchInput && searchInput.value.trim()) {
+          const results = await searchGuests(searchInput.value.trim());
+          if (results) {
+            displayGuestSearchResults(results);
+          }
+        }
+      } else {
+        throw new Error('Ошибка при обновлении бонусов');
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении бонусов:', error);
+      showNotification('Ошибка при обновлении бонусов', 'error');
     }
   }
 

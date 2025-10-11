@@ -691,6 +691,91 @@ html[data-theme="dark"] .content-wrapper a {
   background-color: var(--bg-color) !important;
 }
 
+/* Стили для блока поиска гостей */
+[data-theme="dark"] #guestSearchContainer {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .card-header {
+  background-color: var(--bg-tertiary) !important;
+  border-bottom-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .form-control {
+  background-color: var(--bg-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .form-control:focus {
+  background-color: var(--bg-color) !important;
+  border-color: var(--button-bg) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(52, 144, 220, 0.25) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .table {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .table thead th {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .table tbody td {
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .table tbody tr:hover {
+  background-color: var(--bg-tertiary) !important;
+}
+
+[data-theme="dark"] #guestSearchContainer .alert-info {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* Стили для модальных окон управления балансом */
+[data-theme="dark"] .modal-content {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-header {
+  background-color: var(--bg-tertiary) !important;
+  border-bottom-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .modal-body {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .modal-body .form-control {
+  background-color: var(--bg-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .modal-body .form-control:focus {
+  background-color: var(--bg-color) !important;
+  border-color: var(--button-bg) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(52, 144, 220, 0.25) !important;
+}
+
+[data-theme="dark"] .modal-body label {
+  color: var(--text-color) !important;
+}
+
 /* Стили для панелей и блоков - только в основном контенте */
 [data-theme="dark"] .content-wrapper .panel {
   background-color: var(--bg-secondary) !important;
