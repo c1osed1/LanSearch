@@ -926,10 +926,66 @@
       addBalanceHandlers();
     }, 100);
     
+    // Добавляем обработчики для закрытия модальных окон
+    setTimeout(() => {
+      addModalCloseHandlers();
+    }, 100);
+    
     // Скрываем блок партнеров
     const partnersDiv = document.getElementById('partners_div');
     if (partnersDiv) {
       partnersDiv.style.display = 'none';
+    }
+  }
+
+  // Функция для добавления обработчиков закрытия модальных окон
+  function addModalCloseHandlers() {
+    // Обработчик для модального окна пополнения баланса
+    const addBalanceModal = document.getElementById('addBalanceModal');
+    if (addBalanceModal) {
+      const closeBtn = addBalanceModal.querySelector('.close, [data-dismiss="modal"]');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $('#addBalanceModal').modal('hide');
+          } else {
+            addBalanceModal.style.display = 'none';
+            addBalanceModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Убираем затемнение фона
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+              backdrop.style.display = 'none';
+              backdrop.classList.remove('show');
+            }
+          }
+        });
+      }
+    }
+
+    // Обработчик для модального окна управления бонусами
+    const addBonusModal = document.getElementById('addBonusModal');
+    if (addBonusModal) {
+      const closeBtn = addBonusModal.querySelector('.close, [data-dismiss="modal"]');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+            $('#addBonusModal').modal('hide');
+          } else {
+            addBonusModal.style.display = 'none';
+            addBonusModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // Убираем затемнение фона
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+              backdrop.style.display = 'none';
+              backdrop.classList.remove('show');
+            }
+          }
+        });
+      }
     }
   }
 
