@@ -357,11 +357,11 @@
 }
 
 /* Скрытие чекбоксов ПК - только на странице /all_clubs_pc/ */
-body:has([data-page="all_clubs_pc"]) .lan-search-hide-checkboxes .custom-control.custom-checkbox {
+body.lan-search-hide-checkboxes .custom-control.custom-checkbox {
     display: none !important;
 }
 
 /* Скрытие комментариев ПК - только на странице /all_clubs_pc/ */
-body:has([data-page="all_clubs_pc"]) .lan-search-hide-comments .input-group {
+body.lan-search-hide-comments .input-group {
     display: none !important;
 }
