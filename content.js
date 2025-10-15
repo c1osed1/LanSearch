@@ -1,3 +1,8 @@
+// Переменные для кэширования информации по домену через API
+let domainInfoCache = null;
+let domainInfoCacheTime = 0;
+const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
+
 (function () {
   const MENU_ID = "globalMenuAccordion";
   const SEARCH_ID = "globalMenuSearchInput";
@@ -469,10 +474,22 @@
     if (shouldAutoActivate()) {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-          setTimeout(initGuestSearchOnMainPage, 1000);
+          // Пытаемся инициализировать сразу, если элементы уже есть
+          if (document.getElementById('recentTabsContainer') || document.getElementById('langameSubscriptionWrapper')) {
+            initGuestSearchOnMainPage();
+          } else {
+            // Если элементы еще не загружены, ждем с меньшей задержкой
+            setTimeout(initGuestSearchOnMainPage, 50);
+          }
         });
       } else {
-        setTimeout(initGuestSearchOnMainPage, 1000);
+        // Пытаемся инициализировать сразу, если элементы уже есть
+        if (document.getElementById('recentTabsContainer') || document.getElementById('langameSubscriptionWrapper')) {
+          initGuestSearchOnMainPage();
+        } else {
+          // Если элементы еще не загружены, ждем с меньшей задержкой
+          setTimeout(initGuestSearchOnMainPage, 50);
+        }
       }
     }
   }
@@ -528,7 +545,7 @@
   function createGuestSearchBlock() {
     const container = document.createElement('div');
     container.id = 'guestSearchContainer';
-    container.className = 'card mb-3';
+    container.className = 'card';
     container.style.cssText = `
       margin-top: 15px;
       padding: 15px;
@@ -844,7 +861,7 @@
   }
 
   // Функция для инициализации поиска гостей на главной странице
-  function initGuestSearchOnMainPage() {
+  function initGuestSearchOnMainPage(attempts = 0) {
     console.log('Lan-Search: Инициализация поиска гостей на главной странице');
     
     // Проверяем, что мы на главной странице
@@ -882,8 +899,15 @@
           insertTarget = containerFluid;
           insertTarget.appendChild(createGuestSearchBlock());
         } else {
-          console.log('Lan-Search: Не удалось найти подходящий контейнер');
-          return;
+          // Ограничиваем количество попыток (максимум 10 попыток за 2 секунды)
+          if (attempts < 10) {
+            console.log(`Lan-Search: Не удалось найти подходящий контейнер, повторяем попытку ${attempts + 1}/10 через 200мс`);
+            setTimeout(() => initGuestSearchOnMainPage(attempts + 1), 200);
+            return;
+          } else {
+            console.log('Lan-Search: Превышено максимальное количество попыток инициализации поиска гостей');
+            return;
+          }
         }
       }
     }
@@ -924,18 +948,46 @@
     // Добавляем обработчики для кнопок управления балансом
     setTimeout(() => {
       addBalanceHandlers();
-    }, 100);
+    }, 50);
     
     // Добавляем обработчики для закрытия модальных окон
     setTimeout(() => {
       addModalCloseHandlers();
-    }, 100);
+    }, 50);
     
-    // Скрываем блок партнеров
+    // Скрываем блок партнеров и связанные элементы
     const partnersDiv = document.getElementById('partners_div');
     if (partnersDiv) {
       partnersDiv.style.display = 'none';
     }
+    
+    // Скрываем заголовок "Предложения партнёров"
+    const partnersHeading = document.querySelector('h3');
+    if (partnersHeading && partnersHeading.textContent.includes('Предложения партнёров')) {
+      partnersHeading.style.display = 'none';
+    }
+    
+    // Скрываем описание под заголовком
+    const partnersDescription = document.querySelector('p');
+    if (partnersDescription && partnersDescription.textContent.includes('Здесь мы собираем для пользователей LANGAME Software выгодные предложения от наших партнёров')) {
+      partnersDescription.style.display = 'none';
+    }
+    
+    // Дополнительная проверка - ищем все h3 и p элементы на странице
+    const allHeadings = document.querySelectorAll('h3');
+    const allParagraphs = document.querySelectorAll('p');
+    
+    allHeadings.forEach(heading => {
+      if (heading.textContent.includes('Предложения партнёров')) {
+        heading.style.display = 'none';
+      }
+    });
+    
+    allParagraphs.forEach(paragraph => {
+      if (paragraph.textContent.includes('Здесь мы собираем для пользователей LANGAME Software выгодные предложения от наших партнёров')) {
+        paragraph.style.display = 'none';
+      }
+    });
   }
 
   // Функция для добавления обработчиков закрытия модальных окон
@@ -6004,6 +6056,7 @@ window.lanSearchProcessPCData = function processPCData(data) {
         initTableOptimization();
         initHideCheckboxes();
         initHideComments();
+        initDomainInfo();
         initWebSocketPCData();
       });
     } else {
@@ -6014,6 +6067,7 @@ window.lanSearchProcessPCData = function processPCData(data) {
       initTableOptimization();
       initHideCheckboxes();
       initHideComments();
+      initDomainInfo();
       initWebSocketPCData();
     }
   }
@@ -6760,4 +6814,539 @@ if (window.location.pathname.includes('/freenas_wrap/') || window.location.pathn
   addPCStatusButton();
 } else {
   console.log('Lan-Search: WebSocket мониторинг отключен для страницы:', window.location.pathname);
-} 
+}
+
+// Функции для работы с информацией по домену
+function getDomainInfoSetting(callback) {
+  const now = Date.now();
+  
+  if (domainInfoCache !== null && (now - domainInfoCacheTime) < DOMAIN_INFO_CACHE_DURATION) {
+    callback(domainInfoCache);
+    return;
+  }
+  
+  try {
+    chrome.storage.sync.get(['domainInfo'], function(result) {
+      if (chrome.runtime.lastError) {
+        console.log('Lan-Search: Ошибка получения настроек информации по домену из chrome.storage:', chrome.runtime.lastError);
+        
+        const localDomainInfo = localStorage.getItem('lanSearchDomainInfo');
+        const enabled = localDomainInfo === 'true';
+        
+        domainInfoCache = enabled;
+        domainInfoCacheTime = now;
+        
+        callback(enabled);
+      } else {
+        const enabled = result.domainInfo || false;
+        
+        domainInfoCache = enabled;
+        domainInfoCacheTime = now;
+        
+        try {
+          localStorage.setItem('lanSearchDomainInfo', enabled.toString());
+        } catch (e) {
+          console.log('Lan-Search: Не удалось сохранить настройки информации по домену в localStorage:', e);
+        }
+        
+        callback(enabled);
+      }
+    });
+  } catch (e) {
+    console.log('Lan-Search: Ошибка при получении настроек информации по домену:', e);
+    
+    const localDomainInfo = localStorage.getItem('lanSearchDomainInfo');
+    const enabled = localDomainInfo === 'true';
+    
+    domainInfoCache = enabled;
+    domainInfoCacheTime = now;
+    
+    callback(enabled);
+  }
+}
+
+function clearDomainInfoCache() {
+  domainInfoCache = null;
+  domainInfoCacheTime = 0;
+}
+
+// Функция для поиска домена через API
+async function searchDomainViaAPI(domain) {
+  try {
+    console.log('Lan-Search: Поиск домена через API:', domain);
+    
+    // Очищаем домен от протокола и www
+    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').trim();
+    
+    const apiUrl = `https://k-connect.ru/api/domain-search/${encodeURIComponent(cleanDomain)}`;
+    console.log('Lan-Search: API URL:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Lan-Search: API ошибка:', response.status, errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log('Lan-Search: Ответ API:', data);
+    
+    if (data.success && data.data && data.data.full_row) {
+      console.log('Lan-Search: Найден домен в API, строка:', data.data.full_row);
+      console.log('Lan-Search: Полная строка данных:', data.data.full_row);
+      console.log('Lan-Search: Количество элементов в строке:', data.data.full_row.length);
+      
+      const row = data.data.full_row;
+      
+      // Логируем каждый элемент для отладки
+      row.forEach((item, index) => {
+        console.log(`Lan-Search: Элемент ${index}:`, item);
+      });
+      
+      return {
+        name: row[1] || '', // Клуб
+        id: row[0] || '', // ID
+        domain: data.data.domain || cleanDomain, // Домен
+        value: row[3] || '', // Execute name
+        alias: row[4] || '', // Anydesk
+        ip: row[5] || '', // IP
+        command: row[9] || '', // Команда (индекс 9, а не 6!)
+        info: row[12] || '', // Дополнительная информация
+        // Дополнительные поля из полного ответа
+        rowNumber: data.data.row_number || '',
+        columnNumber: data.data.column_number || '',
+        matchedCell: data.data.matched_cell || '',
+        searchedDomain: data.searched_domain || cleanDomain
+      };
+    } else {
+      console.log('Lan-Search: Домен не найден через API:', data.error || 'Неизвестная ошибка');
+      return null;
+    }
+  } catch (error) {
+    console.error('Lan-Search: Ошибка API запроса:', error);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.error('Lan-Search: Возможная CORS ошибка или недоступность API');
+    }
+    return null;
+  }
+}
+
+// Функция для обработки информации по домену через API
+async function processDomainInfoAPI(currentDomain) {
+  console.log('Lan-Search: Поиск информации по домену через API:', currentDomain);
+  
+  const domainInfo = await searchDomainViaAPI(currentDomain);
+  if (!domainInfo) {
+    console.log('Lan-Search: Информация по домену не найдена через API для:', currentDomain);
+    return;
+  }
+  
+  console.log('Lan-Search: Найдена информация по домену через API:', domainInfo);
+  
+  // Кэшируем результат
+  domainInfoCache = domainInfo;
+  domainInfoCacheTime = Date.now();
+  
+  // Проверяем, что блок еще не добавлен
+  if (document.getElementById('domainInfoContainer')) {
+    console.log('Lan-Search: Блок информации по домену уже существует');
+    return;
+  }
+  
+  // Ищем место для вставки (после блока поиска гостей)
+  const guestSearchContainer = document.getElementById('guestSearchContainer');
+  if (guestSearchContainer) {
+    guestSearchContainer.parentNode.insertBefore(createDomainInfoBlock(domainInfo), guestSearchContainer.nextSibling);
+    console.log('Lan-Search: Блок информации по домену добавлен после guestSearchContainer');
+  } else {
+    // Альтернативные места для вставки
+    const recentTabsContainer = document.getElementById('recentTabsContainer');
+    if (recentTabsContainer) {
+      recentTabsContainer.parentNode.insertBefore(createDomainInfoBlock(domainInfo), recentTabsContainer.nextSibling);
+      console.log('Lan-Search: Блок информации по домену добавлен после recentTabsContainer');
+    } else {
+      const langameWrapper = document.getElementById('langameSubscriptionWrapper');
+      if (langameWrapper) {
+        langameWrapper.parentNode.insertBefore(createDomainInfoBlock(domainInfo), langameWrapper.nextSibling);
+        console.log('Lan-Search: Блок информации по домену добавлен после langameSubscriptionWrapper');
+      } else {
+        const containerFluid = document.querySelector('.container-fluid');
+        if (containerFluid) {
+          containerFluid.appendChild(createDomainInfoBlock(domainInfo));
+          console.log('Lan-Search: Блок информации по домену добавлен в container-fluid');
+        } else {
+          console.log('Lan-Search: Не удалось найти подходящее место для вставки блока информации по домену');
+        }
+      }
+    }
+  }
+}
+
+
+
+function createDomainInfoBlock(domainInfo) {
+  const container = document.createElement('div');
+  container.id = 'domainInfoContainer';
+  container.style.cssText = `
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+  `;
+  
+  const title = document.createElement('h4');
+  title.textContent = 'Информация по домену';
+  title.style.cssText = 'margin: 0 0 10px 0; color: #495057; font-size: 13px;';
+  
+  // Функция для создания блока с кнопкой копирования
+  function createInfoBlock(label, value, isMultiline = false) {
+    if (!value || value === 'Не указано' || value === '') return null;
+    
+    const block = document.createElement('div');
+    block.style.cssText = 'margin-bottom: 8px; padding: 6px; background: white; border-radius: 3px; border: 1px solid #dee2e6;';
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;';
+    
+    const labelEl = document.createElement('strong');
+    labelEl.textContent = label + ':';
+    labelEl.style.cssText = 'color: #495057; font-size: 11px;';
+    
+    const copyBtn = document.createElement('button');
+    copyBtn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    `;
+    copyBtn.style.cssText = `
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 6px;
+      font-size: 0;
+      cursor: pointer;
+      margin-left: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      min-height: 20px;
+    `;
+    copyBtn.title = 'Копировать';
+    
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(value);
+        copyBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20,6 9,17 4,12"></polyline>
+          </svg>
+        `;
+        copyBtn.style.background = '#28a745';
+        setTimeout(() => {
+          copyBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          `;
+          copyBtn.style.background = '#007bff';
+        }, 1000);
+      } catch (err) {
+        console.error('Ошибка копирования:', err);
+        // Fallback для старых браузеров
+        const textArea = document.createElement('textarea');
+        textArea.value = value;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        copyBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20,6 9,17 4,12"></polyline>
+          </svg>
+        `;
+        copyBtn.style.background = '#28a745';
+        setTimeout(() => {
+          copyBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          `;
+          copyBtn.style.background = '#007bff';
+        }, 1000);
+      }
+    });
+    
+    header.appendChild(labelEl);
+    header.appendChild(copyBtn);
+    
+    const valueEl = document.createElement('div');
+    valueEl.textContent = value;
+    valueEl.style.cssText = `
+      color: #212529;
+      font-size: 10px;
+      word-break: break-all;
+      white-space: ${isMultiline ? 'pre-wrap' : 'nowrap'};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: ${isMultiline ? '80px' : 'auto'};
+      overflow-y: ${isMultiline ? 'auto' : 'hidden'};
+    `;
+    
+    block.appendChild(header);
+    block.appendChild(valueEl);
+    
+    return block;
+  }
+  
+  // Отладочное логирование
+  console.log('Lan-Search: Создание блоков для domainInfo:', domainInfo);
+  console.log('Lan-Search: Команда для отображения:', domainInfo.command);
+  console.log('Lan-Search: Длина команды:', domainInfo.command ? domainInfo.command.length : 'undefined');
+  
+  // Создаем блоки для всех полей
+  const blocks = [
+    createInfoBlock('Название клуба', domainInfo.name + ' | ' + domainInfo.value),
+    createInfoBlock('ID', domainInfo.id),
+    createInfoBlock('Домен', domainInfo.domain),
+    createInfoBlock('Anydesk', domainInfo.alias),
+    createInfoBlock('Команда', domainInfo.command, true),
+  ].filter(block => block !== null);
+  
+  console.log('Lan-Search: Создано блоков:', blocks.length);
+  
+  container.appendChild(title);
+  
+  if (blocks.length === 0) {
+    const noData = document.createElement('div');
+    noData.textContent = 'Информация не найдена';
+    noData.style.cssText = 'color: #6c757d; font-style: italic; text-align: center; padding: 20px;';
+    container.appendChild(noData);
+  } else {
+    blocks.forEach(block => container.appendChild(block));
+  }
+  
+  return container;
+}
+
+function initDomainInfo() {
+  // Проверяем, что мы на главной странице
+  if (window.location.pathname !== '/' && window.location.pathname !== '/dashboard/') {
+    console.log('Lan-Search: Информация по домену доступна только на главной странице');
+    return;
+  }
+  
+  console.log('Lan-Search: Инициализация информации по домену через API');
+  console.log('Lan-Search: Текущий URL:', window.location.href);
+  console.log('Lan-Search: Текущий домен:', window.location.hostname);
+  
+  // Небольшая задержка для полной загрузки страницы
+  setTimeout(() => {
+    getDomainInfoSetting(function(domainInfoEnabled) {
+      console.log('Lan-Search: Настройка информации по домену:', domainInfoEnabled);
+      if (!domainInfoEnabled) {
+        console.log('Lan-Search: Информация по домену отключена');
+        return;
+      }
+      
+      // Получаем текущий домен
+      const currentDomain = window.location.hostname;
+      console.log('Lan-Search: Текущий домен:', currentDomain);
+      
+      // Проверяем кэш
+      const now = Date.now();
+      if (domainInfoCache && domainInfoCacheTime && (now - domainInfoCacheTime) < DOMAIN_INFO_CACHE_DURATION) {
+        console.log('Lan-Search: Используем кэшированную информацию по домену');
+        processDomainInfoAPI(currentDomain);
+        return;
+      }
+      
+      // Загружаем данные через API
+      processDomainInfoAPI(currentDomain);
+    });
+  }, 1000); // Задержка в 1 секунду для полной загрузки страницы
+}
+
+// Глобальные функции для синхронизации
+window.lanSearchSyncDomainInfo = function() {
+  console.log('Lan-Search: Принудительная синхронизация настроек информации по домену');
+  clearDomainInfoCache();
+  getDomainInfoSetting(function(enabled) {
+    if (enabled) {
+      console.log('Lan-Search: Синхронизация завершена - информация по домену ВКЛЮЧЕНА');
+      initDomainInfo();
+    } else {
+      console.log('Lan-Search: Синхронизация завершена - информация по домену ОТКЛЮЧЕНА');
+      const domainInfoContainer = document.getElementById('domainInfoContainer');
+      if (domainInfoContainer) {
+        domainInfoContainer.remove();
+      }
+    }
+  });
+};
+
+// Глобальные функции для получения настроек
+window.lanSearchGetDomainInfoSetting = getDomainInfoSetting;
+
+// Тестовая функция для проверки работы
+window.lanSearchTestDomainInfo = function() {
+  console.log('Lan-Search: Тестирование информации по домену');
+  
+  // Создаем тестовый блок
+  const testInfo = {
+    name: 'Тестовое название',
+    id: 'Тестовый ID',
+    ip: '192.168.1.1',
+    info: 'Тестовая информация'
+  };
+  
+  const testBlock = createDomainInfoBlock(testInfo);
+  
+  // Ищем место для вставки
+  const guestSearchContainer = document.getElementById('guestSearchContainer');
+  if (guestSearchContainer) {
+    guestSearchContainer.parentNode.insertBefore(testBlock, guestSearchContainer.nextSibling);
+    console.log('Lan-Search: Тестовый блок добавлен');
+  } else {
+    document.body.appendChild(testBlock);
+    console.log('Lan-Search: Тестовый блок добавлен в body');
+  }
+};
+
+// Функция для тестирования API
+window.lanSearchTestAPI = async function(domain) {
+  console.log('Lan-Search: Тестирование API для домена:', domain);
+  
+  const testDomain = domain || window.location.hostname;
+  const result = await searchDomainViaAPI(testDomain);
+  console.log('Lan-Search: Результат API:', result);
+  
+  if (result && result.command) {
+    console.log('Lan-Search: Команда найдена:', result.command);
+  } else {
+    console.log('Lan-Search: Команда не найдена или пустая');
+  }
+  
+  return result;
+};
+
+// Функция для проверки доступности API и CORS
+window.lanSearchTestCORS = async function() {
+  console.log('Lan-Search: Тестирование CORS и доступности API');
+  
+  try {
+    const healthUrl = 'https://k-connect.ru/api/domain-search/health';
+    console.log('Lan-Search: Проверяем health endpoint:', healthUrl);
+    
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    console.log('Lan-Search: Health response status:', response.status);
+    console.log('Lan-Search: Health response headers:', [...response.headers.entries()]);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Lan-Search: Health response data:', data);
+      return { success: true, data: data };
+    } else {
+      const errorText = await response.text();
+      console.error('Lan-Search: Health check failed:', response.status, errorText);
+      return { success: false, error: `HTTP ${response.status}: ${errorText}` };
+    }
+  } catch (error) {
+    console.error('Lan-Search: CORS/API test error:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Функция для принудительной очистки кэша и перезагрузки данных
+window.lanSearchReloadData = async function() {
+  console.log('Lan-Search: Принудительная перезагрузка данных через API');
+  
+  // Очищаем кэш
+  clearDomainInfoCache();
+  
+  // Удаляем существующий блок
+  const existingBlock = document.getElementById('domainInfoContainer');
+  if (existingBlock) {
+    existingBlock.remove();
+  }
+  
+  // Перезапускаем инициализацию
+  setTimeout(() => {
+    initDomainInfo();
+  }, 1000);
+};
+
+// Функция для прямого тестирования API с детальным логированием
+window.lanSearchDebugAPI = async function(domain) {
+  console.log('Lan-Search: Детальное тестирование API для домена:', domain);
+  
+  const testDomain = domain || window.location.hostname;
+  const cleanDomain = testDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').trim();
+  
+  try {
+    const apiUrl = `https://k-connect.ru/api/domain-search/${encodeURIComponent(cleanDomain)}`;
+    console.log('Lan-Search: Debug API URL:', apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      mode: 'cors',
+      credentials: 'omit'
+    });
+    
+    console.log('Lan-Search: Debug response status:', response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Lan-Search: Debug full response:', data);
+      
+      if (data.success && data.data && data.data.full_row) {
+        console.log('Lan-Search: Debug full_row:', data.data.full_row);
+        console.log('Lan-Search: Debug command (index 9):', data.data.full_row[9]);
+        console.log('Lan-Search: Debug command length:', data.data.full_row[9] ? data.data.full_row[9].length : 'undefined');
+        console.log('Lan-Search: Debug all elements:');
+        data.data.full_row.forEach((item, index) => {
+          console.log(`  [${index}]:`, item);
+        });
+      }
+    } else {
+      const errorText = await response.text();
+      console.error('Lan-Search: Debug API error:', response.status, errorText);
+    }
+  } catch (error) {
+    console.error('Lan-Search: Debug API error:', error);
+  }
+}; 

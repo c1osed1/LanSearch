@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const tableOptimizationToggle = document.getElementById('tableOptimizationToggle');
   const hideCheckboxesToggle = document.getElementById('hideCheckboxesToggle');
   const hideCommentsToggle = document.getElementById('hideCommentsToggle');
+  const domainInfoToggle = document.getElementById('domainInfoToggle');
   
   
   let currentTheme = 'light';
@@ -202,6 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let tableOptimizationEnabled = false;
   let hideCheckboxesEnabled = false;
   let hideCommentsEnabled = false;
+  let domainInfoEnabled = false;
   function initPCStyles() {
     try {
       const localStyles = localStorage.getItem('lanSearchPCStyles');
@@ -505,6 +507,74 @@ document.addEventListener('DOMContentLoaded', function() {
   hideCommentsToggle.addEventListener('click', toggleHideComments);
   
   
+  // Функции для работы с информацией по домену
+  function initDomainInfo() {
+    try {
+      // Инициализация переключателя
+      const localDomainInfo = localStorage.getItem('lanSearchDomainInfo');
+      if (localDomainInfo !== null) {
+        domainInfoEnabled = localDomainInfo === 'true';
+        setDomainInfoState(domainInfoEnabled);
+      } else {
+        chrome.storage.sync.get(['domainInfo'], function(result) {
+          if (result.domainInfo !== undefined) {
+            domainInfoEnabled = result.domainInfo;
+          } else {
+            domainInfoEnabled = false;
+          }
+          setDomainInfoState(domainInfoEnabled);
+        });
+      }
+      
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации информации по домену:', error);
+      domainInfoEnabled = false;
+      setDomainInfoState(false);
+    }
+  }
+  
+  function setDomainInfoState(enabled) {
+    domainInfoToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    domainInfoToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    domainInfoToggle.title = enabled ? 'Отключить информацию по домену' : 'Включить информацию по домену';
+  }
+  
+  function toggleDomainInfo() {
+    domainInfoEnabled = !domainInfoEnabled;
+    setDomainInfoState(domainInfoEnabled);
+    
+    localStorage.setItem('lanSearchDomainInfo', domainInfoEnabled.toString());
+    
+    chrome.storage.sync.set({ domainInfo: domainInfoEnabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек информации по домену:', chrome.runtime.lastError);
+      }
+    });
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncDomainInfo) {
+              window.lanSearchSyncDomainInfo();
+            }
+          }
+        }).catch(err => {
+          console.log('Popup: Не удалось применить информацию по домену:', err);
+        });
+      }
+    });
+  }
+  
+  
+  // Инициализация
+  initDomainInfo();
+  
+  // Обработчики событий
+  domainInfoToggle.addEventListener('click', toggleDomainInfo);
+  
+  
   setTimeout(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       if (tabs[0]) {
@@ -525,6 +595,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     if (window.lanSearchSyncHideComments) {
                       window.lanSearchSyncHideComments();
+                    }
+                    if (window.lanSearchSyncDomainInfo) {
+                      window.lanSearchSyncDomainInfo();
             }
           }
         }).catch(err => {

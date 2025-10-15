@@ -45,17 +45,17 @@
 
 .lan-search-pc-status.status-free {
   background: #28a745;
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 .lan-search-pc-status.status-busy {
   background: #dc3545;
-  color: white;
+  color: 000000;
 }
 
 .lan-search-pc-status.status-connection {
   background: #6c757d;
-  color: white;
+  color: 000000;
 }
 
 /* Кнопки */
