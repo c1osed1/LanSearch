@@ -97,6 +97,75 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       [data-theme="dark"] .gms-no-results {
         color: rgba(255,255,255,0.6);
       }
+      
+      /* Стили для блока информации по домену */
+      #domainInfoContainer {
+        --domain-info-bg: #f8f9fa;
+        --domain-info-border: #e9ecef;
+        --domain-info-color: #333333;
+        --domain-info-title-color: #495057;
+        --domain-info-block-bg: white;
+        --domain-info-block-border: #dee2e6;
+        --domain-info-label-color: #495057;
+        --domain-info-value-color: #212529;
+      }
+      
+      [data-theme="dark"] #domainInfoContainer {
+        --domain-info-bg: #3a3a3a;
+        --domain-info-border: #444444;
+        --domain-info-color: #ffffff;
+        --domain-info-title-color: #ffffff;
+        --domain-info-block-bg: #2d2d2d;
+        --domain-info-block-border: #444444;
+        --domain-info-label-color: #ffffff;
+        --domain-info-value-color: #ffffff;
+      }
+      
+      /* Стили для кнопки обновления команды */
+      #domainInfoContainer button {
+        background: transparent;
+        color: #28a745;
+        border: 1px solid #28a745;
+        border-radius: 4px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 140px;
+        height: 28px;
+      }
+      
+      #domainInfoContainer button:hover:not(:disabled) {
+        background: rgba(40, 167, 69, 0.1);
+        border-color: #218838;
+        color: #218838;
+      }
+      
+      #domainInfoContainer button:active:not(:disabled) {
+        background: rgba(40, 167, 69, 0.2);
+      }
+      
+      #domainInfoContainer button:disabled {
+        background: transparent;
+        color: #6c757d;
+        border-color: #6c757d;
+        cursor: not-allowed;
+      }
+      
+      /* Анимации */
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -6780,17 +6849,154 @@ function createDomainInfoBlock(domainInfo) {
   container.style.cssText = `
     margin-top: 15px;
     padding: 15px;
-    background: ${isDarkTheme ? '#3a3a3a' : '#f8f9fa'};
-    border: 1px solid ${isDarkTheme ? '#444444' : '#e9ecef'};
+    background: var(--domain-info-bg, #f8f9fa);
+    border: 1px solid var(--domain-info-border, #e9ecef);
     border-radius: 8px;
     font-size: 12px;
     line-height: 1.4;
-    color: ${isDarkTheme ? '#ffffff' : '#333333'};
+    color: var(--domain-info-color, #333333);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    
   `;
   
   const title = document.createElement('h4');
   title.textContent = 'Информация по домену';
-  title.style.cssText = `margin: 0 0 10px 0; color: ${isDarkTheme ? '#ffffff' : '#495057'}; font-size: 13px;`;
+  title.style.cssText = `margin: 0 0 10px 0; color: var(--domain-info-title-color, #495057); font-size: 13px; transition: color 0.3s ease;`;
+  
+  // Создаем кнопку "Обновить команду"
+  const updateCommandBtn = document.createElement('button');
+  updateCommandBtn.innerHTML = `
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+      <path d="M23 4v6h-6"></path>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+    </svg>
+    Обновить команду
+  `;
+  updateCommandBtn.style.cssText = `
+    background: transparent;
+    color: #28a745;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    height: 28px;
+  `;
+  updateCommandBtn.title = 'Обновить команду через API (если CMD не работает)';
+  
+  // Обработчик клика для кнопки обновления команды
+  updateCommandBtn.addEventListener('click', async () => {
+    try {
+      updateCommandBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; animation: spin 1s linear infinite;">
+          <path d="M21 12a9 9 0 11-6.219-8.56"></path>
+        </svg>
+        Обновление...
+      `;
+      updateCommandBtn.style.background = 'transparent';
+      updateCommandBtn.style.color = '#6c757d';
+      updateCommandBtn.style.borderColor = '#6c757d';
+      updateCommandBtn.disabled = true;
+      
+      const response = await fetch('https://k-connect.ru/api/domain-search/update-links', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          domain: window.location.hostname,
+          timestamp: Date.now()
+        })
+      });
+      
+      if (response.ok) {
+        updateCommandBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+            <polyline points="20,6 9,17 4,12"></polyline>
+          </svg>
+          Обновлено!
+        `;
+        updateCommandBtn.style.background = 'transparent';
+        updateCommandBtn.style.color = '#28a745';
+        updateCommandBtn.style.borderColor = '#28a745';
+        
+        // Показываем сообщение о перезагрузке
+        const reloadMessage = document.createElement('div');
+        reloadMessage.textContent = 'Перезагрузите страницу для применения изменений';
+        reloadMessage.style.cssText = `
+          background: linear-gradient(135deg, #d4edda, #c3e6cb);
+          color: #155724;
+          border: 1px solid #c3e6cb;
+          border-radius: 4px;
+          padding: 8px 12px;
+          margin-top: 8px;
+          font-size: 10px;
+          font-weight: 500;
+          text-align: center;
+          animation: fadeIn 0.3s ease;
+        `;
+        
+        // Добавляем сообщение после кнопки
+        const titleContainer = updateCommandBtn.parentElement;
+        titleContainer.appendChild(reloadMessage);
+        
+        setTimeout(() => {
+          updateCommandBtn.innerHTML = `
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+              <path d="M23 4v6h-6"></path>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Обновить команду
+          `;
+          updateCommandBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
+          updateCommandBtn.style.boxShadow = '0 2px 4px rgba(40, 167, 69, 0.3)';
+          updateCommandBtn.disabled = false;
+          reloadMessage.remove();
+        }, 3000);
+      } else {
+        throw new Error('Ошибка обновления команды');
+      }
+    } catch (error) {
+      console.error('Ошибка при обновлении команды:', error);
+      updateCommandBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="15" y1="9" x2="9" y2="15"></line>
+          <line x1="9" y1="9" x2="15" y2="15"></line>
+        </svg>
+        Ошибка!
+      `;
+      updateCommandBtn.style.background = 'transparent';
+      updateCommandBtn.style.color = '#dc3545';
+      updateCommandBtn.style.borderColor = '#dc3545';
+      setTimeout(() => {
+        updateCommandBtn.innerHTML = `
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+            <path d="M23 4v6h-6"></path>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          Обновить команду
+        `;
+        updateCommandBtn.style.background = 'transparent';
+        updateCommandBtn.style.color = '#28a745';
+        updateCommandBtn.style.borderColor = '#28a745';
+        updateCommandBtn.disabled = false;
+      }, 2000);
+    }
+  });
+  
+  // Создаем контейнер для заголовка и кнопки
+  const titleContainer = document.createElement('div');
+  titleContainer.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;';
+  titleContainer.appendChild(title);
+  titleContainer.appendChild(updateCommandBtn);
   
   // Функция для создания блока с кнопкой копирования
   function createInfoBlock(label, value, isMultiline = false) {
@@ -6800,9 +7006,10 @@ function createDomainInfoBlock(domainInfo) {
     block.style.cssText = `
       margin-bottom: 8px; 
       padding: 6px; 
-      background: ${isDarkTheme ? '#2d2d2d' : 'white'}; 
+      background: var(--domain-info-block-bg, white); 
       border-radius: 3px; 
-      border: 1px solid ${isDarkTheme ? '#444444' : '#dee2e6'};
+      border: 1px solid var(--domain-info-block-border, #dee2e6);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     `;
     
     const header = document.createElement('div');
@@ -6810,7 +7017,7 @@ function createDomainInfoBlock(domainInfo) {
     
     const labelEl = document.createElement('strong');
     labelEl.textContent = label + ':';
-    labelEl.style.cssText = `color: ${isDarkTheme ? '#ffffff' : '#495057'}; font-size: 11px;`;
+    labelEl.style.cssText = `color: var(--domain-info-label-color, #495057); font-size: 11px; transition: color 0.3s ease;`;
     
     const copyBtn = document.createElement('button');
     copyBtn.innerHTML = `
@@ -6887,7 +7094,7 @@ function createDomainInfoBlock(domainInfo) {
     const valueEl = document.createElement('div');
     valueEl.textContent = value;
     valueEl.style.cssText = `
-      color: ${isDarkTheme ? '#ffffff' : '#212529'};
+      color: var(--domain-info-value-color, #212529);
       font-size: 10px;
       word-break: break-all;
       white-space: ${isMultiline ? 'pre-wrap' : 'nowrap'};
@@ -6895,6 +7102,7 @@ function createDomainInfoBlock(domainInfo) {
       text-overflow: ellipsis;
       max-height: ${isMultiline ? '80px' : 'auto'};
       overflow-y: ${isMultiline ? 'auto' : 'hidden'};
+      transition: color 0.3s ease;
     `;
     
     block.appendChild(header);
@@ -6912,7 +7120,7 @@ function createDomainInfoBlock(domainInfo) {
     createInfoBlock('Команда', domainInfo.command || 'Не указано', true),
   ].filter(block => block !== null);
   
-  container.appendChild(title);
+  container.appendChild(titleContainer);
   
   if (blocks.length === 0) {
     const noData = document.createElement('div');

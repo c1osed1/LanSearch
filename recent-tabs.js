@@ -668,7 +668,7 @@ class RecentTabsManager {
       `;
 
       const favoritesTitle = document.createElement('h3');
-      favoritesTitle.textContent = '⭐ Избранные вкладки (Теперь до 20 штук и можно зажимать и перетаскивать) ';
+      favoritesTitle.textContent = 'Избранные вкладки ';
       favoritesTitle.style.cssText = `
         margin: 10px 0;
         color: var(--text-color, #333);
