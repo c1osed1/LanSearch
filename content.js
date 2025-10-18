@@ -6905,11 +6905,11 @@ function createDomainInfoBlock(domainInfo) {
   
   // Создаем блоки для всех полей
   const blocks = [
-    createInfoBlock('Название клуба', domainInfo.name + ' | ' + domainInfo.value),
-    createInfoBlock('ID', domainInfo.id),
-    createInfoBlock('Домен', domainInfo.domain + ' | ' + domainInfo.value),
-    createInfoBlock('Anydesk', domainInfo.alias),
-    createInfoBlock('Команда', domainInfo.command, true),
+    createInfoBlock('Название клуба', domainInfo.name || 'Не указано'),
+    createInfoBlock('ID', domainInfo.id || 'Не указано'),
+    createInfoBlock('Домен', domainInfo.domain || 'Не указано'),
+    createInfoBlock('Anydesk', domainInfo.alias || 'Не указано'),
+    createInfoBlock('Команда', domainInfo.command || 'Не указано', true),
   ].filter(block => block !== null);
   
   container.appendChild(title);
