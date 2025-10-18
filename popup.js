@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const hideCheckboxesToggle = document.getElementById('hideCheckboxesToggle');
   const hideCommentsToggle = document.getElementById('hideCommentsToggle');
   const domainInfoToggle = document.getElementById('domainInfoToggle');
+  const customWebSocketToggle = document.getElementById('customWebSocketToggle');
   
   
   let currentTheme = 'light';
@@ -94,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (e) {
       
-      console.log('Chrome storage not available, using localStorage only');
     }
   }
   
@@ -182,7 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   }
                 }
               }).catch(err => {
-                console.log('Popup: Не удалось синхронизировать настройки на вкладке:', err);
               });
             }
           });
@@ -190,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (e) {
       
-      console.log('Chrome storage not available, using localStorage only');
     }
   }
   
@@ -204,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let hideCheckboxesEnabled = false;
   let hideCommentsEnabled = false;
   let domainInfoEnabled = false;
+  let customWebSocketEnabled = false;
   function initPCStyles() {
     try {
       const localStyles = localStorage.getItem('lanSearchPCStyles');
@@ -265,7 +264,6 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.set({ pcStyles: pcStylesEnabled }, function() {
-          console.log('Popup: Настройка стилей ПК сохранена в chrome.storage:', pcStylesEnabled);
           
           
           chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -278,7 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
                   }
                 }
               }).catch(err => {
-                console.log('Popup: Не удалось синхронизировать стили ПК на вкладке:', err);
               });
             }
           });
@@ -286,7 +283,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     } catch (e) {
       
-      console.log('Chrome storage not available, using localStorage only');
     }
   }
   
@@ -354,7 +350,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }
         }).catch(err => {
-          console.log('Popup: Не удалось применить оптимизацию таблиц:', err);
         });
       }
     });
@@ -424,7 +419,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }
         }).catch(err => {
-          console.log('Popup: Не удалось применить скрытие чекбоксов:', err);
         });
       }
     });
@@ -494,7 +488,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }
         }).catch(err => {
-          console.log('Popup: Не удалось применить скрытие комментариев:', err);
         });
       }
     });
@@ -561,7 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }
         }).catch(err => {
-          console.log('Popup: Не удалось применить информацию по домену:', err);
         });
       }
     });
@@ -573,6 +565,83 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Обработчики событий
   domainInfoToggle.addEventListener('click', toggleDomainInfo);
+  
+  // Функции для работы с WebSocket
+  function initCustomWebSocket() {
+    try {
+      const localWebSocket = localStorage.getItem('lanSearchCustomWebSocket');
+      if (localWebSocket !== null) {
+        customWebSocketEnabled = localWebSocket === 'true';
+        setCustomWebSocketState(customWebSocketEnabled);
+      } else {
+        chrome.storage.sync.get(['customWebSocket'], function(result) {
+          if (result.customWebSocket !== undefined) {
+            customWebSocketEnabled = result.customWebSocket;
+          } else {
+            customWebSocketEnabled = false;
+          }
+          setCustomWebSocketState(customWebSocketEnabled);
+        });
+      }
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации WebSocket:', error);
+      customWebSocketEnabled = false;
+      setCustomWebSocketState(false);
+    }
+  }
+  
+  function setCustomWebSocketState(enabled) {
+    customWebSocketToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    customWebSocketToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    customWebSocketToggle.title = enabled ? 'Отключить собственное сокет подключение' : 'Включить собственное сокет подключение';
+  }
+  
+  function toggleCustomWebSocket() {
+    customWebSocketEnabled = !customWebSocketEnabled;
+    setCustomWebSocketState(customWebSocketEnabled);
+    
+    localStorage.setItem('lanSearchCustomWebSocket', customWebSocketEnabled.toString());
+    
+    chrome.storage.sync.set({ customWebSocket: customWebSocketEnabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек WebSocket:', chrome.runtime.lastError);
+      }
+    });
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchWebSocket) {
+              // Очищаем кэш настройки
+              if (window.lanSearchWebSocket.clearCache) {
+                window.lanSearchWebSocket.clearCache();
+              }
+              
+              // Проверяем настройку и создаем/закрываем соединение
+              if (window.lanSearchWebSocket.getSetting) {
+                window.lanSearchWebSocket.getSetting((enabled) => {
+                  if (enabled && window.lanSearchWebSocket.create) {
+                    window.lanSearchWebSocket.create();
+                  } else if (!enabled && window._lanSearchWebSocket) {
+                    window._lanSearchWebSocket.close();
+                  }
+                });
+              }
+            }
+          }
+        }).catch(err => {
+        });
+      }
+    });
+  }
+  
+  // Инициализация
+  initCustomWebSocket();
+  
+  // Обработчики событий
+  customWebSocketToggle.addEventListener('click', toggleCustomWebSocket);
   
   
   setTimeout(() => {
@@ -601,7 +670,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
           }
         }).catch(err => {
-          console.log('Popup: Не удалось синхронизировать настройки при открытии popup:', err);
         });
       }
     });

@@ -33,7 +33,7 @@ class RecentTabsManager {
   isSuitableDomain(hostname) {
     if (!hostname) return false;
     const domain = hostname.toLowerCase();
-    return domain.includes('langame') || domain.includes('cls');
+    return domain.includes('langame') || domain.includes('cls') || domain.includes('f5center');
   }
 
   // Получение текущего домена
@@ -48,7 +48,7 @@ class RecentTabsManager {
 
   // Получение списка всех подходящих доменов
   getSuitableDomains() {
-    return ['langame', 'cls'];
+    return ['langame', 'cls', 'f5center'];
   }
 
   // Проверка, содержит ли домен любой из подходящих поддоменов
@@ -153,7 +153,6 @@ class RecentTabsManager {
         
         // Проверяем кэш
         if (this.favoritesCache !== null && (now - this.favoritesCacheTime) < this.CACHE_DURATION) {
-          console.log('Lan-Search: Используем кэш избранных в порядке:', this.favoritesCache.map(t => t.title));
           resolve(this.favoritesCache);
           return;
         }
@@ -177,7 +176,6 @@ class RecentTabsManager {
           this.favoritesCache = tabs;
           this.favoritesCacheTime = now;
           
-          console.log('Lan-Search: Загружены избранные из storage в порядке:', tabs.map(t => t.title));
           resolve(tabs);
         });
       } catch (error) {
@@ -1528,7 +1526,6 @@ try {
   }
 } catch (e) {
   // Игнорируем ошибки если chrome.storage недоступен
-  console.log('Chrome storage not available, using localStorage fallback');
 }
 
 // Периодическое применение темы для динамически загружаемого контента
