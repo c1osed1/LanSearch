@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const hideCommentsToggle = document.getElementById('hideCommentsToggle');
   const domainInfoToggle = document.getElementById('domainInfoToggle');
   const customWebSocketToggle = document.getElementById('customWebSocketToggle');
+  const energySavingIgnoreToggle = document.getElementById('energySavingIgnoreToggle');
   
   
   let currentTheme = 'light';
@@ -203,6 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let hideCommentsEnabled = false;
   let domainInfoEnabled = false;
   let customWebSocketEnabled = false;
+  let energySavingIgnoreEnabled = false;
   function initPCStyles() {
     try {
       const localStyles = localStorage.getItem('lanSearchPCStyles');
@@ -643,6 +645,69 @@ document.addEventListener('DOMContentLoaded', function() {
   // Обработчики событий
   customWebSocketToggle.addEventListener('click', toggleCustomWebSocket);
   
+  // Функции для работы с игнорированием энергосбережения
+  function initEnergySavingIgnore() {
+    try {
+      const localEnergySaving = localStorage.getItem('lanSearchEnergySavingIgnore');
+      if (localEnergySaving !== null) {
+        energySavingIgnoreEnabled = localEnergySaving === 'true';
+        setEnergySavingIgnoreState(energySavingIgnoreEnabled);
+      } else {
+        chrome.storage.sync.get(['energySavingIgnore'], function(result) {
+          if (result.energySavingIgnore !== undefined) {
+            energySavingIgnoreEnabled = result.energySavingIgnore;
+          } else {
+            energySavingIgnoreEnabled = false;
+          }
+          setEnergySavingIgnoreState(energySavingIgnoreEnabled);
+        });
+      }
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации игнорирования энергосбережения:', error);
+      energySavingIgnoreEnabled = false;
+      setEnergySavingIgnoreState(false);
+    }
+  }
+  
+  function setEnergySavingIgnoreState(enabled) {
+    energySavingIgnoreToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    energySavingIgnoreToggle.style.background = enabled ? '#28a745' : '#dc3545';
+    energySavingIgnoreToggle.title = enabled ? 'Отключить игнорирование энергосбережения' : 'Включить игнорирование энергосбережения';
+  }
+  
+  function toggleEnergySavingIgnore() {
+    energySavingIgnoreEnabled = !energySavingIgnoreEnabled;
+    setEnergySavingIgnoreState(energySavingIgnoreEnabled);
+    
+    localStorage.setItem('lanSearchEnergySavingIgnore', energySavingIgnoreEnabled.toString());
+    
+    chrome.storage.sync.set({ energySavingIgnore: energySavingIgnoreEnabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек игнорирования энергосбережения:', chrome.runtime.lastError);
+      }
+    });
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncEnergySavingIgnore) {
+              window.lanSearchSyncEnergySavingIgnore();
+            }
+          }
+        }).catch(err => {
+        });
+      }
+    });
+  }
+  
+  // Инициализация
+  initEnergySavingIgnore();
+  
+  // Обработчики событий
+  energySavingIgnoreToggle.addEventListener('click', toggleEnergySavingIgnore);
+  
   
   setTimeout(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -667,6 +732,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     if (window.lanSearchSyncDomainInfo) {
                       window.lanSearchSyncDomainInfo();
+                    }
+                    if (window.lanSearchSyncEnergySavingIgnore) {
+                      window.lanSearchSyncEnergySavingIgnore();
             }
           }
         }).catch(err => {

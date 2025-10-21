@@ -1,4 +1,4 @@
-// Переменные для кэширования информации по домену через API
+
 let domainInfoCache = null;
 let domainInfoCacheTime = 0;
 const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
@@ -340,9 +340,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
   function getItemLabel(el) {
-    // Для f5center.com ищем текст в разных элементах
+
     if (window.location.hostname.includes('f5center')) {
-      // Ищем текст в различных элементах
+
       const textSelectors = [
         '.nav-link-text', 'a', '.title', '.name', '.label', 
         '[role="menuitem"]', '.menu-text', '.item-text'
@@ -355,10 +355,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         }
       }
       
-      // Если ничего не найдено, используем текст самого элемента
+
       return normalize(el.textContent);
     } else {
-      // Стандартная логика для langame/cls
+
       const labelNode = el.querySelector(".nav-link-text") || el.querySelector("a");
       const text = labelNode ? labelNode.textContent : el.textContent;
     return normalize(text);
@@ -424,11 +424,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     let visibleElements = [];
     
     if (window.location.hostname.includes('f5center')) {
-      // Для f5center.com ищем видимые элементы с ссылками
+
       visibleElements = $all("a, button, .nav-item, .menu-item, .link, [role='menuitem'], .card, .item", menuRoot)
         .filter((el) => !el.classList.contains("gms-hidden"));
     } else {
-      // Стандартный поиск по li элементам
+
       visibleElements = $all("li", menuRoot).filter((li) => !li.classList.contains("gms-hidden"));
     }
     
@@ -448,13 +448,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function filterMenu(menuRoot, queryRaw) {
     const query = normalize(queryRaw);
     
-    // Для f5center.com ищем разные типы элементов
+
     let searchElements = [];
     if (window.location.hostname.includes('f5center')) {
-      // Ищем различные элементы, которые могут содержать ссылки или текст
+
       searchElements = $all("a, button, .nav-item, .menu-item, .link, [role='menuitem'], .card, .item", menuRoot);
     } else {
-      // Стандартный поиск по li элементам
+
       searchElements = $all("li", menuRoot);
     }
 
@@ -505,7 +505,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
   function shouldAutoActivate() {
-    // Отключаем расширение на странице /pc_tasks_config/ чтобы не ломать Bootstrap Select
+
     if (window.location.pathname.includes('/pc_tasks_config/')) {
       console.log('Lan-Search: Расширение отключено на странице /pc_tasks_config/ для предотвращения поломки Bootstrap Select');
       return false;
@@ -521,9 +521,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function init() {
     let menuRoot = document.getElementById(MENU_ID);
     
-    // Если не найден стандартный элемент, ищем альтернативы для f5center.com
+
     if (!menuRoot && window.location.hostname.includes('f5center')) {
-      // Ищем различные возможные контейнеры для меню на f5center.com
+
       const possibleContainers = [
         'nav', 'header', 'main', '.navbar', '.menu', '.navigation',
         '.sidebar', '.nav-menu', '[role="navigation"]', '.main-content'
@@ -536,7 +536,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         }
       }
       
-      // Если ничего не найдено, создаем контейнер в body
+
       if (!menuRoot) {
         menuRoot = document.body;
       }
@@ -557,7 +557,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     injectStylesOnce();
     const input = createSearchBar(menuRoot);
     
-    // captureInitialCollapseState только для стандартного меню
+
     if (document.getElementById(MENU_ID)) {
     captureInitialCollapseState(menuRoot);
     }
@@ -598,34 +598,22 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Добавляем функцию init в глобальную область видимости для Firefox
+
   window.lanSearchInit = init;
 
-  // Добавляем функцию createWebSocketConnection в глобальную область видимости
+
   window.lanSearchCreateWebSocket = createWebSocketConnection;
 
-  // Добавляем функцию getWebSocketSetting в глобальную область видимости
-  window.lanSearchGetWebSocketSetting = getWebSocketSetting;
 
-  // Добавляем функцию clearWebSocketSettingCache в глобальную область видимости
-  window.lanSearchClearWebSocketSettingCache = clearWebSocketSettingCache;
-
-  // Функция для очистки кэша настройки WebSocket
-  function clearWebSocketSettingCache() {
-    webSocketSettingCache = null;
-    webSocketSettingCacheTime = 0;
-  }
-
-  // Кэш для настройки WebSocket
   let webSocketSettingCache = null;
   let webSocketSettingCacheTime = 0;
   const WEB_SOCKET_CACHE_DURATION = 5000; // 5 секунд
 
-  // Функция для получения настройки WebSocket
+
   function getWebSocketSetting(callback) {
     const now = Date.now();
     
-    // Проверяем кэш
+
     if (webSocketSettingCache !== null && (now - webSocketSettingCacheTime) < WEB_SOCKET_CACHE_DURATION) {
       callback(webSocketSettingCache);
       return;
@@ -645,10 +633,22 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
-  // Функция для создания и поддержания WebSocket соединения
+
+  function clearWebSocketSettingCache() {
+    webSocketSettingCache = null;
+    webSocketSettingCacheTime = 0;
+  }
+
+
+  window.lanSearchGetWebSocketSetting = getWebSocketSetting;
+
+
+  window.lanSearchClearWebSocketSettingCache = clearWebSocketSettingCache;
+
+
   function createWebSocketConnection() {
     
-    // Проверяем, не создано ли уже соединение
+
     if (window._lanSearchWebSocket && window._lanSearchWebSocket.readyState === WebSocket.OPEN) {
       return;
     }
@@ -657,33 +657,33 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       return;
     }
     
-    // Проверяем настройку "Собственное сокет подключение" с кэшированием
+
     getWebSocketSetting(function(enabled) {
       if (!enabled) {
         return;
       }
       
       
-      // Получаем domain из мета-тега или используем текущий домен
+
       const domain = document.querySelector('meta[name="domain"]')?.getAttribute('content') || window.location.hostname;
     
-      // Получаем session_id
+
       const sessionId = session_id();
       if (!sessionId) {
         return;
       }
       
-      // Создаем URL для WebSocket
+
       const wsUrl = `wss://${domain}/wss/?client_guid=${sessionId}&type_client=browser`;
       
       try {
-        // Создаем WebSocket соединение
+
         const ws = new WebSocket(wsUrl);
         window._lanSearchWebSocket = ws; // Сохраняем соединение глобально
         
         ws.onopen = function(event) {
           
-          // Запрашиваем состояние всех ПК сразу после подключения
+
           if (typeof requestAllPCStatus === 'function') {
             requestAllPCStatus();
           }
@@ -693,7 +693,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           try {
             const data = JSON.parse(event.data);
             
-            // Обрабатываем данные о ПК
+
             if (data.status_pc !== undefined) {
               if (typeof window.lanSearchProcessPCData === 'function') {
                 window.lanSearchProcessPCData(data);
@@ -701,7 +701,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
               return;
             }
             
-            // Обрабатываем команды
+
             switch (data.command) {
               case "showConfig":
                 if (typeof window.lanSearchProcessPCData === 'function') {
@@ -716,7 +716,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         
         ws.onclose = function(event) {
           
-          // Автоматическое переподключение через 3 секунды
+
           setTimeout(() => {
             if (typeof window.lanSearchCreateWebSocket === 'function') {
               window.lanSearchCreateWebSocket();
@@ -742,7 +742,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Создаем WebSocket соединение для всех подходящих доменов
+
   if (window.location.hostname.includes('langame') || window.location.hostname.includes('cls') || window.location.hostname.includes('f5center')) {
     console.log('Lan-Search: Создание WebSocket соединения для домена:', window.location.hostname);
     
@@ -765,38 +765,38 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Инициализация поиска гостей на главной странице
+
   function initGuestSearch() {
     if (shouldAutoActivate()) {
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-          // Пытаемся инициализировать сразу, если элементы уже есть
+
           if (document.getElementById('recentTabsContainer') || document.getElementById('langameSubscriptionWrapper')) {
             initGuestSearchOnMainPage();
           } else {
-            // Если элементы еще не загружены, ждем с меньшей задержкой
+
             setTimeout(initGuestSearchOnMainPage, 50);
           }
         });
       } else {
-        // Пытаемся инициализировать сразу, если элементы уже есть
+
         if (document.getElementById('recentTabsContainer') || document.getElementById('langameSubscriptionWrapper')) {
           initGuestSearchOnMainPage();
         } else {
-          // Если элементы еще не загружены, ждем с меньшей задержкой
+
           setTimeout(initGuestSearchOnMainPage, 50);
         }
       }
     }
   }
 
-  // Запускаем инициализацию поиска гостей
+
   initGuestSearch();
 
 
   window.lanSearchInit = init;
   
-  // Экспортируем функцию для принудительной инициализации поиска гостей
+
   window.lanSearchInitGuestSearch = initGuestSearchOnMainPage;
   
   
@@ -834,7 +834,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для создания блока поиска гостей
+
   function createGuestSearchBlock() {
     const container = document.createElement('div');
     container.id = 'guestSearchContainer';
@@ -890,7 +890,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       </div>
     `;
 
-    // Добавляем модальное окно для пополнения баланса
+
     const modal = document.createElement('div');
     modal.id = 'addBalanceModal';
     modal.className = 'modal fade';
@@ -919,10 +919,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           </div>
         `;
 
-    // Добавляем модальное окно в body
+
     document.body.appendChild(modal);
 
-    // Создаем модальное окно для бонусов
+
     const bonusModal = document.createElement('div');
     bonusModal.id = 'addBonusModal';
     bonusModal.className = 'modal fade';
@@ -952,13 +952,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           </div>
         `;
 
-    // Добавляем модальное окно для бонусов в body
+
     document.body.appendChild(bonusModal);
 
     return container;
   }
 
-  // Функция для поиска гостей
+
   async function searchGuests(query) {
     if (!query || query.trim().length < 3) {
       showNotification('Введите минимум 3 символа для поиска', 'warning');
@@ -1097,7 +1097,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для отображения результатов поиска
+
   function displayGuestSearchResults(data) {
     const resultsContainer = document.getElementById('guestSearchResults');
     const noResultsContainer = document.getElementById('guestSearchNoResults');
@@ -1117,7 +1117,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     data.data.forEach(guest => {
       const row = document.createElement('tr');
       
-      // Извлекаем данные из HTML
+
       const nameMatch = guest[0]?.match(/onclick="showGuestAnketa\((\d+)\)">([^<]+)<\/div>/);
       const phoneMatch = guest[3]?.match(/onclick="showGuestAnketa\((\d+)\)">([^<]+)<\/div>/);
       const guestId = nameMatch ? nameMatch[1] : (phoneMatch ? phoneMatch[1] : '');
@@ -1153,21 +1153,21 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
-  // Функция для инициализации поиска гостей на главной странице
+
   function initGuestSearchOnMainPage(attempts = 0) {
     console.log('Lan-Search: Инициализация поиска гостей на главной странице');
     
-    // Проверяем, что мы на главной странице
+
     if (window.location.pathname !== '/' && window.location.pathname !== '/dashboard/') {
       return;
     }
 
-    // Проверяем, что блок поиска гостей еще не добавлен
+
     if (document.getElementById('guestSearchContainer')) {
       return;
     }
 
-    // Ищем контейнер с recentTabsContainer
+
     const recentTabsContainer = document.getElementById('recentTabsContainer');
     let insertTarget = null;
     
@@ -1175,19 +1175,19 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       insertTarget = recentTabsContainer.parentNode;
       insertTarget.insertBefore(createGuestSearchBlock(), recentTabsContainer.nextSibling);
     } else {
-      // Альтернативный способ - ищем контейнер с langameSubscriptionWrapper
+
       const langameWrapper = document.getElementById('langameSubscriptionWrapper');
       if (langameWrapper) {
         insertTarget = langameWrapper.parentNode;
         insertTarget.insertBefore(createGuestSearchBlock(), langameWrapper.nextSibling);
       } else {
-        // Последний вариант - ищем container-fluid
+
         const containerFluid = document.querySelector('.container-fluid');
         if (containerFluid) {
           insertTarget = containerFluid;
           insertTarget.appendChild(createGuestSearchBlock());
         } else {
-          // Ограничиваем количество попыток (максимум 10 попыток за 2 секунды)
+
           if (attempts < 10) {
             setTimeout(() => initGuestSearchOnMainPage(attempts + 1), 200);
             return;
@@ -1200,7 +1200,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     
     console.log('Lan-Search: Блок поиска гостей добавлен');
 
-    // Добавляем обработчики событий
+
     const searchInput = document.getElementById('guestSearchInput');
     const searchBtn = document.getElementById('searchGuestBtn');
 
@@ -1231,35 +1231,35 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       });
     }
 
-    // Добавляем обработчики для кнопок управления балансом
+
     setTimeout(() => {
       addBalanceHandlers();
     }, 50);
     
-    // Добавляем обработчики для закрытия модальных окон
+
     setTimeout(() => {
       addModalCloseHandlers();
     }, 50);
     
-    // Скрываем блок партнеров и связанные элементы
+
     const partnersDiv = document.getElementById('partners_div');
     if (partnersDiv) {
       partnersDiv.style.display = 'none';
     }
     
-    // Скрываем заголовок "Предложения партнёров"
+
     const partnersHeading = document.querySelector('h3');
     if (partnersHeading && partnersHeading.textContent.includes('Предложения партнёров')) {
       partnersHeading.style.display = 'none';
     }
     
-    // Скрываем описание под заголовком
+
     const partnersDescription = document.querySelector('p');
     if (partnersDescription && partnersDescription.textContent.includes('Здесь мы собираем для пользователей LANGAME Software выгодные предложения от наших партнёров')) {
       partnersDescription.style.display = 'none';
     }
     
-    // Дополнительная проверка - ищем все h3 и p элементы на странице
+
     const allHeadings = document.querySelectorAll('h3');
     const allParagraphs = document.querySelectorAll('p');
     
@@ -1276,9 +1276,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
-  // Функция для добавления обработчиков закрытия модальных окон
+
   function addModalCloseHandlers() {
-    // Обработчик для модального окна пополнения баланса
+
     const addBalanceModal = document.getElementById('addBalanceModal');
     if (addBalanceModal) {
       const closeBtn = addBalanceModal.querySelector('.close, [data-dismiss="modal"]');
@@ -1291,7 +1291,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             addBalanceModal.classList.remove('show');
             document.body.classList.remove('modal-open');
             
-            // Убираем затемнение фона
+
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
               backdrop.style.display = 'none';
@@ -1302,7 +1302,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       }
     }
 
-    // Обработчик для модального окна управления бонусами
+
     const addBonusModal = document.getElementById('addBonusModal');
     if (addBonusModal) {
       const closeBtn = addBonusModal.querySelector('.close, [data-dismiss="modal"]');
@@ -1315,7 +1315,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             addBonusModal.classList.remove('show');
             document.body.classList.remove('modal-open');
             
-            // Убираем затемнение фона
+
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
               backdrop.style.display = 'none';
@@ -1327,9 +1327,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для добавления обработчиков кнопок управления балансом
+
   function addBalanceHandlers() {
-    // Обработчики для кнопок пополнения/списания баланса
+
     document.addEventListener('click', (e) => {
       if (e.target.closest('.addBalance')) {
         const guestId = e.target.closest('.addBalance').dataset.guestId;
@@ -1355,7 +1355,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
-  // Функция для показа модального окна пополнения баланса
+
   function showAddBalanceModal(guestId, action = 'add') {
     const modal = document.getElementById('addBalanceModal');
     if (!modal) {
@@ -1363,35 +1363,35 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       return;
     }
 
-    // Устанавливаем ID гостя
+
     const guestIdInput = modal.querySelector('input[name="guest_id"]');
     if (guestIdInput) {
       guestIdInput.value = guestId;
     }
 
-    // Обновляем заголовок модального окна
+
     const title = modal.querySelector('.modal-title');
     if (title) {
       title.textContent = action === 'sub' ? 'Списать баланс' : 'Пополнить баланс';
     }
 
-    // Очищаем форму
+
     const form = modal.querySelector('form');
     if (form) {
       form.reset();
       guestIdInput.value = guestId; // Устанавливаем ID заново после reset
     }
 
-    // Показываем модальное окно
+
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $(modal).modal('show');
     } else {
-      // Fallback для случаев, когда jQuery не доступен
+
       modal.style.display = 'block';
       modal.classList.add('show');
       document.body.classList.add('modal-open');
       
-      // Создаем и добавляем затемнение фона
+
       let backdrop = document.querySelector('.modal-backdrop');
       if (!backdrop) {
         backdrop = document.createElement('div');
@@ -1402,16 +1402,16 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       backdrop.classList.add('show');
     }
 
-    // Обработчик отправки формы
+
     if (form) {
-      // Удаляем старые обработчики
+
       const newForm = form.cloneNode(true);
       form.parentNode.replaceChild(newForm, form);
       
       newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Блокируем кнопку отправки
+
         const submitBtn = newForm.querySelector('button[type="submit"]');
         if (submitBtn) {
           submitBtn.disabled = true;
@@ -1421,7 +1421,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         try {
           await submitAddBalanceForm(guestId, new FormData(newForm), action);
         } finally {
-          // Разблокируем кнопку
+
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Сохранить';
@@ -1431,7 +1431,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для показа модального окна управления бонусами
+
   function showAddBonusModal(guestId, action) {
     const modal = document.getElementById('addBonusModal');
     if (!modal) {
@@ -1439,7 +1439,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       return;
     }
 
-    // Устанавливаем ID гостя и действие
+
     const guestIdInput = modal.querySelector('input[name="guest_id"]');
     const actionInput = modal.querySelector('input[name="action"]');
     if (guestIdInput) {
@@ -1449,13 +1449,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       actionInput.value = action;
     }
 
-    // Обновляем заголовок в зависимости от действия
+
     const title = modal.querySelector('.modal-title');
     if (title) {
       title.textContent = action === 'add' ? 'Добавить бонусы' : 'Списать бонусы';
     }
 
-    // Очищаем форму
+
     const form = modal.querySelector('form');
     if (form) {
       form.reset();
@@ -1463,16 +1463,16 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       actionInput.value = action; // Устанавливаем действие заново после reset
     }
 
-    // Показываем модальное окно
+
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $(modal).modal('show');
     } else {
-      // Fallback для случаев, когда jQuery не доступен
+
       modal.style.display = 'block';
       modal.classList.add('show');
       document.body.classList.add('modal-open');
       
-      // Создаем и добавляем затемнение фона
+
       let backdrop = document.querySelector('.modal-backdrop');
       if (!backdrop) {
         backdrop = document.createElement('div');
@@ -1483,16 +1483,16 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       backdrop.classList.add('show');
     }
 
-    // Обработчик отправки формы
+
     if (form) {
-      // Удаляем старые обработчики
+
       const newForm = form.cloneNode(true);
       form.parentNode.replaceChild(newForm, form);
       
       newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // Блокируем кнопку отправки
+
         const submitBtn = newForm.querySelector('button[type="submit"]');
         if (submitBtn) {
           submitBtn.disabled = true;
@@ -1502,7 +1502,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         try {
           await submitAddBonusForm(guestId, action, new FormData(newForm));
         } finally {
-          // Разблокируем кнопку
+
           if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Сохранить';
@@ -1512,7 +1512,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для показа модального окна управления балансом
+
   function showBalanceModal(guestId, action) {
     const modalId = `balanceModal_${guestId}_${action}`;
     let modal = document.getElementById(modalId);
@@ -1553,17 +1553,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       document.body.appendChild(modal);
     }
 
-    // Показываем модальное окно
+
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $(modal).modal('show');
     } else {
-      // Fallback для случаев, когда jQuery не доступен
+
       modal.style.display = 'block';
       modal.classList.add('show');
       document.body.classList.add('modal-open');
     }
 
-    // Обработчик отправки формы
+
     const form = modal.querySelector('form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1571,7 +1571,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
-  // Функция для показа модального окна управления бонусами
+
   function showBonusModal(guestId, action) {
     const modalId = `bonusModal_${guestId}_${action}`;
     let modal = document.getElementById(modalId);
@@ -1611,17 +1611,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       document.body.appendChild(modal);
     }
 
-    // Показываем модальное окно
+
     if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
       $(modal).modal('show');
     } else {
-      // Fallback для случаев, когда jQuery не доступен
+
       modal.style.display = 'block';
       modal.classList.add('show');
       document.body.classList.add('modal-open');
     }
 
-    // Обработчик отправки формы
+
     const form = modal.querySelector('form');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -1629,7 +1629,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
-  // Функция для получения куки
+
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -1637,13 +1637,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     return null;
   }
 
-  // Функция для отправки формы пополнения баланса
+
   async function submitAddBalanceForm(guestId, formData, action = 'add') {
     try {
       const balance = formData.get('balance');
       const sum = action === 'sub' ? -parseFloat(balance) : parseFloat(balance);
 
-      // Получаем токен авторизации из куки
+
       const authToken = getCookie('auth_token') || getCookie('token') || getCookie('access_token');
       
       const headers = {
@@ -1666,7 +1666,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
       if (response.ok) {
         showNotification(`${action === 'sub' ? 'Баланс списан' : 'Баланс пополнен'} успешно`, 'success');
-        // Закрываем модальное окно
+
         const addBalanceModal = document.getElementById('addBalanceModal');
         if (addBalanceModal) {
           if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -1676,7 +1676,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             addBalanceModal.classList.remove('show');
             document.body.classList.remove('modal-open');
             
-            // Убираем затемнение фона
+
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
               backdrop.style.display = 'none';
@@ -1684,7 +1684,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             }
           }
         }
-        // Обновляем результаты поиска
+
         const searchInput = document.getElementById('guestSearchInput');
         if (searchInput && searchInput.value.trim()) {
           const results = await searchGuests(searchInput.value.trim());
@@ -1711,7 +1711,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для отправки формы баланса
+
   async function submitBalanceForm(guestId, action, formData) {
     try {
       const response = await fetch('/guests_search/balance_update.php', {
@@ -1725,7 +1725,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
       if (response.ok) {
         showNotification(`${action === 'add' ? 'Баланс пополнен' : 'Баланс списан'} успешно`, 'success');
-        // Закрываем модальное окно
+
         const balanceModal = document.getElementById(`balanceModal_${guestId}_${action}`);
         if (balanceModal) {
           if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -1736,7 +1736,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             document.body.classList.remove('modal-open');
           }
         }
-        // Обновляем результаты поиска
+
         const searchInput = document.getElementById('guestSearchInput');
         if (searchInput && searchInput.value.trim()) {
           const results = await searchGuests(searchInput.value.trim());
@@ -1753,13 +1753,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для отправки формы бонусов
+
   async function submitAddBonusForm(guestId, action, formData) {
     try {
       const bonusBalance = formData.get('bonus_balance');
       const sum = action === 'add' ? parseFloat(bonusBalance) : -parseFloat(bonusBalance);
 
-      // Получаем токен авторизации из куки
+
       const authToken = getCookie('auth_token') || getCookie('token') || getCookie('access_token');
       
       const headers = {
@@ -1782,7 +1782,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
       if (response.ok) {
         showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
-        // Закрываем модальное окно
+
         const addBonusModal = document.getElementById('addBonusModal');
         if (addBonusModal) {
           if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -1792,7 +1792,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             addBonusModal.classList.remove('show');
             document.body.classList.remove('modal-open');
             
-            // Убираем затемнение фона
+
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
               backdrop.style.display = 'none';
@@ -1800,7 +1800,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             }
           }
         }
-        // Обновляем результаты поиска
+
         const searchInput = document.getElementById('guestSearchInput');
         if (searchInput && searchInput.value.trim()) {
           const results = await searchGuests(searchInput.value.trim());
@@ -1827,7 +1827,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
-  // Функция для отправки формы бонусов
+
   async function submitBonusForm(guestId, action, formData) {
     try {
       const response = await fetch('/guests_search/bonus_update.php', {
@@ -1841,7 +1841,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
       if (response.ok) {
         showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
-        // Закрываем модальное окно
+
         const bonusModal = document.getElementById(`bonusModal_${guestId}_${action}`);
         if (bonusModal) {
           if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -1852,7 +1852,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             document.body.classList.remove('modal-open');
           }
         }
-        // Обновляем результаты поиска
+
         const searchInput = document.getElementById('guestSearchInput');
         if (searchInput && searchInput.value.trim()) {
           const results = await searchGuests(searchInput.value.trim());
@@ -2161,7 +2161,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
 
   function handleHideStylesOnUrlChange() {
-    // Проверяем настройки скрытия и применяем/убираем стили в зависимости от URL
+
     if (window.lanSearchGetHideCheckboxesSetting) {
       window.lanSearchGetHideCheckboxesSetting(function(hideCheckboxesEnabled) {
         if (hideCheckboxesEnabled) {
@@ -2193,8 +2193,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         currentUrl = newUrl;
         setTabTitleToUrl();
         
-        // НЕ обрабатываем стили скрытия при изменении URL
-        // Стили работают только локально на вкладке
+
+
       }
     };
 
@@ -2405,20 +2405,20 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   
   function setModalBypassSetting(enabled) {
     try {
-      // Сохраняем в localStorage
+
       localStorage.setItem('lanSearchModalBypass', enabled.toString());
       
-      // Сохраняем в chrome.storage если доступен
+
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.set({ modalBypass: enabled }, function() {
         });
       }
       
-      // Обновляем кэш
+
       modalBypassCache = enabled;
       modalBypassCacheTime = Date.now();
       
-      // Обрабатываем кнопки с новым состоянием
+
       if (window.lanSearchProcessButtons) {
         window.lanSearchProcessButtons();
       }
@@ -2836,7 +2836,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       });
     }
     
-    // Делаем processButtons доступной глобально
+
     window.lanSearchProcessButtons = processButtons;
     
 
@@ -3076,11 +3076,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         addSelectionStyles();
         showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
         
-        // Сохраняем текущее состояние обхода модальных окон и временно восстанавливаем кнопки
+
         getModalBypassSetting(function(currentState) {
           savedModalBypassState = currentState;
           if (currentState) {
-            // Временно восстанавливаем кнопки без изменения настроек
+
             restoreDivsToButtons();
           }
         });
@@ -3699,14 +3699,14 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   
   function restoreHiddenElements() {
     
-    // Убираем классы скрытия
+
     document.body.classList.remove('lan-search-hide-checkboxes');
     document.body.classList.remove('lan-search-hide-comments');
     
-    // Убираем атрибут data-page
+
     document.body.removeAttribute('data-page');
     
-    // Показываем уведомление
+
     showNotification('Скрытые элементы восстановлены!', 'success', 3000);
     
   }
@@ -3911,7 +3911,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     addCompactButtonHover(invertBtn, '#ffc107', '#e0a800');
     
     
-    // Кнопка восстановления элементов
+
     const restoreBtn = document.createElement('button');
     restoreBtn.textContent = '🔄 Восстановить';
     restoreBtn.title = 'Восстановить скрытые элементы (чекбоксы и комментарии)';
@@ -4141,10 +4141,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     document.body.classList.remove('selection-mode');
     showNotification('Режим выбора отключен', 'warning', 2000);
     
-    // Применяем текущие настройки обхода модальных окон (не изменяем их)
+
     if (savedModalBypassState !== null) {
       if (savedModalBypassState) {
-        // Применяем текущие настройки без их изменения
+
         if (window.lanSearchProcessButtons) {
           window.lanSearchProcessButtons();
         }
@@ -4190,18 +4190,18 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function checkDisksStatus() {
     const clubId = getClubIdFromUrl();
     
-    // Находим кнопку "Проверить диски"
+
     const checkDisksBtn = document.getElementById('checkDisksBtn');
     if (checkDisksBtn) {
-      // Сохраняем оригинальный текст
+
       const originalText = checkDisksBtn.innerHTML;
       
-      // Показываем индикатор загрузки
+
       checkDisksBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Проверяем...';
       checkDisksBtn.disabled = true;
       checkDisksBtn.style.opacity = '0.7';
       
-      // Восстанавливаем кнопку после завершения запроса
+
       const restoreButton = () => {
         checkDisksBtn.innerHTML = originalText;
         checkDisksBtn.disabled = false;
@@ -4228,7 +4228,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         restoreButton();
       });
     } else {
-      // Если кнопка не найдена, показываем только уведомление
+
       showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
     
     fetch('/freenas_wrap/', {
@@ -4386,11 +4386,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function extractSnapshotDate(statusText) {
-    // Ищем дату в формате: bigPool/reference@10.10.2025 10:31:24
+
     const match = statusText.match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
     if (match) {
       const dateTime = match[1];
-      // Убираем секунды, оставляем только дату и время до минут
+
       return dateTime.substring(0, 16); 
     }
     return 'Не определено';
@@ -4597,13 +4597,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function addDiskManagementButton(rows) {
-    // Удаляем существующую кнопку управления дисками
+
     const existingBtn = document.getElementById('diskManagementBtn');
     if (existingBtn) {
       existingBtn.remove();
     }
     
-    // Создаем кнопку управления дисками
+
     const managementBtn = document.createElement('a');
     managementBtn.id = 'diskManagementBtn';
     managementBtn.href = '#';
@@ -4611,13 +4611,13 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     managementBtn.innerHTML = '<i class="fa fa-cogs"></i> Управлять дисками';
     managementBtn.title = 'Управление состоянием подмены дисков';
     
-    // Добавляем кнопку после кнопки проверки дисков
+
     const checkDisksBtn = document.getElementById('checkDisksBtn');
     if (checkDisksBtn) {
       checkDisksBtn.parentNode.insertBefore(managementBtn, checkDisksBtn.nextSibling);
     }
     
-    // Обработчик клика - добавляем переключатели в формы ПК
+
     managementBtn.addEventListener('click', function(e) {
       e.preventDefault();
       addDiskTogglesToPCForms(rows);
@@ -4626,19 +4626,19 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function addDiskTogglesToPCForms(rows) {
-    // Просто добавляем переключатели к существующим формам ПК
+
     const pcForms = document.querySelectorAll('form.pc');
     pcForms.forEach(form => {
       const uuid = form.id;
       if (!uuid) return;
       
-      // Удаляем существующий переключатель
+
       const existingToggle = form.querySelector('.disk-toggle-container');
       if (existingToggle) {
         existingToggle.remove();
       }
       
-      // Добавляем стили для iOS переключателя
+
       if (!document.getElementById('ios-toggle-styles')) {
         const style = document.createElement('style');
         style.id = 'ios-toggle-styles';
@@ -4711,23 +4711,23 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         document.head.appendChild(style);
       }
       
-      // Создаем контейнер переключателя
+
       const toggleContainer = document.createElement('div');
       toggleContainer.className = 'disk-toggle-container';
       toggleContainer.setAttribute('data-uuid', uuid);
       
-      // Создаем переключатель
+
       const toggle = document.createElement('label');
       toggle.className = 'ios-toggle';
       
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       
-      // Определяем начальное состояние на основе существующей информации о подмене
+
       const existingDiskInfo = form.querySelector('.disk-info');
       if (existingDiskInfo) {
         const statusText = existingDiskInfo.textContent;
-        // Если в тексте есть "Подмена включена", то переключатель должен быть включен
+
         const isSubstitutionEnabled = statusText.includes('Подмена включена');
         checkbox.checked = isSubstitutionEnabled;
       }
@@ -4740,7 +4740,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       
       toggleContainer.appendChild(toggle);
       
-      // Добавляем обработчик клика
+
       toggleContainer.addEventListener('click', function(e) {
         if (e.target.type === 'checkbox') {
           const newValue = e.target.checked;
@@ -4750,7 +4750,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         }
       });
       
-      // Вставляем переключатель в форму
+
       const targetDiskInfo = form.querySelector('.disk-info');
       if (targetDiskInfo) {
         targetDiskInfo.appendChild(toggleContainer);
@@ -4764,7 +4764,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   
   function toggleDiskExclusion(uuid, value, container) {
     const clubId = getClubIdFromUrl();
-    // Инвертируем значение: если визуально включаем (value=true), отправляем false
+
     const invertedValue = !value;
     const url = `/freenas_wrap/crud.php?action=toggle_exclusion&club_id=${clubId}&machine_id=${uuid}&value=${invertedValue}`;
     
@@ -4782,7 +4782,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         showNotification(`Состояние диска обновлено: ${value ? 'включена' : 'отключена'}`, 'success', 2000);
       } else {
         showNotification('Ошибка при обновлении состояния диска', 'error', 3000);
-        // Возвращаем переключатель в исходное состояние
+
         const checkbox = container.querySelector('input[type="checkbox"]');
         if (checkbox) {
           checkbox.checked = !value;
@@ -4792,7 +4792,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     .catch(error => {
       console.error('Lan-Search: Ошибка при переключении диска:', error);
       showNotification('Ошибка сети при обновлении диска', 'error', 3000);
-      // Возвращаем переключатель в исходное состояние
+
       const checkbox = container.querySelector('input[type="checkbox"]');
       if (checkbox) {
         checkbox.checked = !value;
@@ -4963,7 +4963,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
     
     if (tables.length > 0) {
-      // Оптимизация применена
+
     }
   }
   
@@ -4991,7 +4991,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
     
     if (tables.length > 0) {
-      // Названия восстановлены
+
     }
   }
   
@@ -5097,49 +5097,64 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function applyHideCheckboxes() {
-    // Применяем стили только на странице /all_clubs_pc/
+    console.log('applyHideCheckboxes called');
+    console.log('Current pathname:', window.location.pathname);
     if (window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.setAttribute('data-page', 'all_clubs_pc');
     document.body.classList.add('lan-search-hide-checkboxes');
+      console.log('Added data-page and lan-search-hide-checkboxes class to body');
+      console.log('Body classes:', document.body.className);
+      console.log('Body data-page:', document.body.getAttribute('data-page'));
     } else {
+      console.log('Not on all_clubs_pc page');
     }
   }
   
   function removeHideCheckboxes() {
     document.body.classList.remove('lan-search-hide-checkboxes');
-    // Убираем атрибут data-page только если мы не на странице /all_clubs_pc/
+
     if (!window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.removeAttribute('data-page');
     }
   }
   
   function initHideCheckboxes() {
-    if (!shouldAutoActivate()) return;
-    
-    // Проверяем, что мы на правильной странице
-    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+    console.log('initHideCheckboxes called');
+    if (!shouldAutoActivate()) {
+      console.log('shouldAutoActivate returned false');
       return;
     }
     
-    // НЕ применяем стили автоматически при инициализации
-    // Стили будут применяться только при явном вызове из popup
+    console.log('Current pathname:', window.location.pathname);
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      console.log('Not on all_clubs_pc page, returning');
+      return;
+    }
+    
+
+
     
     let processingHideCheckboxes = false;
     
     function processHideCheckboxes() {
+      console.log('processHideCheckboxes called');
       if (processingHideCheckboxes) return;
       processingHideCheckboxes = true;
       
       getHideCheckboxesSetting(function(hideCheckboxesEnabled) {
-        
-        // НЕ применяем стили автоматически - только при явном вызове
+        console.log('getHideCheckboxesSetting callback, enabled:', hideCheckboxesEnabled);
+        if (hideCheckboxesEnabled) {
+          applyHideCheckboxes();
+        } else {
+          removeHideCheckboxes();
+        }
         
         processingHideCheckboxes = false;
       });
     }
     
     
-    // НЕ вызываем processHideCheckboxes() автоматически
+
     
     
     chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -5162,7 +5177,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   };
 
-  // Глобальные функции для получения настроек скрытия
+
   window.lanSearchGetHideCheckboxesSetting = getHideCheckboxesSetting;
   window.lanSearchGetHideCommentsSetting = getHideCommentsSetting;
   
@@ -5223,49 +5238,64 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function applyHideComments() {
-    // Применяем стили только на странице /all_clubs_pc/
+    console.log('applyHideComments called');
+    console.log('Current pathname:', window.location.pathname);
     if (window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.setAttribute('data-page', 'all_clubs_pc');
     document.body.classList.add('lan-search-hide-comments');
+      console.log('Added data-page and lan-search-hide-comments class to body');
+      console.log('Body classes:', document.body.className);
+      console.log('Body data-page:', document.body.getAttribute('data-page'));
     } else {
+      console.log('Not on all_clubs_pc page');
     }
   }
   
   function removeHideComments() {
     document.body.classList.remove('lan-search-hide-comments');
-    // Убираем атрибут data-page только если мы не на странице /all_clubs_pc/
+
     if (!window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.removeAttribute('data-page');
     }
   }
   
   function initHideComments() {
-    if (!shouldAutoActivate()) return;
-    
-    // Проверяем, что мы на правильной странице
-    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+    console.log('initHideComments called');
+    if (!shouldAutoActivate()) {
+      console.log('shouldAutoActivate returned false');
       return;
     }
     
-    // НЕ применяем стили автоматически при инициализации
-    // Стили будут применяться только при явном вызове из popup
+    console.log('Current pathname:', window.location.pathname);
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      console.log('Not on all_clubs_pc page, returning');
+      return;
+    }
+    
+
+
     
     let processingHideComments = false;
     
     function processHideComments() {
+      console.log('processHideComments called');
       if (processingHideComments) return;
       processingHideComments = true;
       
       getHideCommentsSetting(function(hideCommentsEnabled) {
-        
-        // НЕ применяем стили автоматически - только при явном вызове
+        console.log('getHideCommentsSetting callback, enabled:', hideCommentsEnabled);
+        if (hideCommentsEnabled) {
+          applyHideComments();
+        } else {
+          removeHideComments();
+        }
         
         processingHideComments = false;
       });
     }
     
     
-    // НЕ вызываем processHideComments() автоматически
+
     
     
     chrome.storage.onChanged.addListener(function(changes, namespace) {
@@ -5310,6 +5340,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   
   
   function applyPCStyles() {
+
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      return;
+    }
+    
     const pcForms = document.querySelectorAll('form.pc:not([data-lan-search-styled])');
     
     if (pcForms.length === 0) return;
@@ -5430,16 +5465,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
            const menu = dropdown.querySelector('.dropdown-menu');
            if (menu) {
              
-             document.querySelectorAll('.dropdown-menu.show').forEach(otherMenu => {
-               if (otherMenu !== menu) {
-                 otherMenu.classList.remove('show');
-                 
-                 const otherDropdown = otherMenu.closest('.lan-search-dropdown');
-                 if (otherDropdown) {
-                   otherDropdown.classList.remove('menu-open');
-                 }
-               }
-             });
+
+            document.querySelectorAll('.lan-search-dropdown .dropdown-menu.show').forEach(otherMenu => {
+              if (otherMenu !== menu) {
+                otherMenu.classList.remove('show');
+                
+                const otherDropdown = otherMenu.closest('.lan-search-dropdown');
+                if (otherDropdown) {
+                  otherDropdown.classList.remove('menu-open');
+                }
+              }
+            });
              
              
              const isOpen = menu.classList.contains('show');
@@ -5463,12 +5499,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
     
     if (pcForms.length > 0) {
-      // Стили применены
+
     }
   }
   
   
   function removePCStylesFromCards() {
+
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      return;
+    }
+    
     const pcForms = document.querySelectorAll('form.pc[data-lan-search-styled]');
     
     if (pcForms.length === 0) return;
@@ -5578,10 +5619,58 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
     
     if (pcForms.length > 0) {
-      // Стили восстановлены
+
     }
   }
   
+  
+  function addManageButtonsToPCs() {
+    console.log('addManageButtonsToPCs called');
+    
+
+    if (!window.location.pathname.includes('/all_clubs_pc/')) {
+      return;
+    }
+    
+
+    const pcForms = document.querySelectorAll('form.pc, .lan-search-pc-container');
+    
+    pcForms.forEach(form => {
+
+      const unlockButton = form.querySelector('[data-type="UnLock"]');
+      if (!unlockButton) return;
+      
+
+      if (form.querySelector('.lan-search-manage-btn')) return;
+      
+
+      const manageButton = form.querySelector('button[onclick*="StartRemote"]');
+      if (!manageButton) return;
+      
+
+      const onclickAttr = manageButton.getAttribute('onclick');
+      const uuidMatch = onclickAttr.match(/StartRemote\('([^']+)'\)/);
+      if (!uuidMatch) return;
+      
+      const uuid = uuidMatch[1];
+      
+
+      const newManageButton = document.createElement('button');
+      newManageButton.className = 'btn btn-primary btn-block lan-search-manage-btn';
+      newManageButton.innerHTML = '<i class="fa fa-desktop"></i> Управлять';
+      newManageButton.title = 'Управлять ПК';
+      newManageButton.setAttribute('onclick', `StartRemote('${uuid}')`);
+      
+
+      unlockButton.parentNode.insertBefore(newManageButton, unlockButton.nextSibling);
+      
+
+      const allBrs = form.querySelectorAll('br');
+      allBrs.forEach(br => br.remove());
+      
+      console.log('Added manage button for PC:', uuid);
+    });
+  }
   
   function initPCStyles() {
     if (!shouldAutoActivate()) return;
@@ -5612,14 +5701,15 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
      
      document.addEventListener('click', function(e) {
        if (!e.target.closest('.lan-search-dropdown')) {
-         document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
-           menu.classList.remove('show');
-           
-           const dropdown = menu.closest('.lan-search-dropdown');
-           if (dropdown) {
-             dropdown.classList.remove('menu-open');
-           }
-         });
+
+        document.querySelectorAll('.lan-search-dropdown .dropdown-menu.show').forEach(menu => {
+          menu.classList.remove('show');
+          
+          const dropdown = menu.closest('.lan-search-dropdown');
+          if (dropdown) {
+            dropdown.classList.remove('menu-open');
+          }
+        });
        }
      });
      
@@ -5674,7 +5764,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   };
 
-  // WebSocket для получения данных о ПК
+
   function initWebSocketPCData() {
     if (!window.location.pathname.includes('/freenas_wrap/')) {
       return;
@@ -5682,7 +5772,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     
     
 
-    // Перехватываем fetch для получения WebSocket данных
+
     const originalFetch = window.fetch;
     window.fetch = function(...args) {
       return originalFetch.apply(this, args).then(response => {
@@ -5700,7 +5790,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       return originalXHROpen.call(this, method, url, ...args);
     };
     
-    // Добавляем MutationObserver для отслеживания изменений в DOM
+
     const observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
@@ -5726,43 +5816,43 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       characterData: true
     });
     
-    // Перехватываем WebSocket через переопределение конструктора
+
     const OriginalWebSocket = window.WebSocket;
     window.WebSocket = function(url, protocols) {
       const ws = new OriginalWebSocket(url, protocols);
       
-      // Перехватываем onmessage
+
       const originalOnMessage = ws.onmessage;
       ws.onmessage = function(event) {
-        // Вызываем оригинальный обработчик
+
         if (originalOnMessage) {
           originalOnMessage.call(this, event);
         }
         
-        // Обрабатываем данные о ПК
+
         try {
           const data = JSON.parse(event.data);
           window.lanSearchProcessPCData(data);
         } catch (e) {
-          // Не JSON, пропускаем
+
         }
       };
       
       return ws;
     };
     
-    // Копируем статические свойства
+
     Object.setPrototypeOf(window.WebSocket, OriginalWebSocket);
     Object.defineProperty(window.WebSocket, 'prototype', {
       value: OriginalWebSocket.prototype,
       writable: false
     });
     
-    // Также проверяем, есть ли уже существующие WebSocket соединения
-    // Это может быть полезно, если WebSocket создается до инициализации нашего кода
+
+
     setTimeout(() => {
       
-      // Ищем существующие WebSocket соединения в глобальных переменных
+
       let foundWebSockets = 0;
       
       for (let prop in window) {
@@ -5772,7 +5862,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             foundWebSockets++;
             
             if (obj.readyState === WebSocket.OPEN || obj.readyState === WebSocket.CONNECTING) {
-              // Перехватываем его onmessage
+
               const originalOnMessage = obj.onmessage;
               obj.onmessage = function(event) {
                 if (originalOnMessage) {
@@ -5787,12 +5877,12 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             }
           }
         } catch (e) {
-          // Игнорируем ошибки доступа к свойствам
+
         }
       }
       
       
-  // Дополнительный поиск в возможных местах
+
   const possibleWebSocketLocations = [
     'window.ws',
     'window.websocket', 
@@ -5826,11 +5916,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       if (value && value.constructor && value.constructor.name === 'WebSocket') {
       }
     } catch (e) {
-      // Игнорируем ошибки доступа
+
     }
   });
   
-  // Поиск в объектах, которые могут содержать WebSocket
+
   const searchObjects = [
     'window.app',
     'window.application',
@@ -5864,23 +5954,23 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             if (value && value.constructor && value.constructor.name === 'WebSocket') {
             }
           } catch (e) {
-            // Игнорируем ошибки доступа
+
           }
         }
       }
     } catch (e) {
-      // Игнорируем ошибки доступа
+
     }
   });
       
-      // Также перехватываем addEventListener для WebSocket
+
       if (!EventTarget.prototype._lanSearchWebSocketAddEventListenerIntercepted) {
         const originalAddEventListener = EventTarget.prototype.addEventListener;
         EventTarget.prototype.addEventListener = function(type, listener, options) {
         if (type === 'message' && this.constructor && this.constructor.name === 'WebSocket') {
       const wrappedListener = function(event) {
         
-        // Проверяем тип данных перед парсингом
+
         let dataToProcess = null;
         
         if (typeof event.data === 'string') {
@@ -5889,7 +5979,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           } catch (e) {
           }
         } else if (typeof event.data === 'object' && event.data !== null) {
-          // Если это уже объект, используем его напрямую
+
           dataToProcess = event.data;
         }
         
@@ -5913,10 +6003,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   
   
   
-// Делаем функцию глобально доступной сразу
+
 window.lanSearchProcessPCData = function processPCData(data) {
   
-  // Проверяем, что мы на правильной странице
+
   if (!window.location.pathname.includes('/freenas_wrap/') && !window.location.pathname.includes('/pc_tasks/')) {
     return;
   }
@@ -5926,21 +6016,21 @@ window.lanSearchProcessPCData = function processPCData(data) {
       return;
     }
     
-    // Проверяем, не обрабатывали ли мы уже эти данные
+
     const dataKey = `${data.UUID}_${data.isLock}_${data.guest_id}_${data.tehnicalTime}_${data.ManualUnlock}_${data.status_pc}`;
     if (window._lanSearchProcessedData && window._lanSearchProcessedData[dataKey]) {
       return;
     }
     
-    // Сохраняем ключ обработанных данных
+
     if (!window._lanSearchProcessedData) {
       window._lanSearchProcessedData = {};
     }
     window._lanSearchProcessedData[dataKey] = true;
     
-    // Ищем строку таблицы с данным UUID
     
-    // Сначала пробуем найти td с data-uuid
+    
+
     const uuidCell = document.querySelector(`td[data-uuid="${data.UUID}"]`);
     if (uuidCell) {
       const row = uuidCell.closest('tr');
@@ -5949,17 +6039,17 @@ window.lanSearchProcessPCData = function processPCData(data) {
       }
     }
     
-    // Если не нашли, пробуем через tr:has (может не поддерживаться)
+
     const row = document.querySelector(`tr:has(td[data-uuid="${data.UUID}"])`);
     if (row) {
       return processPCDataWithRow(data, row);
     }
     
     
-    // Показываем все найденные UUID для отладки
+
     const allUuidCells = document.querySelectorAll('td[data-uuid]');
     
-    // Пробуем найти строку по частичному совпадению UUID
+
     const partialMatch = Array.from(allUuidCells).find(td => 
       td.getAttribute('data-uuid') && td.getAttribute('data-uuid').includes(data.UUID.substring(0, 8))
     );
@@ -5974,7 +6064,7 @@ window.lanSearchProcessPCData = function processPCData(data) {
   
   function processPCDataWithRow(data, row) {
     
-    // Определяем статус ПК по техническим параметрам
+
     let statusText = '';
     let statusClass = '';
     
@@ -5998,27 +6088,27 @@ window.lanSearchProcessPCData = function processPCData(data) {
     }
     
     
-    // Обновляем первую колонку (sorting_1) с информацией о состоянии
+
     const sortingCell = row.querySelector('td.sorting_1');
     if (sortingCell) {
       sortingCell.textContent = statusText;
     } else {
     }
     
-    // Обновляем класс строки
+
     row.className = row.className.replace(/bg-\w+/g, '').trim() + ' ' + statusClass;
     
   }
   
   function updatePCStatusInTable(uuid, status) {
-    // Находим строку таблицы по UUID
+
     const row = document.querySelector(`tr[id^="pcID-"] td[data-uuid="${uuid}"]`);
     if (!row) return;
     
     const tr = row.closest('tr');
     if (!tr) return;
     
-    // Обновляем статус в первой колонке
+
     const statusCell = tr.querySelector('td.sorting_1');
     if (statusCell) {
       let statusText = '';
@@ -6047,7 +6137,7 @@ window.lanSearchProcessPCData = function processPCData(data) {
       
       statusCell.textContent = statusText;
       
-      // Обновляем классы строки
+
       tr.className = tr.className.replace(/bg-\w+/g, '');
       if (statusClass) {
         tr.classList.add(statusClass);
@@ -6057,7 +6147,7 @@ window.lanSearchProcessPCData = function processPCData(data) {
   
   function updatePCDetailedInfo(data) {
     
-    // Находим строку таблицы по UUID
+
     const row = document.querySelector(`tr[id^="pcID-"] td[data-uuid="${data.UUID}"]`);
     if (!row) {
       return;
@@ -6069,13 +6159,13 @@ window.lanSearchProcessPCData = function processPCData(data) {
     }
     
     
-    // Обновляем статус блокировки
+
     const statusCell = tr.querySelector('td.sorting_1');
     if (statusCell) {
       let statusText = '';
       let statusClass = '';
       
-      // Определяем статус на основе isLock и ManualUnlock
+
       if (data.isLock) {
         if (data.ManualUnlock) {
           statusText = 'Ручная разблокировка';
@@ -6091,19 +6181,19 @@ window.lanSearchProcessPCData = function processPCData(data) {
       
       statusCell.textContent = statusText;
       
-      // Обновляем классы строки
+
       tr.className = tr.className.replace(/bg-\w+/g, '');
       if (statusClass) {
         tr.classList.add(statusClass);
       }
     }
     
-    // Добавляем информацию о техническом времени
+
     if (data.tehnicalTime !== undefined) {
       
       const statusColumn = tr.querySelector('td:nth-child(3)');
       if (statusColumn) {
-        // Удаляем старую информацию о тех.времени
+
         const oldTechTime = statusColumn.querySelector('.tech-time-info');
         if (oldTechTime) {
           oldTechTime.remove();
@@ -6118,12 +6208,12 @@ window.lanSearchProcessPCData = function processPCData(data) {
       }
     }
     
-    // Добавляем информацию о ручной разблокировке
+
     if (data.ManualUnlock !== undefined) {
       
       const statusColumn = tr.querySelector('td:nth-child(3)');
       if (statusColumn) {
-        // Удаляем старую информацию о ручной разблокировке
+
         const oldManualUnlock = statusColumn.querySelector('.manual-unlock-info');
         if (oldManualUnlock) {
           oldManualUnlock.remove();
@@ -6157,7 +6247,14 @@ window.lanSearchProcessPCData = function processPCData(data) {
         initHideCheckboxes();
         initHideComments();
         initDomainInfo();
+        initEnergySavingIgnore();
         initWebSocketPCData();
+        
+
+        handleHideStylesOnUrlChange();
+        
+
+        addManageButtonsToPCs();
       });
     } else {
       initModalBypass();
@@ -6168,43 +6265,50 @@ window.lanSearchProcessPCData = function processPCData(data) {
       initHideCheckboxes();
       initHideComments();
       initDomainInfo();
+      initEnergySavingIgnore();
       initWebSocketPCData();
+      
+
+      handleHideStylesOnUrlChange();
+      
+
+      addManageButtonsToPCs();
     }
   }
 
 })(); 
 
-// Автоматическая проверка WebSocket каждые 3 секунды
+
 let websocketCheckInterval = null;
 
 function startWebSocketMonitoring() {
-  // Проверяем, что мы на правильной странице
+
   if (!window.location.pathname.includes('/freenas_wrap/') && !window.location.pathname.includes('/pc_tasks/')) {
     return;
   }
   
   
-  // Проверяем WebSocket соединения сразу
+
   checkWebSocketConnections();
 }
 
 function checkWebSocketConnections() {
-  // Ищем WebSocket соединения в глобальных переменных
+
   let foundConnections = 0;
   
   
-  // Расширенный поиск WebSocket соединений
+
   const searchInObject = (obj, path = '') => {
     if (!obj || typeof obj !== 'object') return;
     
     try {
-      // Проверяем сам объект
+
       if (obj.constructor && obj.constructor.name === 'WebSocket') {
         foundConnections++;
         
         if (obj.readyState === WebSocket.OPEN || obj.readyState === WebSocket.CONNECTING) {
           
-          // Перехватываем onmessage если еще не перехвачен
+
           if (!obj._lanSearchIntercepted) {
             const originalOnMessage = obj.onmessage;
             obj.onmessage = function(event) {
@@ -6227,7 +6331,7 @@ function checkWebSocketConnections() {
         }
       }
       
-      // Рекурсивно ищем в свойствах объекта (ограничиваем глубину)
+
       if (path.split('.').length < 3) {
         for (let key in obj) {
           try {
@@ -6235,22 +6339,22 @@ function checkWebSocketConnections() {
               searchInObject(obj[key], path ? `${path}.${key}` : key);
             }
           } catch (e) {
-            // Игнорируем ошибки доступа
+
           }
         }
       }
     } catch (e) {
-      // Игнорируем ошибки
+
     }
   };
   
-  // Ищем в window и его основных объектах
+
   searchInObject(window, 'window');
   
-  // Ищем в document
+
   searchInObject(document, 'document');
   
-  // Ищем в iframe
+
   try {
     const iframes = document.querySelectorAll('iframe');
     iframes.forEach((iframe, index) => {
@@ -6259,14 +6363,14 @@ function checkWebSocketConnections() {
           searchInObject(iframe.contentWindow, `iframe[${index}]`);
         }
       } catch (e) {
-        // Игнорируем ошибки доступа к iframe
+
       }
     });
   } catch (e) {
-    // Игнорируем ошибки
+
   }
   
-  // Ищем в основных глобальных объектах
+
   const globalObjects = ['navigator', 'screen', 'location', 'history', 'localStorage', 'sessionStorage'];
   globalObjects.forEach(objName => {
     try {
@@ -6274,22 +6378,22 @@ function checkWebSocketConnections() {
         searchInObject(window[objName], objName);
       }
     } catch (e) {
-      // Игнорируем ошибки
+
     }
   });
   
-  // Также перехватываем все новые WebSocket через переопределение конструктора
+
   if (!window._lanSearchWebSocketIntercepted) {
     const OriginalWebSocket = window.WebSocket;
     window.WebSocket = function(url, protocols) {
       
-        // Проверяем, содержит ли URL wss://
+
         if (url.includes('wss://')) {
         }
       
       const ws = new OriginalWebSocket(url, protocols);
       
-      // Перехватываем все события WebSocket
+
       const originalOnMessage = ws.onmessage;
       const originalOnOpen = ws.onopen;
       const originalOnClose = ws.onclose;
@@ -6331,7 +6435,7 @@ function checkWebSocketConnections() {
       return ws;
     };
     
-    // Копируем статические свойства
+
     Object.setPrototypeOf(window.WebSocket, OriginalWebSocket);
     Object.defineProperty(window.WebSocket, 'prototype', {
       value: OriginalWebSocket.prototype,
@@ -6344,16 +6448,16 @@ function checkWebSocketConnections() {
   
   if (foundConnections === 0) {
     
-    // Пытаемся найти WebSocket URL и подключиться
+
     findAndConnectToWebSocket();
   } else {
   }
 }
 
-// Функция для поиска WebSocket URL и подключения
+
 function findAndConnectToWebSocket() {
   
-  // Ограничиваем количество попыток подключения
+
   if (window._lanSearchConnectionAttempts && window._lanSearchConnectionAttempts > 5) {
     return;
   }
@@ -6362,37 +6466,37 @@ function findAndConnectToWebSocket() {
     window._lanSearchConnectionAttempts = 0;
   }
   
-  // Пытаемся подключиться по принципу оригинала
+
   connectToWebSocket();
   window._lanSearchConnectionAttempts++;
 }
 
-// Функция для подключения к WebSocket (по принципу оригинала)
+
 function connectToWebSocket() {
   try {
-    // Получаем domain из мета-тега (как в оригинале)
+
     const domain = document.querySelector('meta[name="domain"]')?.getAttribute('content');
     if (!domain) {
       return;
     }
     
-    // Получаем session_id
+
     const sessionId = session_id();
     if (!sessionId) {
       return;
     }
     
-    // Создаем URL для WebSocket (как в оригинале)
+
     const wsUrl = `wss://${domain}/wss/?client_guid=${sessionId}&type_client=browser`;
     
-    // Используем оригинальный WebSocket конструктор
+
     const OriginalWebSocket = window._lanSearchOriginalWebSocket || window.WebSocket;
     const ws = new OriginalWebSocket(wsUrl);
     
     ws.onopen = function(event) {
       window._lanSearchWebSocket = ws; // Сохраняем соединение
       
-      // Запрашиваем состояние всех ПК сразу после подключения
+
       requestAllPCStatus();
     };
     
@@ -6400,7 +6504,7 @@ function connectToWebSocket() {
       try {
         const data = JSON.parse(event.data);
         
-        // Обрабатываем данные о ПК (как в оригинале)
+
         if (data.status_pc !== undefined) {
           if (typeof window.lanSearchProcessPCData === 'function') {
             window.lanSearchProcessPCData(data);
@@ -6408,7 +6512,7 @@ function connectToWebSocket() {
           return;
         }
         
-        // Обрабатываем команды (как в оригинале)
+
         switch (data.command) {
           case "showConfig":
             if (typeof window.lanSearchProcessPCData === 'function') {
@@ -6423,7 +6527,7 @@ function connectToWebSocket() {
     };
     
     ws.onclose = function(event) {
-      // Автоматическое переподключение сразу
+
       connectToWebSocket();
     };
     
@@ -6435,12 +6539,12 @@ function connectToWebSocket() {
   }
 }
 
-// Функция для получения session_id (как в оригинале)
+
 function session_id() {
   return /SESS\w*ID=([^;]+)/i.test(document.cookie) ? RegExp.$1 : false;
 }
 
-// Функция для отправки команд к ПК через WebSocket (по принципу оригинала)
+
 function sendPCCommand(uuid, command = 'showConfig') {
   if (!window._lanSearchWebSocket || window._lanSearchWebSocket.readyState !== WebSocket.OPEN) {
     return false;
@@ -6463,17 +6567,17 @@ function sendPCCommand(uuid, command = 'showConfig') {
   }
 }
 
-// Функция для получения состояния всех ПК
+
 function requestAllPCStatus() {
   
-  // Ищем все строки таблицы с ПК - ищем по td с data-uuid
+
   const pcRows = document.querySelectorAll('tr:has(td[data-uuid])');
   
-  // Если не нашли, пробуем другой способ
+
   if (pcRows.length === 0) {
     const allRows = document.querySelectorAll('tr');
     
-    // Ищем строки, которые содержат td с data-uuid
+
     allRows.forEach((row, index) => {
       const uuidCell = row.querySelector('td[data-uuid]');
       if (uuidCell) {
@@ -6484,14 +6588,14 @@ function requestAllPCStatus() {
   let emptyPCs = [];
   
   pcRows.forEach((row, index) => {
-      // Получаем UUID из td внутри строки
+
       const uuidCell = row.querySelector('td[data-uuid]');
       if (!uuidCell) return;
       
       const uuid = uuidCell.getAttribute('data-uuid');
       if (!uuid) return;
       
-      // Проверяем, есть ли пустая ячейка sorting_1 (первая колонка)
+
       const sortingCell = row.querySelector('td.sorting_1');
       if (sortingCell && sortingCell.textContent.trim() === '') {
         emptyPCs.push({uuid, index});
@@ -6500,7 +6604,7 @@ function requestAllPCStatus() {
     });
     
     
-    // Отправляем команды только к ПК с пустым состоянием
+
     emptyPCs.forEach((pc, index) => {
       sendPCCommand(pc.uuid, 'showConfig');
     });
@@ -6510,40 +6614,40 @@ function requestAllPCStatus() {
     }
 }
 
-// Функция для добавления кнопки запроса состояния ПК
+
 function addPCStatusButton() {
-  // Проверяем, есть ли уже кнопка
+
   if (document.getElementById('lanSearchPCStatusBtn')) {
     return;
   }
   
-  // Создаем кнопку
+
   const statusBtn = document.createElement('button');
   statusBtn.id = 'lanSearchPCStatusBtn';
   statusBtn.className = 'btn btn-info mb-3 mr-2';
   statusBtn.innerHTML = '<i class="fa fa-refresh"></i> Запросить состояние ПК';
   statusBtn.title = 'Запросить актуальное состояние всех ПК через WebSocket';
   
-  // Добавляем обработчик события
+
   statusBtn.addEventListener('click', function(e) {
     e.preventDefault();
     requestAllPCStatus();
-    // Убираем showNotification, так как функция уже показывает alert
+
   });
   
-  // Ищем место для вставки кнопки
+
   const checkDisksBtn = document.getElementById('checkDisksBtn');
   if (checkDisksBtn) {
     checkDisksBtn.parentNode.insertBefore(statusBtn, checkDisksBtn.nextSibling);
   } else {
-    // Если кнопка "Проверить диски" не найдена, добавляем в начало страницы
+
     const container = document.querySelector('.container-fluid') || document.body;
     container.insertBefore(statusBtn, container.firstChild);
   }
   
 }
 
-// Функция для тестирования поиска ПК (можно вызвать из консоли)
+
 window.testPCSearch = function() {
   
   const selectors = [
@@ -6569,10 +6673,10 @@ window.testPCSearch = function() {
   });
 };
 
-// Функция для тестирования поиска пустых ПК (можно вызвать из консоли)
+
 window.testEmptyPCs = function() {
   
-  // Пробуем разные селекторы
+
   const selectors = [
     'tr:has(td[data-uuid])',
     'tr[data-uuid]',
@@ -6592,7 +6696,7 @@ window.testEmptyPCs = function() {
   let filledPCs = [];
   
   pcRows.forEach((row, index) => {
-    // Ищем td с data-uuid внутри строки
+
     const uuidCell = row.querySelector('td[data-uuid]');
     if (!uuidCell) return;
     
@@ -6612,18 +6716,18 @@ window.testEmptyPCs = function() {
 };
 
 
-// Запускаем WebSocket мониторинг для страниц /freenas_wrap/ и /pc_tasks/
+
 if (window.location.pathname.includes('/freenas_wrap/') || window.location.pathname.includes('/pc_tasks/')) {
   
-  // Запускаем мониторинг сразу
+
   startWebSocketMonitoring();
 
-  // Добавляем кнопку запроса состояния ПК сразу
+
   addPCStatusButton();
 } else {
 } 
 
-// Функция для проверки состояния WebSocket соединения
+
 function checkWebSocketStatus() {
   if (window._lanSearchWebSocket) {
     const state = window._lanSearchWebSocket.readyState;
@@ -6633,7 +6737,7 @@ function checkWebSocketStatus() {
   return false;
 }
 
-// Функция для принудительного переподключения WebSocket
+
 function reconnectWebSocket() {
   if (window._lanSearchWebSocket) {
     window._lanSearchWebSocket.close();
@@ -6646,11 +6750,11 @@ function reconnectWebSocket() {
   }, 1000);
 }
 
-// Создаем WebSocket соединение для всех подходящих доменов
+
 if (window.location.hostname.includes('langame') || window.location.hostname.includes('cls') || window.location.hostname.includes('f5center')) {
   console.log('Lan-Search: Создание WebSocket соединения для домена:', window.location.hostname);
   
-  // Небольшая задержка для полной загрузки страницы
+
   setTimeout(() => {
     if (typeof window.lanSearchCreateWebSocket === 'function') {
       window.lanSearchCreateWebSocket();
@@ -6659,7 +6763,7 @@ if (window.location.hostname.includes('langame') || window.location.hostname.inc
   }, 1000);
 }
 
-// Добавляем глобальные функции для управления WebSocket
+
 window.lanSearchWebSocket = {
   create: window.lanSearchCreateWebSocket,
   check: checkWebSocketStatus,
@@ -6669,7 +6773,7 @@ window.lanSearchWebSocket = {
   clearCache: window.lanSearchClearWebSocketSettingCache
 }; 
 
-// Функции для работы с информацией по домену
+
 function getDomainInfoSetting(callback) {
   const now = Date.now();
   
@@ -6720,11 +6824,11 @@ function clearDomainInfoCache() {
   domainInfoCacheTime = 0;
 }
 
-// Функция для поиска домена через API
+
 async function searchDomainViaAPI(domain) {
   try {
     
-    // Очищаем домен от протокола и www
+
     const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').trim();
     
     const apiUrl = `https://k-connect.ru/api/domain-search/${encodeURIComponent(cleanDomain)}`;
@@ -6753,7 +6857,7 @@ async function searchDomainViaAPI(domain) {
       
       const row = data.data.full_row;
       
-      // Логируем каждый элемент для отладки
+
       row.forEach((item, index) => {
       });
       
@@ -6766,7 +6870,7 @@ async function searchDomainViaAPI(domain) {
         ip: row[5] || '', // IP
         command: row[9] || '', // Команда (индекс 9, а не 6!)
         info: row[12] || '', // Дополнительная информация
-        // Дополнительные поля из полного ответа
+
         rowNumber: data.data.row_number || '',
         columnNumber: data.data.column_number || '',
         matchedCell: data.data.matched_cell || '',
@@ -6784,7 +6888,7 @@ async function searchDomainViaAPI(domain) {
   }
 }
 
-// Функция для обработки информации по домену через API
+
 async function processDomainInfoAPI(currentDomain) {
   
   const domainInfo = await searchDomainViaAPI(currentDomain);
@@ -6793,24 +6897,24 @@ async function processDomainInfoAPI(currentDomain) {
   }
   
   
-  // Кэшируем результат
+
   domainInfoCache = domainInfo;
   domainInfoCacheTime = Date.now();
   
-  // Проверяем, что блок еще не добавлен
+
   if (document.getElementById('domainInfoContainer')) {
     return;
   }
   
   
-  // Ищем место для вставки (после блока поиска гостей)
+
   const guestSearchContainer = document.getElementById('guestSearchContainer');
   
   if (guestSearchContainer) {
     guestSearchContainer.parentNode.insertBefore(createDomainInfoBlock(domainInfo), guestSearchContainer.nextSibling);
   } else {
     
-    // Альтернативные места для вставки
+
     const recentTabsContainer = document.getElementById('recentTabsContainer');
     
     if (recentTabsContainer) {
@@ -6827,7 +6931,7 @@ async function processDomainInfoAPI(currentDomain) {
           containerFluid.appendChild(createDomainInfoBlock(domainInfo));
         } else {
           
-          // Последняя попытка - вставить в body
+
           document.body.appendChild(createDomainInfoBlock(domainInfo));
         }
       }
@@ -6841,7 +6945,7 @@ function createDomainInfoBlock(domainInfo) {
   const container = document.createElement('div');
   container.id = 'domainInfoContainer';
   
-  // Проверяем темную тему
+
   const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark' || 
                      document.body.classList.contains('dark-theme') ||
                      window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -6863,7 +6967,7 @@ function createDomainInfoBlock(domainInfo) {
   title.textContent = 'Информация по домену';
   title.style.cssText = `margin: 0 0 10px 0; color: var(--domain-info-title-color, #495057); font-size: 13px; transition: color 0.3s ease;`;
   
-  // Создаем кнопку "Обновить команду"
+
   const updateCommandBtn = document.createElement('button');
   updateCommandBtn.innerHTML = `
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
@@ -6891,7 +6995,7 @@ function createDomainInfoBlock(domainInfo) {
   `;
   updateCommandBtn.title = 'Обновить команду через API (если CMD не работает)';
   
-  // Обработчик клика для кнопки обновления команды
+
   updateCommandBtn.addEventListener('click', async () => {
     try {
       updateCommandBtn.innerHTML = `
@@ -6927,7 +7031,7 @@ function createDomainInfoBlock(domainInfo) {
         updateCommandBtn.style.color = '#28a745';
         updateCommandBtn.style.borderColor = '#28a745';
         
-        // Показываем сообщение о перезагрузке
+
         const reloadMessage = document.createElement('div');
         reloadMessage.textContent = 'Перезагрузите страницу для применения изменений';
         reloadMessage.style.cssText = `
@@ -6943,7 +7047,7 @@ function createDomainInfoBlock(domainInfo) {
           animation: fadeIn 0.3s ease;
         `;
         
-        // Добавляем сообщение после кнопки
+
         const titleContainer = updateCommandBtn.parentElement;
         titleContainer.appendChild(reloadMessage);
         
@@ -6992,13 +7096,13 @@ function createDomainInfoBlock(domainInfo) {
     }
   });
   
-  // Создаем контейнер для заголовка и кнопки
+
   const titleContainer = document.createElement('div');
   titleContainer.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;';
   titleContainer.appendChild(title);
   titleContainer.appendChild(updateCommandBtn);
   
-  // Функция для создания блока с кнопкой копирования
+
   function createInfoBlock(label, value, isMultiline = false) {
     if (!value || value === 'Не указано' || value === '') return null;
     
@@ -7063,7 +7167,7 @@ function createDomainInfoBlock(domainInfo) {
         }, 1000);
       } catch (err) {
         console.error('Ошибка копирования:', err);
-        // Fallback для старых браузеров
+
         const textArea = document.createElement('textarea');
         textArea.value = value;
         document.body.appendChild(textArea);
@@ -7111,7 +7215,7 @@ function createDomainInfoBlock(domainInfo) {
     return block;
   }
   
-  // Создаем блоки для всех полей
+
   const blocks = [
     createInfoBlock('Название клуба', domainInfo.name || 'Не указано'),
     createInfoBlock('ID', domainInfo.id || 'Не указано'),
@@ -7135,7 +7239,7 @@ function createDomainInfoBlock(domainInfo) {
 }
 
 function initDomainInfo() {
-  // Строгие условия для запуска - только главная страница
+
   const isMainPage = window.location.pathname === '/' || 
                      window.location.pathname === '/dashboard/';
   
@@ -7143,35 +7247,35 @@ function initDomainInfo() {
     return;
   }
   
-  // Небольшая задержка для полной загрузки страницы
+
   setTimeout(() => {
     getDomainInfoSetting(function(domainInfoEnabled) {
       if (!domainInfoEnabled) {
         return;
       }
       
-      // Получаем текущий домен
+
       const currentDomain = window.location.hostname;
       
-      // Проверяем кэш
+
       const now = Date.now();
       if (domainInfoCache && domainInfoCacheTime && (now - domainInfoCacheTime) < DOMAIN_INFO_CACHE_DURATION) {
         processDomainInfoAPI(currentDomain);
         return;
       }
       
-      // Загружаем данные через API
+
       processDomainInfoAPI(currentDomain);
     });
   }, 1000); // Задержка в 1 секунду для полной загрузки страницы
 }
 
-// Глобальные функции для синхронизации
+
 window.lanSearchSyncDomainInfo = function() {
   clearDomainInfoCache();
   getDomainInfoSetting(function(enabled) {
     if (enabled) {
-      // Проверяем, что мы на главной странице
+
       const isMainPage = window.location.pathname === '/' || 
                          window.location.pathname === '/dashboard/';
       
@@ -7188,13 +7292,209 @@ window.lanSearchSyncDomainInfo = function() {
   });
 };
 
-// Глобальные функции для получения настроек
+
+function getEnergySavingIgnoreSetting(callback) {
+  try {
+    chrome.storage.sync.get(['energySavingIgnore'], function(result) {
+      if (chrome.runtime.lastError) {
+        const localEnergySaving = localStorage.getItem('lanSearchEnergySavingIgnore');
+        const enabled = localEnergySaving === 'true';
+        callback(enabled);
+      } else {
+        const enabled = result.energySavingIgnore || false;
+        callback(enabled);
+      }
+    });
+  } catch (e) {
+    const localEnergySaving = localStorage.getItem('lanSearchEnergySavingIgnore');
+    const enabled = localEnergySaving === 'true';
+    callback(enabled);
+  }
+}
+
+function initEnergySavingIgnore() {
+  if (!window.location.pathname.includes('/all_clubs_pc/')) {
+    return;
+  }
+  
+  getEnergySavingIgnoreSetting(function(enabled) {
+    if (enabled) {
+      addEnergySavingIgnoreButtons();
+      
+
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+
+            const hasNewDropdowns = Array.from(mutation.addedNodes).some(node => {
+              return node.nodeType === 1 && (
+                node.classList?.contains('dropdown-menu') ||
+                node.querySelector?.('.dropdown-menu')
+              );
+            });
+            
+            if (hasNewDropdowns) {
+
+              setTimeout(() => {
+                addEnergySavingIgnoreButtons();
+              }, 100);
+            }
+          }
+        });
+      });
+      
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+      
+
+      window._lanSearchEnergySavingObserver = observer;
+    } else {
+      removeEnergySavingIgnoreButtons();
+      
+
+      if (window._lanSearchEnergySavingObserver) {
+        window._lanSearchEnergySavingObserver.disconnect();
+        window._lanSearchEnergySavingObserver = null;
+      }
+    }
+  });
+}
+
+function addEnergySavingIgnoreButtons() {
+
+  if (!window.location.pathname.includes('/all_clubs_pc/')) {
+    return;
+  }
+
+  removeEnergySavingIgnoreButtons();
+  
+
+  const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+  
+  dropdownMenus.forEach(menu => {
+
+    const manageButton = menu.querySelector('button[onclick*="StartRemote"]');
+    if (manageButton) {
+
+      const onclickAttr = manageButton.getAttribute('onclick');
+      const uuidMatch = onclickAttr.match(/StartRemote\('([^']+)'\)/);
+      if (uuidMatch) {
+        const uuid = uuidMatch[1];
+        
+
+        if (!menu.querySelector('.lan-search-energy-saving-btn')) {
+
+          const energyButton = document.createElement('button');
+          energyButton.className = 'btn btn-warning btn-block lan-search-energy-saving-btn';
+          energyButton.innerHTML = '<i class="fa fa-power-off"></i>&nbsp;Игн. перевод в спящий';
+          energyButton.title = 'Отключить энергосбережение монитора и ПК';
+          
+
+          energyButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleEnergySavingIgnore(uuid);
+          });
+          
+
+          manageButton.parentNode.insertBefore(energyButton, manageButton.nextSibling);
+          
+
+          updateDropdownEventHandlers(menu);
+        }
+      }
+    }
+  });
+}
+
+function updateDropdownEventHandlers(menu) {
+
+  const toggleButton = menu.closest('.dropdown, .btn-group')?.querySelector('[data-toggle="dropdown"], .dropdown-toggle');
+  if (!toggleButton) return;
+  
+
+  toggleButton.addEventListener('click', function() {
+    menu.classList.add('show');
+  });
+}
+
+function removeEnergySavingIgnoreButtons() {
+  const existingButtons = document.querySelectorAll('.lan-search-energy-saving-btn');
+  existingButtons.forEach(button => button.remove());
+  
+
+  if (window._lanSearchEnergySavingObserver) {
+    window._lanSearchEnergySavingObserver.disconnect();
+    window._lanSearchEnergySavingObserver = null;
+  }
+}
+
+function handleEnergySavingIgnore(uuid) {
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const clubId = urlParams.get('club_id') || '1';
+  
+
+  const endpoints = [
+    '/monitor_ignore/crud.php',
+    '/pc_energy_saving_ignore/crud.php'
+  ];
+  
+  const requests = endpoints.map(endpoint => {
+    return fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json, text/javascript, */*; q=0.01',
+        'accept-language': 'ru,en-US;q=0.9,en;q=0.8,uk;q=0.7',
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'priority': 'u=0, i',
+        'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-origin',
+        'x-requested-with': 'XMLHttpRequest'
+      },
+      body: `command=addClient&club_id=${clubId}&client=${uuid}`,
+      mode: 'cors',
+      credentials: 'include'
+    });
+  });
+  
+
+  Promise.all(requests)
+    .then(responses => {
+      const allSuccessful = responses.every(response => response.ok);
+      if (allSuccessful) {
+        showNotification('Энергосбережение отключено для монитора и ПК', 'success', 3000);
+      } else {
+        showNotification('Ошибка при отключении энергосбережения', 'error', 3000);
+      }
+    })
+    .catch(error => {
+      console.error('Ошибка при отключении энергосбережения:', error);
+      showNotification('Ошибка при отключении энергосбережения', 'error', 3000);
+    });
+}
+
+
+window.lanSearchSyncEnergySavingIgnore = function() {
+  if (window.location.pathname.includes('/all_clubs_pc/')) {
+    initEnergySavingIgnore();
+  }
+};
+
+
 window.lanSearchGetDomainInfoSetting = getDomainInfoSetting;
 
-// Тестовая функция для проверки работы
+
 window.lanSearchTestDomainInfo = function() {
   
-  // Создаем тестовый блок
+
   const testInfo = {
     name: 'Тестовое название',
     id: 'Тестовый ID',
@@ -7204,7 +7504,7 @@ window.lanSearchTestDomainInfo = function() {
   
   const testBlock = createDomainInfoBlock(testInfo);
   
-  // Ищем место для вставки
+
   const guestSearchContainer = document.getElementById('guestSearchContainer');
   if (guestSearchContainer) {
     guestSearchContainer.parentNode.insertBefore(testBlock, guestSearchContainer.nextSibling);
@@ -7213,7 +7513,7 @@ window.lanSearchTestDomainInfo = function() {
   }
 };
 
-// Функция для тестирования API
+
 window.lanSearchTestAPI = async function(domain) {
   
   const testDomain = domain || window.location.hostname;
@@ -7226,7 +7526,7 @@ window.lanSearchTestAPI = async function(domain) {
   return result;
 };
 
-// Функция для проверки доступности API и CORS
+
 window.lanSearchTestCORS = async function() {
   
   try {
@@ -7258,21 +7558,21 @@ window.lanSearchTestCORS = async function() {
   }
 };
 
-// Функция для принудительной очистки кэша и перезагрузки данных
+
 window.lanSearchReloadData = async function() {
   
-  // Очищаем кэш
+
   clearDomainInfoCache();
   
-  // Удаляем существующий блок
+
   const existingBlock = document.getElementById('domainInfoContainer');
   if (existingBlock) {
     existingBlock.remove();
   }
   
-  // Перезапускаем инициализацию (только на главной странице)
+
   setTimeout(() => {
-    // Проверяем, что мы на главной странице
+
     const isMainPage = window.location.pathname === '/' || 
                        window.location.pathname === '/dashboard/';
     
@@ -7283,7 +7583,7 @@ window.lanSearchReloadData = async function() {
   }, 1000);
 };
 
-// Функция для прямого тестирования API с детальным логированием
+
 window.lanSearchDebugAPI = async function(domain) {
   
   const testDomain = domain || window.location.hostname;
@@ -7321,11 +7621,11 @@ window.lanSearchDebugAPI = async function(domain) {
   }
 };
 
-// Принудительная инициализация для Firefox (только на главной странице)
+
 console.log('Lan-Search: Принудительная инициализация для Firefox');
 setTimeout(() => {
   console.log('Lan-Search: Запуск принудительной инициализации...');
-  // Проверяем, что мы на главной странице
+
   const isMainPage = window.location.pathname === '/' || 
                      window.location.pathname === '/dashboard/';
   
@@ -7336,10 +7636,10 @@ setTimeout(() => {
   }
 }, 2000);
 
-// Дополнительная инициализация через 5 секунд для надежности (только на главной странице)
+
 setTimeout(() => {
   
-  // Проверяем, что мы на главной странице
+
   const isMainPage = window.location.pathname === '/' || 
                      window.location.pathname === '/dashboard/';
   
@@ -7349,10 +7649,10 @@ setTimeout(() => {
   }
 }, 5000); 
 
-// Дополнительная инициализация поиска для f5center.com
+
 if (window.location.hostname.includes('f5center') && !document.getElementById('globalMenuSearchInput')) {
   console.log('Lan-Search: Повторная инициализация поиска для f5center.com...');
-  // Используем setTimeout для корректной работы в Firefox
+
   setTimeout(() => {
     if (typeof window.lanSearchInit === 'function') {
       window.lanSearchInit();
@@ -7361,7 +7661,7 @@ if (window.location.hostname.includes('f5center') && !document.getElementById('g
   }, 100);
 }
 
-// Дополнительная инициализация поиска гостей для f5center.com
+
 if (window.location.hostname.includes('f5center')) {
   console.log('Lan-Search: Инициализация поиска гостей для f5center.com...');
   setTimeout(() => {
@@ -7372,28 +7672,28 @@ if (window.location.hostname.includes('f5center')) {
   }, 200);
 }
 
-// Дополнительная инициализация вкладок и избранных для f5center.com
+
 if (window.location.hostname.includes('f5center')) {
   console.log('Lan-Search: Инициализация вкладок и избранных для f5center.com...');
   setTimeout(() => {
-    // Инициализация отслеживания вкладок
+
     if (typeof initRecentTabsTracking === 'function') {
       initRecentTabsTracking();
     }
     
-    // Инициализация избранных
+
     if (typeof initFavoritesDragDrop === 'function') {
       initFavoritesDragDrop();
     }
     
-    // Отображение вкладок на главной странице
+
     if (window.recentTabsManager) {
       window.recentTabsManager.displayOnMainPage();
     }
   }, 300);
 }
 
-// Дополнительная инициализация WebSocket для f5center.com
+
 if (window.location.hostname.includes('f5center')) {
   console.log('Lan-Search: Инициализация WebSocket для f5center.com...');
   setTimeout(() => {
