@@ -3097,6 +3097,53 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           hideMassiveSelectionPanelForAllClubs();
         }
       }
+      
+      // Обработка кнопок выбора в панели
+      if (event.target && event.target.id === 'selectAllPC') {
+        setTimeout(() => {
+          exitSelectionMode();
+          if (window.location.pathname.includes('/all_clubs_pc/')) {
+            hideMassiveSelectionPanelForAllClubs();
+          }
+        }, 300);
+      }
+      
+      if (event.target && event.target.id === 'selectAllFreePC') {
+        setTimeout(() => {
+          exitSelectionMode();
+          if (window.location.pathname.includes('/all_clubs_pc/')) {
+            hideMassiveSelectionPanelForAllClubs();
+          }
+        }, 300);
+      }
+      
+      if (event.target && event.target.id === 'selectAllInTech') {
+        setTimeout(() => {
+          exitSelectionMode();
+          if (window.location.pathname.includes('/all_clubs_pc/')) {
+            hideMassiveSelectionPanelForAllClubs();
+          }
+        }, 300);
+      }
+      
+      if (event.target && event.target.id === 'selectAllInUnlock') {
+        setTimeout(() => {
+          exitSelectionMode();
+          if (window.location.pathname.includes('/all_clubs_pc/')) {
+            hideMassiveSelectionPanelForAllClubs();
+          }
+        }, 300);
+      }
+      
+      // Обработка action кнопок в панели выбора
+      if (event.target && event.target.classList.contains('select-action')) {
+        setTimeout(() => {
+          exitSelectionMode();
+          if (window.location.pathname.includes('/all_clubs_pc/')) {
+            hideMassiveSelectionPanelForAllClubs();
+          }
+        }, 300);
+      }
     });
 
     
@@ -4139,7 +4186,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function exitSelectionMode() {
     selectionMode = false;
     document.body.classList.remove('selection-mode');
-    showNotification('Режим выбора отключен', 'warning', 2000);
+    showNotification('вот бы пивка', 'warning', 2000);
     
 
     if (savedModalBypassState !== null) {
