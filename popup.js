@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const domainInfoToggle = document.getElementById('domainInfoToggle');
   const customWebSocketToggle = document.getElementById('customWebSocketToggle');
   const energySavingIgnoreToggle = document.getElementById('energySavingIgnoreToggle');
+  const updaters3000Toggle = document.getElementById('updaters3000Toggle');
   
   
   let currentTheme = 'light';
@@ -205,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let domainInfoEnabled = false;
   let customWebSocketEnabled = false;
   let energySavingIgnoreEnabled = false;
+  let updaters3000Enabled = false;
   function initPCStyles() {
     try {
       const localStyles = localStorage.getItem('lanSearchPCStyles');
@@ -708,6 +710,69 @@ document.addEventListener('DOMContentLoaded', function() {
   // Обработчики событий
   energySavingIgnoreToggle.addEventListener('click', toggleEnergySavingIgnore);
   
+  // Функции для работы с Обновляторы3000
+  function initUpdaters3000() {
+    try {
+      const localUpdaters3000 = localStorage.getItem('lanSearchUpdaters3000');
+      if (localUpdaters3000 !== null) {
+        updaters3000Enabled = localUpdaters3000 === 'true';
+        setUpdaters3000State(updaters3000Enabled);
+      } else {
+        chrome.storage.sync.get(['updaters3000'], function(result) {
+          if (result.updaters3000 !== undefined) {
+            updaters3000Enabled = result.updaters3000;
+          } else {
+            updaters3000Enabled = false;
+          }
+          setUpdaters3000State(updaters3000Enabled);
+        });
+      }
+    } catch (error) {
+      console.error('Popup: Ошибка при инициализации Обновляторы3000:', error);
+      updaters3000Enabled = false;
+      setUpdaters3000State(false);
+    }
+  }
+  
+  function setUpdaters3000State(enabled) {
+    updaters3000Toggle.textContent = enabled ? 'Включен' : 'Выключен';
+    updaters3000Toggle.style.background = enabled ? '#28a745' : '#dc3545';
+    updaters3000Toggle.title = enabled ? 'Отключить Обновляторы3000' : 'Включить Обновляторы3000';
+  }
+  
+  function toggleUpdaters3000() {
+    updaters3000Enabled = !updaters3000Enabled;
+    setUpdaters3000State(updaters3000Enabled);
+    
+    localStorage.setItem('lanSearchUpdaters3000', updaters3000Enabled.toString());
+    
+    chrome.storage.sync.set({ updaters3000: updaters3000Enabled }, function() {
+      if (chrome.runtime.lastError) {
+        console.error('Popup: Ошибка сохранения настроек Обновляторы3000:', chrome.runtime.lastError);
+      }
+    });
+    
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (tabs[0]) {
+        chrome.scripting.executeScript({
+          target: { tabId: tabs[0].id },
+          func: () => {
+            if (window.lanSearchSyncUpdaters3000) {
+              window.lanSearchSyncUpdaters3000();
+            }
+          }
+        }).catch(err => {
+        });
+      }
+    });
+  }
+  
+  // Инициализация
+  initUpdaters3000();
+  
+  // Обработчики событий
+  updaters3000Toggle.addEventListener('click', toggleUpdaters3000);
+  
   
   setTimeout(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -735,6 +800,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     if (window.lanSearchSyncEnergySavingIgnore) {
                       window.lanSearchSyncEnergySavingIgnore();
+                    }
+                    if (window.lanSearchSyncUpdaters3000) {
+                      window.lanSearchSyncUpdaters3000();
             }
           }
         }).catch(err => {

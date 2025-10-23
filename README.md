@@ -1,5 +1,9 @@
 # Changelog - LanSearch Extension (Chrome)
 
+## Version 1.3.79 23-10-2025
+
+- **НОВОЕ**: Обновляторы3000
+
 ## Version 1.3.78 23-10-2025
 
 - **НОВОЕ**: вот бы пивка

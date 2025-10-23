@@ -3144,6 +3144,23 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           }
         }, 300);
       }
+      
+      // Обработка кнопки "Управлять" с классом lan-search-manage-btn
+      if (event.target && event.target.classList.contains('lan-search-manage-btn')) {
+        // Проверяем, включен ли переключатель "Обновляторы3000"
+        getUpdaters3000Setting(function(enabled) {
+          if (enabled) {
+            // Извлекаем UUID из onclick атрибута
+            const onclickAttr = event.target.getAttribute('onclick');
+            const uuidMatch = onclickAttr.match(/StartRemote\('([^']+)'\)/);
+            if (uuidMatch) {
+              const uuid = uuidMatch[1];
+              // Отправляем запрос на игнорирование энергосбережения
+              handleEnergySavingIgnore(uuid);
+            }
+          }
+        });
+      }
     });
 
     
@@ -7359,6 +7376,25 @@ function getEnergySavingIgnoreSetting(callback) {
   }
 }
 
+function getUpdaters3000Setting(callback) {
+  try {
+    chrome.storage.sync.get(['updaters3000'], function(result) {
+      if (chrome.runtime.lastError) {
+        const localUpdaters3000 = localStorage.getItem('lanSearchUpdaters3000');
+        const enabled = localUpdaters3000 === 'true';
+        callback(enabled);
+      } else {
+        const enabled = result.updaters3000 || false;
+        callback(enabled);
+      }
+    });
+  } catch (e) {
+    const localUpdaters3000 = localStorage.getItem('lanSearchUpdaters3000');
+    const enabled = localUpdaters3000 === 'true';
+    callback(enabled);
+  }
+}
+
 function initEnergySavingIgnore() {
   if (!window.location.pathname.includes('/all_clubs_pc/')) {
     return;
@@ -7533,6 +7569,11 @@ window.lanSearchSyncEnergySavingIgnore = function() {
   if (window.location.pathname.includes('/all_clubs_pc/')) {
     initEnergySavingIgnore();
   }
+};
+
+window.lanSearchSyncUpdaters3000 = function() {
+  // Функция синхронизации для переключателя "Обновляторы3000"
+  // Логика уже реализована в обработчике событий для кнопки "Управлять"
 };
 
 
