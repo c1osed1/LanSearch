@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const energySavingIgnoreToggle = document.getElementById('energySavingIgnoreToggle');
   const updaters3000Toggle = document.getElementById('updaters3000Toggle');
   
-  
   let currentTheme = 'light';
   let themeApplied = false;
   

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Lan-Search",
-  "version": "1.3.79",
+  "version": "1.4",
   "description": "Добавляет поиск по глобальному меню @qsoulmain",
   "author": "GlobalSearch Team",
   "homepage_url": "https://github.com/c1osed1/LanSearch",
@@ -49,13 +49,13 @@
         "*://*.f5center.com/*"
         
       ],
-      "js": ["recent-tabs.js", "content.js"],
+      "js": ["recent-tabs.js", "search-widget.js", "content.js"],
       "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "theme.css", "style_pc.css"],
+      "resources": ["icons/*", "theme.css", "style_pc.css", "Search.json"],
       "matches": [
         "*://*.langame.com/*",
         "*://*.langame.ru/*",
