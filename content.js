@@ -2724,6 +2724,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   let savedModalBypassState = null; // Сохраненное состояние обхода модальных окон перед активацией режима выбора 
   
 
+  function isInsideReleForm(element) {
+    let current = element;
+    while (current && current !== document.body) {
+      if (current.tagName === 'FORM' && current.id && current.id.startsWith('rele')) {
+        return true;
+      }
+      current = current.parentElement;
+    }
+    return false;
+  }
+
   function replaceButtonsWithDivs() {
     const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock', 'LockPS', 'UnLockPS'];
     
@@ -2731,6 +2742,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     const buttons = document.querySelectorAll('button[data-type]:not([data-lan-search-replaced])');
     
     buttons.forEach(button => {
+      if (isInsideReleForm(button)) {
+        return;
+      }
+      
       const dataType = button.getAttribute('data-type');
       const buttonText = button.textContent.trim();
       
@@ -2785,6 +2800,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
     const divs = document.querySelectorAll('div[data-lan-search-replaced="true"]');
     divs.forEach(div => {
+      if (isInsideReleForm(div)) {
+        return;
+      }
       
 
       const button = document.createElement('button');
@@ -2877,6 +2895,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock', 'LockPS', 'UnLockPS'];
       
       if (target.tagName === 'DIV' && supportedCommands.includes(dataType) && target.hasAttribute('data-lan-search-replaced')) {
+        if (isInsideReleForm(target)) {
+          return;
+        }
+        
         getModalBypassSetting(function(bypassEnabled) {
           if (bypassEnabled) {
             
