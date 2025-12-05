@@ -1,0 +1,450 @@
+<div class="content-wrapper" style="overflow: hidden;">
+    <div class="container-fluid px-1 p-lg-3">
+
+        <div id="langameSubscriptionWrapper">
+
+        </div>
+
+
+<ul class="nav nav-pills" style="gap: 15px; margin-bottom: 15px;">
+    <li class="nav-item">
+        <a class="nav-link " href="?action=">Главная</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link " href="?action=groups">Типы дней</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link " href="?action=types_groups">Группы тарифов</a>
+    </li>
+        <li class="nav-item dropdown" id="navItemTypeBasic">
+        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Базовый</a>
+        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="?action=time_period&amp;id=1">Базовый тариф</a>
+                        </div>
+    </li>
+                <li class="nav-item dropdown" id="navItemTypePacket">
+            <a class="nav-link dropdown-toggle active" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Пакеты</a>
+            <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="?action=time_period&amp;id=23">утро</a>
+                                    <a class="dropdown-item" href="?action=time_period&amp;id=25">ночь</a>
+                                    <a class="dropdown-item" href="?action=time_period&amp;id=13">3 часа</a>
+                                    <a class="dropdown-item" href="?action=time_period&amp;id=14">5 часов</a>
+                            </div>
+        </li>
+        </ul>
+
+<div>
+    
+<h5>
+    Настройка пакета - ночь</h5><div class="bulk-price-update-container" style="margin: 20px 0px; padding: 15px; border: 1px solid rgb(221, 221, 221); border-radius: 5px; background-color: rgb(249, 249, 249);">
+      <h6 style="margin-top: 0;">Массовое изменение цены</h6>
+      <div style="margin-bottom: 15px;">
+        <label style="margin-right: 15px;">
+          <input type="radio" name="bulk-price-mode" value="auto" checked="" style="margin-right: 5px;">
+          По цене (автоматический поиск)
+        </label>
+        <label>
+          <input type="radio" name="bulk-price-mode" value="manual" style="margin-right: 5px;">
+          Выборочное (с чекбоксами)
+        </label>
+      </div>
+      <div class="bulk-mode-auto">
+        <div class="row" style="margin-bottom: 10px;">
+          <div class="col-md-6">
+            <label>Текущая цена:</label>
+            <input type="number" class="form-control bulk-price-old" step="0.01" placeholder="150">
+          </div>
+          <div class="col-md-6">
+            <label>Новая цена:</label>
+            <input type="number" class="form-control bulk-price-new" step="0.01" placeholder="160">
+          </div>
+        </div>
+      </div>
+      <div class="bulk-mode-manual" style="display: none;">
+        <div class="row" style="margin-bottom: 10px;">
+          <div class="col-md-12">
+            <label>Новая цена:</label>
+            <input type="number" class="form-control bulk-price-new-manual" step="0.01" placeholder="160">
+          </div>
+        </div>
+        <div style="margin-bottom: 10px; font-size: 12px; color: #666;">
+          Отметьте нужные ячейки с ценами галочками, затем введите новую цену и нажмите "Обновить"
+        </div>
+      </div>
+      <button class="btn btn-primary bulk-price-update-btn" style="width: 100%;">
+        Обновить все найденные цены
+      </button>
+      <div class="bulk-price-status" style="margin-top: 10px; display: none;"></div>
+      <div class="bulk-price-progress" style="margin-top: 10px; display: none;">
+        <div class="progress">
+          <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" style="margin-top: 5px; font-size: 12px;"></div>
+      </div>
+    </div>
+<!--
+Какой-нибудь блок с кратким описанием
+-->
+<br><br>
+
+
+<h5>Ценовая политика для клубов</h5>
+
+<ul class="nav" id="clubsTab" role="tablist" style="gap: 10px">
+            <li class="nav-item">
+            <a class="nav-link" id="club1-tab" data-toggle="tab" href="#club1" role="tab" aria-controls="1" aria-selected="true">Colizeum</a>
+        </li>
+            <li class="nav-item">
+            <a class="nav-link active show" id="club3-tab" data-toggle="tab" href="#club3" role="tab" aria-controls="3" aria-selected="true">обучение</a>
+        </li>
+    </ul>
+<div class="tab-content">
+            <div class="tab-pane" id="club1" role="tabpanel" aria-labelledby="club1-tab">
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="1">
+                    <h5>Colizeum – Standart</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="2">
+                    <h5>Colizeum – BootCamp-VIP</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="3">
+                    <h5>Colizeum – BootCamp Premium</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="4">
+                    <h5>Colizeum – Аренда TV - Pro</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="5">
+                    <h5>Colizeum – BootCamp-Pro</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="6">
+                    <h5>Colizeum – Standart-Pro</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="7">
+                    <h5>Colizeum – Standart-Vip</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="8">
+                    <h5>Colizeum – Аренда TV</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="1" data-zone="9">
+                    <h5>Colizeum – Аренда TV - Vip</h5>
+                    <div>Загрузка данных ...</div>
+                </div>
+                <br>
+                    </div>
+            <div class="tab-pane active show" id="club3" role="tabpanel" aria-labelledby="club3-tab">
+                            <div class="time-ruler-wrapper" data-club="3" data-zone="5"><div>
+        <div class="pull-right">
+        <button class="btn btn-info btn-sm" onclick="addTimePeriod(3, 5)">Добавить</button>
+        <button class="btn btn-dark btn-sm" onclick="copyTimePeriod(3, 5)">Скопировать</button>
+    </div>
+        <h5>обучение – BootCamp-Pro</h5>
+</div>
+
+<h6>
+    Время старта    </h6>
+<div class="tableTimeRuler">
+    <div class="head">
+        <div class="cell">0</div><div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div><div class="cell">5</div><div class="cell">6</div><div class="cell">7</div><div class="cell">8</div><div class="cell">9</div><div class="cell">10</div><div class="cell">11</div><div class="cell">12</div><div class="cell">13</div><div class="cell">14</div><div class="cell">15</div><div class="cell">16</div><div class="cell">17</div><div class="cell">18</div><div class="cell">19</div><div class="cell">20</div><div class="cell">21</div><div class="cell">22</div><div class="cell">23</div>        <div class="cell_end">Тип дня</div>
+    </div>
+                <div class="rows">
+                <div class="cell" onclick="editTimePeriod(1017, 950)" style="flex-basis: 480px; background-color: #0fff2b;">
+                                        950
+                                    </div><div class="cell" style="flex-basis: 960px"></div>                <div class="cell_end">Будние дни</div>
+            </div>
+                    <div class="rows">
+                <div class="cell" onclick="editTimePeriod(1019, 1150)" style="flex-basis: 480px; background-color: #f5003d;">
+                                        1150
+                                    </div><div class="cell" style="flex-basis: 960px"></div>                <div class="cell_end">Выходные дни</div>
+            </div>
+        </div>
+
+    <h6>Время начала отображения / доступности</h6>
+    <div class="tableTimeRuler">
+        <div class="head">
+            <div class="cell">0</div><div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div><div class="cell">5</div><div class="cell">6</div><div class="cell">7</div><div class="cell">8</div><div class="cell">9</div><div class="cell">10</div><div class="cell">11</div><div class="cell">12</div><div class="cell">13</div><div class="cell">14</div><div class="cell">15</div><div class="cell">16</div><div class="cell">17</div><div class="cell">18</div><div class="cell">19</div><div class="cell">20</div><div class="cell">21</div><div class="cell">22</div><div class="cell">23</div>            <div class="cell_end">Тип дня</div>
+        </div>
+                        <div class="rows">
+                    <div class="cell" onclick="editTimePeriod(1017)" style="flex-basis: 480px; background-color: #0fff2b;">950</div><div class="cell" style="flex-basis: 960px"></div>                    <div class="cell_end">Будние дни</div>
+                </div>
+                                <div class="rows">
+                    <div class="cell" onclick="editTimePeriod(1019)" style="flex-basis: 480px; background-color: #f5003d;">1150</div><div class="cell" style="flex-basis: 960px"></div>                    <div class="cell_end">Выходные дни</div>
+                </div>
+                    </div>
+
+</div>
+                <br>
+                            <div class="time-ruler-wrapper" data-club="3" data-zone="11"><div>
+        <div class="pull-right">
+        <button class="btn btn-info btn-sm" onclick="addTimePeriod(3, 11)">Добавить</button>
+        <button class="btn btn-dark btn-sm" onclick="copyTimePeriod(3, 11)">Скопировать</button>
+    </div>
+        <h5>обучение – PRO ZONE</h5>
+</div>
+
+<h6>
+    Время старта    </h6>
+<div class="tableTimeRuler">
+    <div class="head">
+        <div class="cell">0</div><div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div><div class="cell">5</div><div class="cell">6</div><div class="cell">7</div><div class="cell">8</div><div class="cell">9</div><div class="cell">10</div><div class="cell">11</div><div class="cell">12</div><div class="cell">13</div><div class="cell">14</div><div class="cell">15</div><div class="cell">16</div><div class="cell">17</div><div class="cell">18</div><div class="cell">19</div><div class="cell">20</div><div class="cell">21</div><div class="cell">22</div><div class="cell">23</div>        <div class="cell_end">Тип дня</div>
+    </div>
+                <div class="rows">
+                <div class="cell" onclick="editTimePeriod(1013, 850)" style="flex-basis: 480px; background-color: #0fff2b;">
+                                        850
+                                    </div><div class="cell" style="flex-basis: 960px"></div>                <div class="cell_end">Будние дни</div>
+            </div>
+                    <div class="rows">
+                <div class="cell" onclick="editTimePeriod(1015, 950)" style="flex-basis: 480px; background-color: #f5003d;">
+                                        950
+                                    </div><div class="cell" style="flex-basis: 960px"></div>                <div class="cell_end">Выходные дни</div>
+            </div>
+        </div>
+
+    <h6>Время начала отображения / доступности</h6>
+    <div class="tableTimeRuler">
+        <div class="head">
+            <div class="cell">0</div><div class="cell">1</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div><div class="cell">5</div><div class="cell">6</div><div class="cell">7</div><div class="cell">8</div><div class="cell">9</div><div class="cell">10</div><div class="cell">11</div><div class="cell">12</div><div class="cell">13</div><div class="cell">14</div><div class="cell">15</div><div class="cell">16</div><div class="cell">17</div><div class="cell">18</div><div class="cell">19</div><div class="cell">20</div><div class="cell">21</div><div class="cell">22</div><div class="cell">23</div>            <div class="cell_end">Тип дня</div>
+        </div>
+                        <div class="rows">
+                    <div class="cell" onclick="editTimePeriod(1013)" style="flex-basis: 480px; background-color: #0fff2b;">850</div><div class="cell" style="flex-basis: 960px"></div>                    <div class="cell_end">Будние дни</div>
+                </div>
+                                <div class="rows">
+                    <div class="cell" onclick="editTimePeriod(1015)" style="flex-basis: 480px; background-color: #f5003d;">950</div><div class="cell" style="flex-basis: 960px"></div>                    <div class="cell_end">Выходные дни</div>
+                </div>
+                    </div>
+
+</div>
+                <br>
+                    </div>
+    </div>
+
+<!-- Modal -->
+<div class="modal fade" id="editTimePeriodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="crud.php" onsubmit="return tariffsAdminReactiveSubmit(this, true)">
+                <input type="hidden" name="action" value="edit_time_period">
+                <input type="hidden" name="type_group_id" value="25">
+                <input type="hidden" name="id" value="">
+                <input type="hidden" name="club_id" value="">
+                <input type="hidden" name="zone_id" value="">
+                <div class="modal-header">
+                    <h5 class="modal-title"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Группа дня</label>
+                        <select class="form-control" name="group_ids[]" multiple="" required="" size="2">
+                                                            <option value="74">Будние дни</option>
+                                                            <option value="76">Выходные дни</option>
+                                                    </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-6">
+                                <label>Время старта</label>
+                                <input type="time" class="form-control" name="time_from" required="" value="00:00">
+                            </div>
+                            <div class="col-6">
+                                <label>Время завершения</label>
+                                <input type="time" class="form-control" name="time_to" required="" value="00:00">
+                            </div>
+                        </div>
+                    </div>
+                                        <div class="form-group">
+                        <div class="row">
+                            <div class="col-6">
+                                <label>Время начала отображения / доступности</label>
+                                <input type="time" class="form-control" name="visible_time_from" required="" value="00:00">
+                            </div>
+                            <div class="col-6">
+                                <label>Время завершения отображения</label>
+                                <input type="time" class="form-control" name="visible_time_to" required="" value="00:00">
+                            </div>
+                        </div>
+                    </div>
+                                        <div class="form-group">
+                        <label>Стоимость</label>
+                        <input type="number" class="form-control" name="price" step=".0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="pull-left text-danger modal-reactive-error"></div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <button type="button" class="btn btn-danger" data-name="delete_time_period" onclick="deleteTimePeriod(this)">Удалить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="copyTimePeriodModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="crud.php">
+                <input type="hidden" name="action" value="copy_time_period">
+                <input type="hidden" name="type_group_id" value="25">
+                <input type="hidden" name="club_id" value="">
+                <input type="hidden" name="zone_id" value="">
+                <div class="modal-header">
+                    <h5 class="modal-title">Скопировать цены</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>На пакет</label>
+                        <select class="form-control" name="new_type_group_id" required="">
+                            <option value="">Выберите из списка</option>
+                                                            <option value="1">Базовый тариф</option>
+                                                            <option value="23">утро</option>
+                                                            <option value="25" selected="">ночь</option>
+                                                            <option value="13">3 часа</option>
+                                                            <option value="14">5 часов</option>
+                                                    </select>
+                    </div>
+                    <div class="form-group">
+                        <label>На зону в клубе</label>
+                        <select class="form-control" name="new_club_id_zone_id" required="">
+                            <option value="">Выберите из списка</option>
+                                                            <optgroup label="Colizeum">
+                                                                    <option value="1_1">Standart</option>
+                                                                    <option value="1_2">BootCamp-VIP</option>
+                                                                    <option value="1_3">BootCamp Premium</option>
+                                                                    <option value="1_4">Аренда TV - Pro</option>
+                                                                    <option value="1_5">BootCamp-Pro</option>
+                                                                    <option value="1_6">Standart-Pro</option>
+                                                                    <option value="1_7">Standart-Vip</option>
+                                                                    <option value="1_8">Аренда TV</option>
+                                                                    <option value="1_9">Аренда TV - Vip</option>
+                                                                </optgroup>
+                                                            <optgroup label="обучение">
+                                                                    <option value="3_5">BootCamp-Pro</option>
+                                                                    <option value="3_11">PRO ZONE</option>
+                                                                </optgroup>
+                                                    </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var typeGroup = 'packet';
+    var typeGroupId = 25;
+
+    $(function () {
+        // $('#clubsTab li:last-child a').tab('show');
+        $('#clubsTab').on('show.bs.tab', function (e) {
+            var target = $(e.target).attr("href");
+            console.log('tab', target);
+
+            loadTimeRulerByDefault(typeGroupId, target);
+        });
+        $('#clubsTab li:last-child a').click();
+
+
+        // $('.tableTimeRuler .rows .cell').each(function () {
+        //     var colSpan = 1;
+        //     while ($(this).text() == $(this).next().text()) {
+        //         $(this).next().remove();
+        //         colSpan++;
+        //     }
+        //     $(this).css('flex-basis', colSpan+'px');
+        // });
+        // $('.tableTimeRuler .rows').fadeIn();
+
+
+        switch (typeGroup) {
+            case 'basic':
+                $('#navItemTypeBasic a.nav-link').addClass('active');
+                break;
+
+            case 'packet':
+                $('#navItemTypePacket a.nav-link').addClass('active');
+                break;
+
+            case 'subscription':
+                $('#navItemTypeSubscription a.nav-link').addClass('active');
+                break;
+
+        }
+    });
+
+</script>
+</div>
+
+<link href="/tariff/style.css?v=1736862351" rel="stylesheet">
+<script>
+    locale.add = 'Добавить';
+    locale.edit = 'Редактировать';
+</script>
+<script src="/tariff/scripts.js?v=1736862351"></script>
+
+</div>
+<!-- /.container-fluid-->
+<!-- /.content-wrapper-->
+<footer class="sticky-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+                <div class="main_signature">
+                    <span>Powered by</span>
+                    <img src="/img/aside-icons/signature.svg" alt="signature">
+                    <span class="upper">SOFTWARE</span>
+                </div>
+            </div>
+            <div class="col-6 text-sm-right">
+                <small>
+              Page was generated in 0.049318 seconds                </small>
+            </div>
+        </div>
+    </div>
+</footer>
+<!-- Scroll to Top Button-->
+<a class="scroll-to-top rounded" href="#page-top">
+    <i class="fa fa-angle-up"></i>
+</a>
+<!-- Logout Modal-->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Выйти</h5>
+                <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">Выбрав "Выйти" Вы завершите свою сессию.</div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" type="button" data-dismiss="modal">Отмена</button>
+                <a class="btn btn-primary" href="/?logout=1">Выйти</a>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
