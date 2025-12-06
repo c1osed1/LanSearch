@@ -4707,6 +4707,12 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     managementBtn.addEventListener('click', function(e) {
       e.preventDefault();
       addDiskTogglesToPCForms(rows);
+      
+      // Увеличиваем max-height карточек до 370px
+      const pcCards = document.querySelectorAll('form.pc.lan-search-styled.lan-search-pc-card, form.pc.lan-search-pc-card, .lan-search-pc-card');
+      pcCards.forEach(card => {
+        card.style.setProperty('max-height', '370px', 'important');
+      });
     });
     
   }
@@ -5425,6 +5431,16 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   
+  // Функция для обновления класса pc-manual-unlock
+  function updateManualUnlockClass(form) {
+    const timeLock = form.querySelector('.timeLock');
+    if (timeLock && timeLock.textContent.trim().includes('Ручная разблокировка')) {
+      form.classList.add('pc-manual-unlock');
+    } else {
+      form.classList.remove('pc-manual-unlock');
+    }
+  }
+  
   function applyPCStyles() {
 
     if (!window.location.pathname.includes('/all_clubs_pc/')) {
@@ -5521,6 +5537,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
        });
       
       
+      // Проверка на ручную разблокировку
+      updateManualUnlockClass(form);
+      
       const pcInfo = form.querySelector('.pc_info');
       if (pcInfo) {
         pcInfo.classList.add('lan-search-pc-info');
@@ -5584,12 +5603,40 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       }
     });
     
+    // Добавляем MutationObserver для отслеживания изменений timeLock
     if (pcForms.length > 0) {
-
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList' || mutation.type === 'characterData') {
+            const target = mutation.target;
+            if (target.classList && target.classList.contains('timeLock')) {
+              const form = target.closest('form.pc');
+              if (form) {
+                updateManualUnlockClass(form);
+              }
+            } else if (target.querySelector && target.querySelector('.timeLock')) {
+              const forms = target.querySelectorAll('form.pc');
+              forms.forEach(form => updateManualUnlockClass(form));
+            }
+          }
+        });
+      });
+      
+      // Наблюдаем за изменениями в элементах timeLock
+      pcForms.forEach(form => {
+        const timeLock = form.querySelector('.timeLock');
+        if (timeLock) {
+          observer.observe(timeLock, {
+            childList: true,
+            characterData: true,
+            subtree: true
+          });
+        }
+      });
     }
   }
   
-  
+ 
   function removePCStylesFromCards() {
 
     if (!window.location.pathname.includes('/all_clubs_pc/')) {

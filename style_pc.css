@@ -58,6 +58,56 @@
   color: white;
 }
 
+/* Цвет карточки в зависимости от статуса */
+/* По классам status-* */
+.lan-search-pc-card:has(.lan-search-pc-status.status-free) {
+  background: rgba(40, 167, 69, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.status-busy) {
+  background: rgba(220, 53, 69, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.status-connection) {
+  background: rgba(108, 117, 125, 0.5);
+}
+
+/* По Bootstrap классам bg-* на статусе */
+.lan-search-pc-card:has(.lan-search-pc-status.bg-warning) {
+  background: rgba(255, 193, 7, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.bg-success) {
+  background: rgba(40, 167, 69, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.bg-danger) {
+  background: rgba(220, 53, 69, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.bg-info) {
+  background: rgba(23, 162, 184, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.bg-secondary) {
+  background: rgba(108, 117, 125, 0.5);
+}
+
+.lan-search-pc-card:has(.lan-search-pc-status.bg-primary) {
+  background: rgba(0, 123, 255, 0.5);
+}
+
+/* Фиолетовый для ручной разблокировки - должен иметь приоритет над другими статусами */
+.lan-search-pc-card.pc-manual-unlock,
+.lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-warning),
+.lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-success),
+.lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-danger),
+.lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-info),
+.lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-secondary),
+.lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-primary) {
+  background: rgb(85 72 253 / 44%) !important;
+}
+
 /* Кнопки */
 .lan-search-pc-card .lan-search-btn {
   width: 100%;
@@ -208,6 +258,52 @@
 [data-theme="dark"] .lan-search-pc-card {
   background: #2d2d2d;
   border-color: #444;
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.status-free) {
+  background: rgba(40, 167, 69, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.status-busy) {
+  background: rgba(220, 53, 69, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.status-connection) {
+  background: rgba(108, 117, 125, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.bg-warning) {
+  background: rgba(255, 193, 7, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.bg-success) {
+  background: rgba(40, 167, 69, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.bg-danger) {
+  background: rgba(220, 53, 69, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.bg-info) {
+  background: rgba(23, 162, 184, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.bg-secondary) {
+  background: rgba(108, 117, 125, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card:has(.lan-search-pc-status.bg-primary) {
+  background: rgba(0, 123, 255, 0.5);
+}
+
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock,
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-warning),
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-success),
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-danger),
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-info),
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-secondary),
+[data-theme="dark"] .lan-search-pc-card.pc-manual-unlock:has(.lan-search-pc-status.bg-primary) {
+  background: rgba(128, 0, 128, 0.5) !important;
 }
 
 [data-theme="dark"] .lan-search-pc-number {
