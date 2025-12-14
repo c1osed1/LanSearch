@@ -849,43 +849,133 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
     container.innerHTML = `
       <div class="card-header">
-        <h5 class="mb-0">
-          <i class="fa fa-search"></i> Поиск гостей
-        </h5>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h5 class="mb-0">
+            <i class="fa fa-search"></i> <span id="modeTitle">Поиск гостей</span>
+          </h5>
+          <div style="display: flex; gap: 4px; background: #f8f9fa; padding: 4px; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+            <button id="modeSearchBtn" class="btn btn-sm" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; box-shadow: 0 2px 4px rgba(220,53,69,0.3);">
+              <i class="fa fa-search"></i> Поиск гостей
+            </button>
+            <button id="modeInventBtn" class="btn btn-sm" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; opacity: 0.7;">
+              <i class="fa fa-cubes"></i> Инвентаризация
+            </button>
+          </div>
+        </div>
       </div>
       <div class="card-body">
-        <div class="row mb-3">
-          <div class="col-12">
-            <div class="input-group">
-              <input style="min-height: 38px;" type="text" id="guestSearchInput" class="form-control" placeholder="Введите номер телефона, ФИО или email гостя..." />
-              <div class="input-group-append">
-                <button class="btn btn-primary" type="button" id="searchGuestBtn" style="min-height: 38px; padding: 8px 16px;">
-                  <i class="fa fa-search"></i> Найти
-                </button>
+        <!-- Режим поиска гостей -->
+        <div id="guestSearchMode">
+          <div class="row mb-3">
+            <div class="col-12">
+              <div class="input-group">
+                <input style="min-height: 38px;" type="text" id="guestSearchInput" class="form-control" placeholder="Введите номер телефона, ФИО или email гостя..." />
+                <div class="input-group-append">
+                  <button class="btn btn-primary" type="button" id="searchGuestBtn" style="min-height: 38px; padding: 8px 16px;">
+                    <i class="fa fa-search"></i> Найти
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div id="guestSearchResults" style="display: none;">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover">
-              <thead>
-                <tr>
-                  <th>ФИО</th>
-                  <th>Телефон</th>
-                  <th>Email</th>
-                  <th>Баланс</th>
-                  <th>Бонусы</th>
-                  <th>Действия</th>
-                </tr>
-              </thead>
-              <tbody id="guestSearchResultsBody">
-              </tbody>
-            </table>
+          <div id="guestSearchResults" style="display: none;">
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead>
+                  <tr>
+                    <th>ФИО</th>
+                    <th>Телефон</th>
+                    <th>Email</th>
+                    <th>Баланс</th>
+                    <th>Бонусы</th>
+                    <th>Действия</th>
+                  </tr>
+                </thead>
+                <tbody id="guestSearchResultsBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="guestSearchNoResults" style="display: none;" class="alert alert-info">
+            <i class="fa fa-info-circle"></i> Гости не найдены
           </div>
         </div>
-        <div id="guestSearchNoResults" style="display: none;" class="alert alert-info">
-          <i class="fa fa-info-circle"></i> Гости не найдены
+        
+        <!-- Режим инвентаризации -->
+        <div id="inventMode" style="display: none;">
+          <!-- Выбор клуба -->
+          <div id="inventClubsSelection">
+            <div class="row mb-3">
+              <div class="col-12">
+                <div id="clubsList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+                  <div style="width: 100%; text-align: center; padding: 10px;">
+                    <i class="fa fa-spinner fa-spin"></i> Загрузка клубов...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Список продуктов -->
+          <div id="inventProductsSection" style="display: none;">
+            <div class="row mb-3">
+              <div class="col-12">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <button id="backToClubsBtn" class="btn btn-secondary btn-sm">
+                      <i class="fa fa-arrow-left"></i> Назад
+                    </button>
+                    <div id="selectedClubName" style="font-weight: bold; font-size: 14px;"></div>
+                  </div>
+                  <button id="saveInventBtnTop" class="btn btn-success" style="min-height: 38px; padding: 8px 16px; display: none;">
+                    <i class="fa fa-save"></i> Сохранить инвентаризацию
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="inventResults" style="display: none;">
+              <div class="row mb-3">
+                <div class="col-12">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text">
+                        <i class="fa fa-search"></i>
+                      </span>
+                    </div>
+                    <input type="text" 
+                           id="inventSearchInput" 
+                           class="form-control" 
+                           placeholder="Поиск по ID или наименованию..." 
+                           style="min-height: 38px;">
+                  </div>
+                </div>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Наименование</th>
+                      <th>Текущий остаток</th>
+                      <th>Фактический остаток</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inventResultsBody">
+                  </tbody>
+                </table>
+              </div>
+              <div class="row mt-3">
+                <div class="col-12">
+                  <button id="saveInventBtn" class="btn btn-success" style="min-height: 38px; padding: 8px 16px; width: 100%;">
+                    <i class="fa fa-save"></i> Сохранить инвентаризацию
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="inventNoResults" style="display: none;" class="alert alert-info">
+              <i class="fa fa-info-circle"></i> Продукты не загружены
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -1097,6 +1187,395 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
+  // Функции для работы с инвентаризацией
+  function getClubId() {
+    // Пытаемся получить club_id из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const clubId = urlParams.get('club_id');
+    if (clubId) return clubId;
+    
+    // Пытаемся получить из meta тега
+    const metaClubId = document.querySelector('meta[name="club_id"]');
+    if (metaClubId) return metaClubId.getAttribute('content');
+    
+    return null;
+  }
+
+  async function loadClubsForInvent() {
+    try {
+      // Загружаем страницу инвентаризации для получения списка клубов
+      const response = await fetch('/products_invent/', {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Ищем select с клубами - может быть в разных местах
+      let clubsSelect = doc.querySelector('select[name="club_id"]');
+      if (!clubsSelect) {
+        // Пробуем найти в модальном окне создания тикета
+        clubsSelect = doc.querySelector('#createTickedWindow select[name="club_id"]');
+      }
+      
+      if (!clubsSelect) {
+        showNotification('Не удалось найти список клубов', 'error');
+        return null;
+      }
+
+      const clubs = [];
+      const options = clubsSelect.querySelectorAll('option');
+      
+      options.forEach(option => {
+        const value = option.value;
+        const text = option.textContent.trim();
+        if (value && value !== '0' && text) {
+          clubs.push({
+            id: value,
+            name: text
+          });
+        }
+      });
+
+      return clubs.length > 0 ? clubs : null;
+    } catch (error) {
+      console.error('Ошибка при загрузке клубов:', error);
+      showNotification('Ошибка при загрузке клубов: ' + error.message, 'error');
+      return null;
+    }
+  }
+
+  function displayClubsForInvent(clubs) {
+    const clubsList = document.getElementById('clubsList');
+    if (!clubsList) return;
+
+    clubsList.innerHTML = '';
+
+    if (!clubs || clubs.length === 0) {
+      clubsList.innerHTML = '<div style="width: 100%; text-align: center; padding: 10px; color: #dc3545;">Клубы не найдены</div>';
+      return;
+    }
+
+    clubs.forEach(club => {
+      const clubBtn = document.createElement('button');
+      clubBtn.className = 'btn btn-outline-primary';
+      clubBtn.style.cssText = 'min-height: 38px; padding: 8px 16px; margin: 4px;';
+      clubBtn.textContent = club.name;
+      clubBtn.setAttribute('data-club-id', club.id);
+      
+      clubBtn.addEventListener('click', async () => {
+        const clubId = clubBtn.getAttribute('data-club-id');
+        const clubName = clubBtn.textContent;
+        
+        // Показываем секцию продуктов
+        document.getElementById('inventClubsSelection').style.display = 'none';
+        document.getElementById('inventProductsSection').style.display = 'block';
+        document.getElementById('selectedClubName').textContent = `Клуб: ${clubName}`;
+        
+        // Сохраняем club_id в элементе для последующего использования
+        document.getElementById('selectedClubName').setAttribute('data-club-id', clubId);
+        
+        // Загружаем продукты для выбранного клуба
+        await loadProductsForInvent(clubId);
+      });
+      
+      clubsList.appendChild(clubBtn);
+    });
+  }
+
+  async function loadProductsForInvent(clubId) {
+    try {
+      if (!clubId) {
+        showNotification('Не указан club_id', 'error');
+        return null;
+      }
+
+      // Загружаем страницу инвентаризации для выбранного клуба
+      const response = await fetch(`/products_invent/?club_id=${clubId}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Ищем таблицу с продуктами по ID
+      const table = doc.querySelector('#dataTableIncome tbody');
+      
+      if (!table) {
+        showNotification('Не удалось найти таблицу продуктов', 'warning');
+        return null;
+      }
+
+      const products = [];
+      const rows = table.querySelectorAll('tr');
+      
+      rows.forEach((row) => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 7) {
+          // Извлекаем данные из строки таблицы
+          // Структура: Клуб, Сортировка, Наименование, Группа, art_numbers (скрыто), Цена закупки, Текущий остаток, Фактический остаток (input)
+          
+          // Название продукта - 3-я колонка (индекс 2)
+          const productName = cells[2] ? cells[2].textContent.trim() : '';
+          
+          // Цена закупки - 6-я колонка (индекс 5)
+          const price = cells[5] ? cells[5].textContent.trim() : '0';
+          
+          // Текущий остаток - 7-я колонка (индекс 6)
+          const currentCount = cells[6] ? cells[6].textContent.trim() : '0';
+          
+          // Фактический остаток - input в 8-й колонке (индекс 7)
+          const countInput = cells[7] ? cells[7].querySelector('input[name*="count"]') : null;
+          
+          if (countInput) {
+            // Извлекаем product_id из name атрибута: count[1093] -> 1093
+            const nameMatch = countInput.getAttribute('name').match(/count\[(\d+)\]/);
+            if (nameMatch && nameMatch[1] && productName) {
+              const productId = nameMatch[1];
+              products.push({
+                id: productId,
+                name: productName,
+                currentCount: currentCount,
+                price: price,
+                clubId: clubId
+              });
+            }
+          }
+        }
+      });
+
+      if (products.length === 0) {
+        showNotification('Не удалось извлечь данные о продуктах', 'warning');
+        return null;
+      }
+
+      // Отображаем продукты
+      displayInventProducts(products);
+      return products;
+    } catch (error) {
+      console.error('Ошибка при загрузке продуктов:', error);
+      showNotification('Ошибка при загрузке продуктов: ' + error.message, 'error');
+      return null;
+    }
+  }
+
+  // Сохраняем все продукты для фильтрации
+  let allInventProducts = [];
+
+  function filterInventProducts(searchQuery) {
+    if (!searchQuery || searchQuery.trim() === '') {
+      displayInventProductsTable(allInventProducts);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = allInventProducts.filter(product => {
+      const idMatch = product.id.toString().toLowerCase().includes(query);
+      const nameMatch = product.name.toLowerCase().includes(query);
+      return idMatch || nameMatch;
+    });
+
+    displayInventProductsTable(filtered);
+  }
+
+  function displayInventProductsTable(products) {
+    const resultsBody = document.getElementById('inventResultsBody');
+    if (!resultsBody) return;
+
+    resultsBody.innerHTML = '';
+
+    if (!products || products.length === 0) {
+      resultsBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #6c757d;">Продукты не найдены</td></tr>';
+      return;
+    }
+
+    products.forEach(product => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${product.id}</td>
+        <td>${product.name}</td>
+        <td class="current-count-cell" data-product-id="${product.id}">${product.currentCount || '0'}</td>
+        <td>
+          <input type="text" 
+                 class="form-control form-control-sm invent-count" 
+                 data-product-id="${product.id}" 
+                 value="" 
+                 placeholder="0" 
+                 min="0"
+                 style="width: 120px;">
+        </td>
+      `;
+      resultsBody.appendChild(row);
+    });
+  }
+
+  function displayInventProducts(products) {
+    const resultsContainer = document.getElementById('inventResults');
+    const noResultsContainer = document.getElementById('inventNoResults');
+    const resultsBody = document.getElementById('inventResultsBody');
+    const saveInventBtnTop = document.getElementById('saveInventBtnTop');
+    const searchInput = document.getElementById('inventSearchInput');
+
+    if (!products || products.length === 0) {
+      resultsContainer.style.display = 'none';
+      noResultsContainer.style.display = 'block';
+      if (saveInventBtnTop) saveInventBtnTop.style.display = 'none';
+      allInventProducts = [];
+      return;
+    }
+
+    // Сохраняем все продукты для фильтрации
+    allInventProducts = products;
+
+    resultsContainer.style.display = 'block';
+    noResultsContainer.style.display = 'none';
+    if (saveInventBtnTop) saveInventBtnTop.style.display = 'block';
+
+    // Очищаем поле поиска
+    if (searchInput) {
+      searchInput.value = '';
+    }
+
+    // Отображаем все продукты
+    displayInventProductsTable(products);
+  }
+
+  async function saveInvent() {
+    try {
+      // Получаем club_id из выбранного клуба
+      const selectedClubName = document.getElementById('selectedClubName');
+      const clubId = selectedClubName ? selectedClubName.getAttribute('data-club-id') : null;
+      
+      if (!clubId) {
+        showNotification('Не удалось определить club_id', 'error');
+        return;
+      }
+
+      const countInputs = document.querySelectorAll('.invent-count');
+      
+      const inventData = {};
+      const productUpdates = {}; // Сохраняем данные для обновления текущего остатка
+      let hasData = false;
+
+      countInputs.forEach(input => {
+        const productId = input.getAttribute('data-product-id');
+        const count = input.value.trim();
+        
+        if (count && count !== '' && count !== '0') {
+          inventData[`count[${productId}]`] = count + '__';
+          productUpdates[productId] = count; // Сохраняем для обновления
+          hasData = true;
+        }
+      });
+
+      if (!hasData) {
+        showNotification('Укажите хотя бы одно количество для сохранения', 'warning');
+        return;
+      }
+
+      const formData = new URLSearchParams();
+      formData.append('command', 'invent');
+      formData.append('club_id', clubId);
+      
+      Object.keys(inventData).forEach(key => {
+        formData.append(key, inventData[key]);
+      });
+
+      const response = await fetch('/products_invent/crud.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json, text/javascript, */*; q=0.01'
+        },
+        credentials: 'include',
+        body: formData.toString()
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.status === 'ok') {
+        showNotification('Инвентаризация успешно сохранена', 'success');
+        
+        // Обновляем текущий остаток на значение из фактического остатка
+        Object.keys(productUpdates).forEach(productId => {
+          const currentCountCell = document.querySelector(`.current-count-cell[data-product-id="${productId}"]`);
+          const countInput = document.querySelector(`.invent-count[data-product-id="${productId}"]`);
+          
+          if (currentCountCell && countInput) {
+            const newCount = countInput.value.trim();
+            if (newCount) {
+              currentCountCell.textContent = newCount;
+              // Очищаем поле ввода
+              countInput.value = '';
+            }
+          }
+        });
+      } else {
+        showNotification('Ошибка при сохранении: ' + (result.textStatus || 'Неизвестная ошибка'), 'error');
+      }
+    } catch (error) {
+      console.error('Ошибка при сохранении инвентаризации:', error);
+      showNotification('Ошибка при сохранении инвентаризации', 'error');
+    }
+  }
+
+  function switchMode(mode) {
+    const guestSearchMode = document.getElementById('guestSearchMode');
+    const inventMode = document.getElementById('inventMode');
+    const modeTitle = document.getElementById('modeTitle');
+    const modeSearchBtn = document.getElementById('modeSearchBtn');
+    const modeInventBtn = document.getElementById('modeInventBtn');
+
+    if (mode === 'search') {
+      guestSearchMode.style.display = 'block';
+      inventMode.style.display = 'none';
+      modeTitle.textContent = 'Поиск гостей';
+      modeSearchBtn.style.background = '#dc3545';
+      modeSearchBtn.style.opacity = '1';
+      modeSearchBtn.style.boxShadow = '0 2px 4px rgba(220,53,69,0.3)';
+      modeInventBtn.style.background = '#6c757d';
+      modeInventBtn.style.opacity = '0.7';
+      modeInventBtn.style.boxShadow = 'none';
+    } else if (mode === 'invent') {
+      guestSearchMode.style.display = 'none';
+      inventMode.style.display = 'block';
+      modeTitle.textContent = 'Инвентаризация';
+      modeSearchBtn.style.background = '#6c757d';
+      modeSearchBtn.style.opacity = '0.7';
+      modeSearchBtn.style.boxShadow = 'none';
+      modeInventBtn.style.background = '#dc3545';
+      modeInventBtn.style.opacity = '1';
+      modeInventBtn.style.boxShadow = '0 2px 4px rgba(220,53,69,0.3)';
+      
+      // Показываем выбор клубов и скрываем секцию продуктов
+      document.getElementById('inventClubsSelection').style.display = 'block';
+      document.getElementById('inventProductsSection').style.display = 'none';
+      
+      // Загружаем список клубов
+      loadClubsForInvent().then(clubs => {
+        if (clubs) {
+          displayClubsForInvent(clubs);
+        }
+      });
+    }
+  }
 
   function displayGuestSearchResults(data) {
     const resultsContainer = document.getElementById('guestSearchResults');
@@ -1200,7 +1679,19 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     
     console.log('Lan-Search: Блок поиска гостей добавлен');
 
+    // Обработчики переключения режимов
+    const modeSearchBtn = document.getElementById('modeSearchBtn');
+    const modeInventBtn = document.getElementById('modeInventBtn');
+    
+    if (modeSearchBtn) {
+      modeSearchBtn.addEventListener('click', () => switchMode('search'));
+    }
+    
+    if (modeInventBtn) {
+      modeInventBtn.addEventListener('click', () => switchMode('invent'));
+    }
 
+    // Обработчики для режима поиска гостей
     const searchInput = document.getElementById('guestSearchInput');
     const searchBtn = document.getElementById('searchGuestBtn');
 
@@ -1229,6 +1720,56 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           performSearch();
         }
       });
+    }
+
+    // Обработчики для режима инвентаризации
+    const backToClubsBtn = document.getElementById('backToClubsBtn');
+    const saveInventBtn = document.getElementById('saveInventBtn');
+    const saveInventBtnTop = document.getElementById('saveInventBtnTop');
+    const inventSearchInput = document.getElementById('inventSearchInput');
+
+    if (backToClubsBtn) {
+      backToClubsBtn.addEventListener('click', () => {
+        document.getElementById('inventClubsSelection').style.display = 'block';
+        document.getElementById('inventProductsSection').style.display = 'none';
+      });
+    }
+
+    // Обработчик поиска продуктов
+    if (inventSearchInput) {
+      inventSearchInput.addEventListener('input', (e) => {
+        const searchQuery = e.target.value;
+        filterInventProducts(searchQuery);
+      });
+
+      inventSearchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+        }
+      });
+    }
+
+    const handleSaveInvent = async (btn) => {
+      if (!btn) return;
+      
+      btn.disabled = true;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Сохранение...';
+
+      try {
+        await saveInvent();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    };
+
+    if (saveInventBtn) {
+      saveInventBtn.addEventListener('click', () => handleSaveInvent(saveInventBtn));
+    }
+
+    if (saveInventBtnTop) {
+      saveInventBtnTop.addEventListener('click', () => handleSaveInvent(saveInventBtnTop));
     }
 
 
