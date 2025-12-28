@@ -3,38 +3,34 @@
 <head>
   <meta charset="utf-8">
   <style>
-
+    * {
+      box-sizing: border-box;
+    }
 
     body {
-      width: 320px;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      width: 380px;
+      padding: 0;
       margin: 0;
-      background-color: #ffffff;
-      color: #1a1a1a;
-      line-height: 1.5;
-    }
-    
-    [data-theme="dark"] body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: #1a1a1a;
       color: #ffffff;
+      line-height: 1.5;
     }
+
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid #e5e5e5;
+      padding: 16px 20px;
+      border-bottom: 1px solid #333333;
+      background-color: #2a2a2a;
     }
-    
-    [data-theme="dark"] .header {
-      border-bottom-color: #333333;
-    }
+
     .header-left {
       display: flex;
       align-items: center;
     }
+
     .icon {
       width: 36px;
       height: 36px;
@@ -43,237 +39,427 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: #f8f9fa;
-    }
-    
-    [data-theme="dark"] .icon {
       background-color: #2a2a2a;
     }
+
     .icon img {
       width: 100%;
       height: 100%;
       border-radius: 6px;
     }
+
     .title {
       font-size: 20px;
       font-weight: 700;
-      color: #1a1a1a;
+      color: #ffffff;
       margin: 0;
     }
-    
-    [data-theme="dark"] .title {
-      color: #ffffff;
+
+    .account-info {
+      display: none;
     }
-    .theme-toggle {
-      background: #f8f9fa;
-      border: 1px solid #e5e5e5;
-      cursor: pointer;
-      padding: 10px;
-      border-radius: 8px;
-      color: #1a1a1a;
-      font-size: 16px;
+
+    .account-info.visible {
+      display: block;
     }
-    
-    [data-theme="dark"] .theme-toggle {
-      background: #2a2a2a;
-      border-color: #333333;
-      color: #ffffff;
-    }
-    
-    .theme-toggle:hover {
-      background: #e9ecef;
-    }
-    
-    [data-theme="dark"] .theme-toggle:hover {
-      background: #333333;
-    }
-    .description {
-      color: #666666;
-      font-size: 14px;
-      line-height: 1.5;
+
+    .account-section {
       margin-bottom: 20px;
+      padding: 12px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      border: 1px solid #333333;
     }
-    
-    [data-theme="dark"] .description {
-      color: #cccccc;
+
+    .account-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
     }
-    .button-popup {
+
+    .account-title {
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .account-username {
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .logout-btn {
       width: 100%;
-      padding: 12px 16px;
-      background: #007bff;
+      padding: 8px 12px;
+      background: #dc3545;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .logout-btn:hover {
+      background: #c82333;
+    }
+
+    .auth-section {
+      padding: 20px;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .auth-input {
+      padding: 10px 12px;
+      background: #2a2a2a;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .auth-input:focus {
+      outline: none;
+      border-color: #dc3545;
+    }
+
+    .auth-input::placeholder {
+      color: #666666;
+    }
+
+    .auth-btn {
+      padding: 10px 16px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
     }
-    
-    .button-popup:hover {
-      background: #0056b3;
+
+    .auth-btn:hover {
+      background: #c82333;
     }
-    
-    .button-popup:disabled {
+
+    .auth-btn:disabled {
       background: #6c757d;
       cursor: not-allowed;
     }
+
+    .auth-error {
+      color: #dc3545;
+      font-size: 13px;
+      margin-top: -8px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #333333;
+      background-color: #2a2a2a;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: #cccccc;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      color: #ffffff;
+      background-color: #333333;
+    }
+
+    .tab.active {
+      color: #dc3545;
+      border-bottom-color: #dc3545;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 5px;
+      max-height: 500px;
+      overflow-y: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .tab-content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .description {
+      color: #cccccc;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .update-section {
+      margin-top: 16px;
+      padding: 12px;
+      background: #2a2a2a;
+      border-radius: 8px;
+      border: 1px solid #333333;
+    }
+
+    .update-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .update-title {
+      font-size: 13px;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .update-buttons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .update-btn {
+      padding: 6px 12px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .update-btn.enabled {
+      background: #28a745;
+    }
+
+    .update-btn:hover {
+      opacity: 0.9;
+    }
+
+    .update-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+
+    .update-status {
+      font-size: 12px;
+      color: #cccccc;
+      line-height: 1.4;
+    }
+
+    .favorites-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .favorite-item {
+      background: #2a2a2a;
+      border: 1px solid #333333;
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .favorite-item:hover {
+      border-color: #444444;
+      background: #333333;
+    }
+
+    .favorite-item-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+
+    .favorite-item-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .favorite-item-meta {
+      font-size: 11px;
+      color: #666666;
+    }
+
+    .favorite-item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .favorite-btn {
+      flex: 1;
+      padding: 8px 12px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .favorite-btn:hover {
+      background: #c82333;
+    }
+
+    .favorite-btn.secondary {
+      background: transparent;
+      border: 1px solid #333333;
+      color: #cccccc;
+      white-space: nowrap;
+    }
+
+    .favorite-btn.secondary:hover {
+      background: #333333;
+      border-color: #444444;
+      color: #ffffff;
+    }
+
+    .empty-favorites {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666666;
+    }
+
+    .empty-favorites-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #cccccc;
+    }
+
     .shortcuts {
       margin-top: 20px;
       padding: 16px;
-      background: #f8f9fa;
+      background: #2a2a2a;
       border-radius: 8px;
       font-size: 12px;
-      color: #666666;
-      border: 1px solid #e5e5e5;
-    }
-    
-    [data-theme="dark"] .shortcuts {
-      background: #2a2a2a;
       color: #cccccc;
-      border-color: #333333;
+      border: 1px solid #333333;
     }
+
     .shortcuts h4 {
       margin: 0 0 12px 0;
       font-size: 14px;
-      color: #1a1a1a;
+      color: #ffffff;
       font-weight: 600;
     }
-    
-    [data-theme="dark"] .shortcuts h4 {
-      color: #ffffff;
-    }
+
     .shortcut {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 8px;
     }
-    
+
     .key {
-      background: #e9ecef;
+      background: #333333;
       padding: 4px 8px;
       border-radius: 4px;
       font-family: monospace;
       font-size: 11px;
-      color: #1a1a1a;
-      font-weight: 500;
-    }
-    
-    [data-theme="dark"] .key {
-      background: #333333;
       color: #ffffff;
-    }
-    .status {
-      margin-top: 16px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      text-align: center;
       font-weight: 500;
     }
-    
-    .status.auto {
-      background: #d4edda;
-      color: #155724;
-      border: 1px solid #c3e6cb;
+
+    .search-section {
+      padding: 0;
     }
-    
-    [data-theme="dark"] .status.auto {
-      background: #1e4a1e;
-      color: #90ee90;
-      border-color: #2d5a2d;
+
+    .search-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
     }
-    
-    .status.manual {
-      background: #fff3cd;
-      color: #856404;
-      border: 1px solid #ffeaa7;
-    }
-    
-    [data-theme="dark"] .status.manual {
-      background: #4a4a1e;
-      color: #ffff90;
-      border-color: #5a5a2d;
-    }
-    .update-section {
-      margin-top: 16px;
-      padding: 6px;
-      background: #ffffff;
-      border-radius: 8px;
-      border: 1px solid #e5e5e5;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    
-    [data-theme="dark"] .update-section {
+
+    .search-input {
+      padding: 10px 12px;
       background: #2a2a2a;
-      border-color: #333333;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      border: 1px solid #333333;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 14px;
     }
-    .update-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 5px;
+
+    .search-input:focus {
+      outline: none;
+      border-color: #dc3545;
     }
-    
-    .update-title {
-      font-size: 13px;
-      color: #1a1a1a;
-      font-weight: 600;
+
+    .search-input::placeholder {
+      color: #666666;
     }
-    
-    [data-theme="dark"] .update-title {
+
+    .category-select {
+      padding: 10px 12px;
+      background: #2a2a2a;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .category-select:focus {
+      outline: none;
+      border-color: #dc3545;
+    }
+
+    .category-select option {
+      background: #2a2a2a;
       color: #ffffff;
     }
-    .update-buttons {
-      display: flex;
-      gap: 4px;
+
+    .search-results {
+      margin-top: 16px;
     }
-    .update-btn {
-      padding: 6px 12px;
-      background: #28a745;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+
+    .search-results-count {
       font-size: 12px;
-      font-weight: 500;
-    }
-    
-    .update-btn:hover {
-      background: #218838;
-    }
-    
-    .update-btn:disabled {
-      background: #6c757d;
-      cursor: not-allowed;
-    }
-    .update-status {
-      font-size: 13px;
-      color: #666666;
-      line-height: 1.4;
-    }
-    
-    [data-theme="dark"] .update-status {
       color: #cccccc;
-    }
-    .download-btn {
-      padding: 8px 16px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      width: 100%;
-    }
-    
-    .download-btn:hover {
-      background: #0056b3;
-    }
-    .error-text {
-      color: #dc3545;
+      margin-bottom: 12px;
     }
   </style>
 </head>
@@ -285,133 +471,202 @@
       </div>
       <h1 class="title">Lan-Search</h1>
     </div>
-    <button id="themeToggle" class="theme-toggle" title="Переключить тему">🌙</button>
-  </div>
-  
-  <p class="description">
-    Не только добавляет поиск на доменах LanGame, но и создаёт набор удобных настроек для работы!
-  </p>
-  <span class="description">    Не просто LanSearch, а LanPlus
-
-  </span>  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Обход модальных окон</span>
-      <div class="update-buttons">
-        <button id="modalBypassToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Убирает модальные окна подтверждения тех старт/стоп и блокировки/разблокировки ПК</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Современные стили карт ПК</span>
-      <div class="update-buttons">
-        <button id="pcStylesToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Применяет иные стили для панели устройств</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Оптимизация таблиц</span>
-      <div class="update-buttons">
-        <button id="tableOptimizationToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Сокращает названия колонок в таблицах для экономии места</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Скрыть чекбоксы ПК</span>
-      <div class="update-buttons">
-        <button id="hideCheckboxesToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Скрывает чекбоксы "Посадка" и "Бронь" на карточках ПК для экономии места</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Скрыть комментарии ПК</span>
-      <div class="update-buttons">
-        <button id="hideCommentsToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Скрывает поля комментариев на карточках ПК для экономии места</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Информация по домену</span>
-      <div class="update-buttons">
-        <button id="domainInfoToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Отображает информацию о домене через API k-connect.ru</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Собственное сокет подключение</span>
-      <div class="update-buttons">
-        <button id="customWebSocketToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Создает собственное WebSocket соединение для работы расширения, отображенние тех/разлок режимов</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Игнорирование энергосбережения</span>
-      <div class="update-buttons">
-        <button id="energySavingIgnoreToggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">Добавляет кнопку "Игнорирование энерго" в дроп-меню ПК для отключения энергосбережения монитора и ПК</div>
-  </div>
-  
-  <div class="update-section">
-    <div class="update-header">
-      <span class="update-title">Обновляторы3000</span>
-      <div class="update-buttons">
-        <button id="updaters3000Toggle" class="update-btn">Выключен</button>
-      </div>
-    </div>
-    <div class="update-status">СТЕРОИДЫ: Объединяет функционал кнопки "Управлять" с запросом на игнорирование энергосбережения</div>
-  </div>
-  
-  <div id="updateSection" class="update-section">
-    <div class="update-header">
-      <span class="update-title">Обновления</span>
-      <div class="update-buttons">
-        <button id="checkUpdateBtn" class="update-btn">Проверить</button>
-      </div>
-    </div>
-    <div id="updateStatus" class="update-status"></div>
-  </div>
-  
-  <div id="status" class="status" style="display: none;"></div>
-  
-  <div class="shortcuts">
-    <h4>Горячие клавиши:</h4>
-    <div class="shortcut">
-      <span>Фокус на поиск</span>
-      <span class="key">/</span>
-    </div>
-    <div class="shortcut">
-      <span>Очистить поиск</span>
-      <span class="key">Esc</span>
-    </div>
-    <div class="shortcut">
-      <span>Перейти по результату</span>
-      <span class="key">Enter</span>
-    </div>
   </div>
 
+  <div id="authSection" class="auth-section">
+    <form id="authForm" class="auth-form">
+      <input 
+        type="text" 
+        id="usernameInput" 
+        class="auth-input" 
+        placeholder="Логин" 
+        required
+        autocomplete="username"
+      >
+      <input 
+        type="password" 
+        id="passwordInput" 
+        class="auth-input" 
+        placeholder="Пароль" 
+        required
+        autocomplete="current-password"
+      >
+      <button type="submit" id="loginBtn" class="auth-btn">Войти</button>
+      <div id="authError" class="auth-error" style="display: none;"></div>
+    </form>
+  </div>
+
+  <div id="mainContent" style="display: none;">
+    <div class="tabs">
+      <button class="tab active" data-tab="favorites">Избранные</button>
+      <button class="tab" data-tab="search">Поиск</button>
+      <button class="tab" data-tab="settings">Настройки</button>
+    </div>
+
+    <div id="favoritesTab" class="tab-content active">
+      <div id="favoritesList" class="favorites-list">
+        <div class="loading">Загрузка избранных файлов...</div>
+      </div>
+    </div>
+
+    <div id="searchTab" class="tab-content">
+      <div class="search-section">
+        <div class="search-controls">
+          <input 
+            type="text" 
+            id="searchInput" 
+            class="search-input" 
+            placeholder="Поиск по названию файла или описанию..."
+          >
+          <select id="categorySelect" class="category-select">
+            <option value="">Все категории</option>
+            <option value="-1">Без категории</option>
+          </select>
+        </div>
+        <div class="search-results">
+          <div id="searchResultsCount" class="search-results-count"></div>
+          <div id="searchResultsList" class="favorites-list">
+            <div class="loading">Введите запрос для поиска...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="settingsTab" class="tab-content">
+      <div id="accountInfo" class="account-info">
+        <div class="account-section">
+          <div class="account-header">
+            <span class="account-title">Аккаунт</span>
+          </div>
+          <div class="account-username" id="accountUsername"></div>
+          <button id="logoutBtn" class="logout-btn">Выйти</button>
+        </div>
+      </div>
+
+      <p class="description">
+        Не только добавляет поиск на доменах LanGame, но и создаёт набор удобных настроек для работы!
+      </p>
+      <span class="description">Не просто LanSearch, а LanPlus</span>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Обход модальных окон</span>
+          <div class="update-buttons">
+            <button id="modalBypassToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Убирает модальные окна подтверждения тех старт/стоп и блокировки/разблокировки ПК</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Современные стили карт ПК</span>
+          <div class="update-buttons">
+            <button id="pcStylesToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Применяет иные стили для панели устройств</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Оптимизация таблиц</span>
+          <div class="update-buttons">
+            <button id="tableOptimizationToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Сокращает названия колонок в таблицах для экономии места</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Скрыть чекбоксы ПК</span>
+          <div class="update-buttons">
+            <button id="hideCheckboxesToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Скрывает чекбоксы "Посадка" и "Бронь" на карточках ПК для экономии места</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Скрыть комментарии ПК</span>
+          <div class="update-buttons">
+            <button id="hideCommentsToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Скрывает поля комментариев на карточках ПК для экономии места</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Информация по домену</span>
+          <div class="update-buttons">
+            <button id="domainInfoToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Отображает информацию о домене через API k-connect.ru</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Собственное сокет подключение</span>
+          <div class="update-buttons">
+            <button id="customWebSocketToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Создает собственное WebSocket соединение для работы расширения, отображенние тех/разлок режимов</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Игнорирование энергосбережения</span>
+          <div class="update-buttons">
+            <button id="energySavingIgnoreToggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">Добавляет кнопку "Игнорирование энерго" в дроп-меню ПК для отключения энергосбережения монитора и ПК</div>
+      </div>
+
+      <div class="update-section">
+        <div class="update-header">
+          <span class="update-title">Обновляторы3000</span>
+          <div class="update-buttons">
+            <button id="updaters3000Toggle" class="update-btn">Выключен</button>
+          </div>
+        </div>
+        <div class="update-status">СТЕРОИДЫ: Объединяет функционал кнопки "Управлять" с запросом на игнорирование энергосбережения</div>
+      </div>
+
+      <div id="updateSection" class="update-section">
+        <div class="update-header">
+          <span class="update-title">Обновления</span>
+          <div class="update-buttons">
+            <button id="checkUpdateBtn" class="update-btn">Проверить</button>
+          </div>
+        </div>
+        <div id="updateStatus" class="update-status"></div>
+      </div>
+
+      <div class="shortcuts">
+        <h4>Горячие клавиши:</h4>
+        <div class="shortcut">
+          <span>Фокус на поиск</span>
+          <span class="key">/</span>
+        </div>
+        <div class="shortcut">
+          <span>Очистить поиск</span>
+          <span class="key">Esc</span>
+        </div>
+        <div class="shortcut">
+          <span>Перейти по результату</span>
+          <span class="key">Enter</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
   <script src="popup.js"></script>
 </body>
-</html> 
+</html>
