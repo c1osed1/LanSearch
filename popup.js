@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Элементы настроек
   const checkUpdateBtn = document.getElementById('checkUpdateBtn');
   const updateStatus = document.getElementById('updateStatus');
+  const themeToggle = document.getElementById('themeToggle');
   const modalBypassToggle = document.getElementById('modalBypassToggle');
   const pcStylesToggle = document.getElementById('pcStylesToggle');
   const tableOptimizationToggle = document.getElementById('tableOptimizationToggle');
@@ -918,7 +919,92 @@ document.addEventListener('DOMContentLoaded', function() {
 
   checkUpdateBtn.addEventListener('click', checkForUpdates);
 
+  // Функции для работы с темой (только для сайта, не для popup)
+  let currentTheme = 'dark';
+  
+  function initTheme() {
+    try {
+      const localTheme = localStorage.getItem('lanSearchTheme');
+      if (localTheme) {
+        currentTheme = localTheme;
+        setThemeButton(localTheme);
+        return;
+      }
+      
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['theme'], function(result) {
+          try {
+            currentTheme = result.theme || 'dark';
+            setThemeButton(currentTheme);
+            
+            try {
+              localStorage.setItem('lanSearchTheme', currentTheme);
+            } catch (e) {}
+          } catch (e) {
+            currentTheme = 'dark';
+            setThemeButton('dark');
+          }
+        });
+      } else {
+        currentTheme = 'dark';
+        setThemeButton('dark');
+      }
+    } catch (e) {
+      currentTheme = 'dark';
+      setThemeButton('dark');
+    }
+  }
+  
+  function setThemeButton(theme) {
+    if (themeToggle) {
+      themeToggle.textContent = theme === 'dark' ? 'Темная' : 'Светлая';
+      themeToggle.title = theme === 'dark' ? 'Переключить на светлую тему' : 'Переключить на темную тему';
+    }
+  }
+  
+  function toggleTheme() {
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    currentTheme = newTheme;
+    setThemeButton(newTheme);
+    
+    // Сохраняем настройку темы
+    try {
+      localStorage.setItem('lanSearchTheme', newTheme);
+    } catch (e) {}
+    
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.set({ theme: newTheme }, function() {
+          // Применяем тему на всех открытых вкладках
+          chrome.tabs.query({}, function(tabs) {
+            tabs.forEach(tab => {
+              chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: (theme) => {
+                  if (document.documentElement) {
+                    document.documentElement.setAttribute('data-theme', theme);
+                  }
+                  // Также обновляем через localStorage на странице
+                  try {
+                    localStorage.setItem('lanSearchTheme', theme);
+                  } catch (e) {}
+                },
+                args: [newTheme]
+              }).catch(() => {});
+            });
+          });
+        });
+      }
+    } catch (e) {}
+  }
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+
   // Инициализация
   checkAuth();
   initSettings();
+  initTheme();
 });
