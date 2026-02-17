@@ -161,6 +161,12 @@
       margin-top: -8px;
     }
 
+    .auth-sso-hint {
+      font-size: 12px;
+      color: #888;
+      margin: 0 0 12px 0;
+    }
+
     .tabs {
       display: flex;
       border-bottom: 1px solid #333333;
@@ -474,26 +480,11 @@
   </div>
 
   <div id="authSection" class="auth-section">
-    <form id="authForm" class="auth-form">
-      <input 
-        type="text" 
-        id="usernameInput" 
-        class="auth-input" 
-        placeholder="Логин" 
-        required
-        autocomplete="username"
-      >
-      <input 
-        type="password" 
-        id="passwordInput" 
-        class="auth-input" 
-        placeholder="Пароль" 
-        required
-        autocomplete="current-password"
-      >
-      <button type="submit" id="loginBtn" class="auth-btn">Войти</button>
+    <div class="auth-form">
+      <p class="auth-sso-hint">Войдите через msgtp.langame.ru</p>
+      <button type="button" id="loginBtn" class="auth-btn">Авторизоваться через msgtp</button>
       <div id="authError" class="auth-error" style="display: none;"></div>
-    </form>
+    </div>
   </div>
 
   <div id="mainContent" style="display: none;">

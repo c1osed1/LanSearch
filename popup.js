@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   // Элементы интерфейса
   const authSection = document.getElementById('authSection');
-  const authForm = document.getElementById('authForm');
-  const usernameInput = document.getElementById('usernameInput');
-  const passwordInput = document.getElementById('passwordInput');
   const loginBtn = document.getElementById('loginBtn');
   const authError = document.getElementById('authError');
   
@@ -42,8 +39,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const energySavingIgnoreToggle = document.getElementById('energySavingIgnoreToggle');
   const updaters3000Toggle = document.getElementById('updaters3000Toggle');
 
+  async function syncAuthFromStorage() {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      const data = await new Promise(function (resolve) {
+        chrome.storage.local.get(['wikiToken', 'wikiUser'], resolve);
+      });
+      if (data.wikiToken && data.wikiUser) {
+        localStorage.setItem('wikiToken', data.wikiToken);
+        localStorage.setItem('wikiUser', data.wikiUser);
+      }
+    }
+  }
+
   // Проверка авторизации при загрузке
-  function checkAuth() {
+  async function checkAuth() {
+    await syncAuthFromStorage();
     if (wikiAPI.isAuthenticated()) {
       const user = wikiAPI.getUser();
       showMainContent(user);
@@ -58,8 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     accountInfo.classList.remove('visible');
     mainContent.style.display = 'none';
     authError.style.display = 'none';
-    usernameInput.value = '';
-    passwordInput.value = '';
   }
 
   // Показать основной контент
@@ -76,31 +84,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Обработка авторизации
-  authForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
-    
-    if (!username || !password) {
-      showAuthError('Введите логин и пароль');
-      return;
-    }
-
-    loginBtn.disabled = true;
-    loginBtn.textContent = 'Вход...';
+  // SSO: открыть страницу авторизации на msgtp
+  loginBtn.addEventListener('click', function() {
     authError.style.display = 'none';
-
-    try {
-      const response = await wikiAPI.login(username, password);
-      showMainContent(response.user);
-    } catch (error) {
-      showAuthError(error.message || 'Ошибка входа. Проверьте логин и пароль.');
-    } finally {
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Открываю...';
+    const extId = chrome.runtime?.id;
+    const baseUrl = 'https://msgtp.langame.ru';
+    const ssoUrl = extId
+      ? baseUrl + '/lansearch-sso?ext_id=' + encodeURIComponent(extId)
+      : baseUrl + '/auth';
+    chrome.tabs.create({ url: ssoUrl }, function() {
       loginBtn.disabled = false;
-      loginBtn.textContent = 'Войти';
-    }
+      loginBtn.textContent = 'Авторизоваться через msgtp';
+      window.close();
+    });
   });
 
   // Показать ошибку авторизации
@@ -112,6 +110,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // Выход
   logoutBtn.addEventListener('click', function() {
     wikiAPI.logout();
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.remove(['wikiToken', 'wikiUser']);
+    }
     showAuthForm();
   });
 

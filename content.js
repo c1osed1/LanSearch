@@ -4,6 +4,8 @@ let domainInfoCacheTime = 0;
 const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
 (function () {
+  const hostname = window.location.hostname.toLowerCase();
+  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(hostname)) return;
   const MENU_ID = "globalMenuAccordion";
   const SEARCH_ID = "globalMenuSearchInput";
   const STYLE_ID = "globalMenuSearchStyles";
@@ -16,8 +18,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
 
+  const EXCLUDED_HOSTS = ['msgtp.langame.ru', 'msgpublic.langame.ru'];
+
   function isSuitableDomain() {
     const hostname = window.location.hostname.toLowerCase();
+    if (EXCLUDED_HOSTS.includes(hostname)) return false;
     return hostname.includes('langame') || hostname.includes('cls') || hostname.includes('f5center');
   }
 

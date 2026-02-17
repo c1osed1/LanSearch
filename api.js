@@ -111,19 +111,8 @@ class WikiAPI {
     return response.json();
   }
 
-  // Авторизация
-  async login(username, password) {
-    const response = await this.request('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password }),
-    });
-
-    // Сохраняем токен и данные пользователя
-    this.setToken(response.access_token);
-    this.setUser(response.user);
-
-    return response;
-  }
+  // SSO: авторизация через msgtp (лентинг из popup, токен сохраняется в callback.html)
+  // Метод login удалён — используется только SSO.
 
   // Выход
   logout() {
