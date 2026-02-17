@@ -84,7 +84,8 @@
         "*://*.langamecloud.ru/*",
         "*://*.langamesftw.ru/*",
         "*://*.f5center.com/*"
-      ]
+      ],
+      "exclude_matches":["*://msgpublic.langame.ru/*", "*://msgtp.langame.ru/*"]
     }
   ]
 } 

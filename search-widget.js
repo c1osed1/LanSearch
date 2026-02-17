@@ -1,4 +1,6 @@
-
+(function() {
+  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
+  var searchWidget;
 class SearchWidget {
   constructor() {
     this.searchData = {};
@@ -510,5 +512,5 @@ if (document.readyState === 'loading') {
   searchWidget = new SearchWidget();
 }
 
-
 window.lanSearchWidget = searchWidget;
+})();

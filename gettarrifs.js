@@ -1,9 +1,9 @@
 /**
  * Логика для экспорта и импорта тарифов в CSV
  */
-
 (function() {
   'use strict';
+  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
 
   // Проверяем, находимся ли мы на странице тарифов
   function isTariffPage() {

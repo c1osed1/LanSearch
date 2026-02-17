@@ -1,5 +1,7 @@
 // Управление последними использованными вкладками
-class RecentTabsManager {
+(function() {
+  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
+  class RecentTabsManager {
   constructor() {
     this.storageKey = 'lanSearchRecentTabs';
     this.favoritesKey = 'lanSearchFavoriteTabs';
@@ -1590,3 +1592,4 @@ window.lanSearchIsSuitableDomainWithSubdomains = (hostname) => window.recentTabs
 // Экспортируем функции для работы с цветами избранных
 window.lanSearchSetFavoriteColor = (tabId, colorValue) => window.recentTabsManager.setFavoriteColor(tabId, colorValue);
 window.lanSearchRemoveFavoriteColor = (tabId) => window.recentTabsManager.removeFavoriteColor(tabId);
+})();

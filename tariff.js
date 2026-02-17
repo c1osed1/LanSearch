@@ -1,10 +1,9 @@
 /**
  * Логика для массового изменения цен в тарифах
  */
-
 (function() {
   'use strict';
-
+  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
 
   function isTariffPage() {
     const path = window.location.pathname;
