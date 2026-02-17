@@ -46,7 +46,8 @@ document.addEventListener('DOMContentLoaded', function() {
       });
       if (data.wikiToken && data.wikiUser) {
         localStorage.setItem('wikiToken', data.wikiToken);
-        localStorage.setItem('wikiUser', data.wikiUser);
+        var userVal = data.wikiUser;
+        localStorage.setItem('wikiUser', typeof userVal === 'string' ? userVal : JSON.stringify(userVal));
       }
     }
   }
