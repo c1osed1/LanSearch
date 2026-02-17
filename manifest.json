@@ -56,7 +56,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "theme.css", "style_pc.css", "Search.json"],
+      "resources": ["icons/*", "theme.css", "style_pc.css", "Search.json", "callback.html"],
       "matches": [
         "*://*.langame.com/*",
         "*://*.langame.ru/*",
