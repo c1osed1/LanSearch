@@ -48,7 +48,10 @@
         "*://*.langamecloud.ru/*",
         "*://*.langamesftw.ru/*",
         "*://*.f5center.com/*"
-        
+      ],
+      "exclude_matches": [
+        "*://msgtp.langame.ru/*",
+        "*://msgpublic.langame.ru/*"
       ],
       "js": ["recent-tabs.js", "search-widget.js", "content.js", "tariff.js", "gettarrifs.js"],
       "run_at": "document_end"
