@@ -647,22 +647,23 @@
 
     if (document.getElementById('recentTabsContainer')) return;
 
-    const container = this.createTabsContainer(recentTabs, favoriteTabs);
-
+    // Контейнер собираем только когда якорь уже найден: иначе на каждой
+    // неудачной попытке создавался и выбрасывался лишний DOM.
     const guestSearch = document.getElementById('guestSearchContainer');
     if (guestSearch && guestSearch.parentNode) {
-      guestSearch.parentNode.insertBefore(container, guestSearch);
+      guestSearch.parentNode.insertBefore(this.createTabsContainer(recentTabs, favoriteTabs), guestSearch);
       return;
     }
 
     const legacy = document.getElementById('langameSubscriptionWrapper');
     if (legacy && legacy.parentNode) {
-      legacy.parentNode.insertBefore(container, legacy.nextSibling);
+      legacy.parentNode.insertBefore(this.createTabsContainer(recentTabs, favoriteTabs), legacy.nextSibling);
       return;
     }
 
-    if (typeof window.lanSearchInsertMainDashboardWidget === 'function' &&
-        window.lanSearchInsertMainDashboardWidget(container)) {
+    const insertMainDashboardWidget = window.lanSearchInsertMainDashboardWidget;
+    if (typeof insertMainDashboardWidget === 'function' &&
+        insertMainDashboardWidget(this.createTabsContainer(recentTabs, favoriteTabs))) {
       return;
     }
 

@@ -8,6 +8,7 @@ class ScriptManager {
     }
 
     async load() {
+        if (!this.container) return;
         try {
             const response = await fetch(chrome.runtime.getURL('scripts.json'));
             if (!response.ok) throw new Error(`scripts.json: HTTP ${response.status}`);
@@ -167,7 +168,10 @@ class ScriptManager {
         const values = {};
         for (const input of panel.querySelectorAll('[data-field]')) {
             if (input.type === 'file') continue;
-            if (!input.reportValidity()) throw new Error('Проверьте поля настроек');
+            if (!input.reportValidity()) {
+                const label = panel.querySelector(`label[for="${input.id}"]`);
+                throw new Error(`Проверьте поле: ${label ? label.textContent.trim() : input.dataset.field}`);
+            }
             values[input.dataset.field] = input.type === 'checkbox' ? input.checked : input.value;
         }
         return values;

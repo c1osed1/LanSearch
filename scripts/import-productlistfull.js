@@ -33,8 +33,11 @@ window.LanSearchScripts.run('import-productlistfull', async ({ params, files }) 
     const index = U.uniqueIndex(products, row => normalize(row.name));
     const matched = updates.map(row => ({ ...row, id: index.get(normalize(row.name))?.id })).filter(row => row.id);
     if (!matched.length) throw new Error('Нет совпадений товаров по названиям');
+    const cookieToken = document.cookie.match(/(?:^|;\s*)token_master_api=([^;]+)/)?.[1] ||
+        document.cookie.match(/(?:^|;\s*)token=([^;]+)/)?.[1];
+    // В cookie токен лежит в URL-кодировке — как и в promocode-create.js, декодируем.
     const token = localStorage.token_master_api || localStorage.token ||
-        document.cookie.match(/(?:^|;\s*)token_master_api=([^;]+)/)?.[1] || document.cookie.match(/(?:^|;\s*)token=([^;]+)/)?.[1];
+        (cookieToken ? decodeURIComponent(cookieToken) : '');
     if (!token) throw new Error('На странице клуба не найден токен API');
     let completed = 0;
     for (const row of matched) {
