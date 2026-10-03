@@ -2,7 +2,23 @@
     if (window.LanSearchScripts) return;
     let state = null;
     let transferTimer;
-    const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const isCancelled = () => !!(state && state.cancelled);
+    const stop = () => {
+        if (!state) return { ok: false, error: 'Нет активного запуска' };
+        if (state.phase === 'preparing') {
+            clearTimeout(transferTimer);
+            state = null;
+            notify('Подготовка отменена.');
+            return { ok: true, message: 'Подготовка отменена' };
+        }
+        state.cancelled = true;
+        notify('Останавливаю после текущего шага…');
+        return { ok: true, message: 'Останавливаю после текущего шага' };
+    };
+    const wait = ms => new Promise((resolve, reject) => setTimeout(
+        () => (isCancelled() ? reject(new Error('Остановлено пользователем')) : resolve()),
+        ms
+    ));
     const notify = message => {
         let box = document.getElementById('lansearch-script-status');
         if (!box) {
@@ -11,11 +27,15 @@
             box.style.cssText = 'position:fixed;bottom:16px;right:16px;z-index:2147483647;max-width:420px;padding:14px;background:#212121;color:white;border:1px solid #888;border-radius:10px;font:14px/1.5 sans-serif;white-space:pre-wrap;';
             box.setAttribute('role', 'status');
             const text = document.createElement('span');
+            const stopButton = document.createElement('button');
+            stopButton.textContent = 'Стоп'; stopButton.title = 'Остановить выполнение';
+            stopButton.style.cssText = 'margin-left:12px;cursor:pointer;';
+            stopButton.addEventListener('click', stop);
             const close = document.createElement('button');
             close.textContent = '×'; close.title = 'Скрыть статус';
             close.style.cssText = 'margin-left:12px;cursor:pointer;';
             close.addEventListener('click', () => box.remove());
-            box.append(text, close);
+            box.append(text, stopButton, close);
             document.documentElement.appendChild(box);
         }
         box.firstChild.textContent = `LanSearch: ${message}`;
@@ -78,6 +98,7 @@
     };
     const downloadCSV = (rows, name) => download(new Blob([csv(rows)], { type: 'text/csv;charset=utf-8' }), name);
     async function request(url, options = {}) {
+        if (isCancelled()) throw new Error('Остановлено пользователем');
         const response = await fetch(url, { credentials: 'include', ...options });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${new URL(url, location.href).pathname}`);
         if (response.redirected && /\/(?:login|auth)(?:\/|\?|$)/i.test(response.url)) throw new Error('Сайт требует входа. Обновите страницу клуба.');
@@ -166,7 +187,7 @@
         async run(scriptId, callback) {
             if (!state || state.scriptId !== scriptId || state.phase !== 'preparing') return { ok: false, error: 'Запускайте скрипт через расширение' };
             const current = state;
-            current.phase = 'running'; clearTimeout(transferTimer);
+            current.phase = 'running'; current.cancelled = false; clearTimeout(transferTimer);
             let result;
             try {
                 notify(`Выполняется ${scriptId}…`);
@@ -180,6 +201,6 @@
             } finally { if (state === current) state = null; }
             return result;
         },
-        wait, notify, parseCSV, records, csv, download, downloadCSV, request, api, htmlText, number, uniqueIndex, products
+        stop, wait, notify, parseCSV, records, csv, download, downloadCSV, request, api, htmlText, number, uniqueIndex, products
     };
 })();
