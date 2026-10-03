@@ -1,7 +1,9 @@
 (function() {
   if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
-  var searchWidget;
-class SearchWidget {
+
+  let searchWidget;
+
+  class SearchWidget {
   constructor() {
     this.searchData = {};
     this.searchInput = null;
@@ -501,16 +503,13 @@ class SearchWidget {
   }
 }
 
-
-let searchWidget;
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      searchWidget = new SearchWidget();
+      window.lanSearchWidget = searchWidget;
+    });
+  } else {
     searchWidget = new SearchWidget();
-  });
-} else {
-  searchWidget = new SearchWidget();
-}
-
-window.lanSearchWidget = searchWidget;
+    window.lanSearchWidget = searchWidget;
+  }
 })();
