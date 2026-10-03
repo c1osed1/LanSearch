@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const checkUpdateBtn = document.getElementById('checkUpdateBtn');
   const updateStatus = document.getElementById('updateStatus');
   const themeToggle = document.getElementById('themeToggle');
+  const chatPopupToggle = document.getElementById('chatPopupToggle');
   const modalBypassToggle = document.getElementById('modalBypassToggle');
   const pcStylesToggle = document.getElementById('pcStylesToggle');
   const tableOptimizationToggle = document.getElementById('tableOptimizationToggle');
@@ -394,6 +395,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Инициализация всех настроек
   function initSettings() {
+    initChatPopup();
     initModalBypass();
     initPCStyles();
     initTableOptimization();
@@ -403,6 +405,59 @@ document.addEventListener('DOMContentLoaded', function() {
     initCustomWebSocket();
     initEnergySavingIgnore();
     initUpdaters3000();
+  }
+
+  // Чат поп-ап (LanSearch chat popup widget). Включён по умолчанию.
+  let chatPopupEnabled = true;
+
+  function initChatPopup() {
+    if (!chatPopupToggle) return;
+    try {
+      const localValue = localStorage.getItem('lanSearchChatPopup');
+      if (localValue !== null) {
+        chatPopupEnabled = localValue === 'true';
+        setChatPopupState(chatPopupEnabled);
+        return;
+      }
+
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['lanSearchChatPopup'], function (result) {
+          const raw = result ? result.lanSearchChatPopup : undefined;
+          chatPopupEnabled = raw === undefined ? true : raw === true;
+          setChatPopupState(chatPopupEnabled);
+          try {
+            localStorage.setItem('lanSearchChatPopup', chatPopupEnabled.toString());
+          } catch (e) {}
+        });
+      } else {
+        chatPopupEnabled = true;
+        setChatPopupState(true);
+      }
+    } catch (e) {
+      chatPopupEnabled = true;
+      setChatPopupState(true);
+    }
+  }
+
+  function setChatPopupState(enabled) {
+    if (!chatPopupToggle) return;
+    chatPopupToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    chatPopupToggle.classList.toggle('enabled', enabled);
+  }
+
+  function toggleChatPopup() {
+    chatPopupEnabled = !chatPopupEnabled;
+    setChatPopupState(chatPopupEnabled);
+    try {
+      localStorage.setItem('lanSearchChatPopup', chatPopupEnabled.toString());
+    } catch (e) {}
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+      chrome.storage.sync.set({ lanSearchChatPopup: chatPopupEnabled });
+    }
+  }
+
+  if (chatPopupToggle) {
+    chatPopupToggle.addEventListener('click', toggleChatPopup);
   }
 
   // Обход модальных окон

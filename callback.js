@@ -2,11 +2,16 @@
   var params = new URLSearchParams(window.location.search);
   var token = params.get('token');
   var userStr = params.get('user');
+  var msgtpToken = params.get('msgtp_token');
   var statusEl = document.getElementById('status');
   if (token && userStr) {
     try {
       var user = JSON.parse(decodeURIComponent(userStr));
-      chrome.storage.local.set({ wikiToken: token, wikiUser: user }, function() {
+      var payload = { wikiToken: token, wikiUser: user };
+      if (msgtpToken) {
+        payload.msgtpSessionToken = msgtpToken;
+      }
+      chrome.storage.local.set(payload, function() {
         statusEl.textContent = 'Авторизация успешна! Закройте вкладку.';
         statusEl.className = 'success';
         chrome.runtime.sendMessage({ type: 'LANSEARCH_AUTH_SUCCESS' });

@@ -53,7 +53,7 @@
         "*://msgtp.langame.ru/*",
         "*://msgpublic.langame.ru/*"
       ],
-      "js": ["recent-tabs.js", "search-widget.js", "content.js", "tariff.js", "gettarrifs.js"],
+      "js": ["recent-tabs.js", "search-widget.js", "chat-popup.js", "content.js", "tariff.js", "gettarrifs.js", "my-script.js"],
       "run_at": "document_end"
     }
   ],
