@@ -6,9 +6,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 (function () {
   const hostname = window.location.hostname.toLowerCase();
   if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(hostname)) return;
-  const MENU_ID = "globalMenuAccordion";
+  const MENU_ID = ["nav-accordion-parent", "globalMenuAccordion"];
   const SEARCH_ID = "globalMenuSearchInput";
   const STYLE_ID = "globalMenuSearchStyles";
+
+  function getMenuRootFromIds() {
+    for (const id of MENU_ID) {
+      const el = document.getElementById(id);
+      if (el) return el;
+    }
+    return null;
+  }
 
   function $(sel, root = document) {
     return root.querySelector(sel);
@@ -524,8 +532,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
   function init() {
-    let menuRoot = document.getElementById(MENU_ID);
-    
+    let menuRoot = getMenuRootFromIds();
+    const menuFromKnownIds = !!menuRoot;
 
     if (!menuRoot && window.location.hostname.includes('f5center')) {
 
@@ -549,7 +557,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     
     if (!menuRoot) {
       if (shouldAutoActivate()) {
-        console.log("Lan-Search: элемент #globalMenuAccordion не найден на подходящем домене");
+        console.log("Lan-Search: ни #nav-accordion-parent, ни #globalMenuAccordion не найдены на подходящем домене");
       }
       return;
     }
@@ -563,8 +571,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     const input = createSearchBar(menuRoot);
     
 
-    if (document.getElementById(MENU_ID)) {
-    captureInitialCollapseState(menuRoot);
+    if (menuFromKnownIds) {
+      captureInitialCollapseState(menuRoot);
     }
 
     let handle;
@@ -776,7 +784,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
 
-          if (document.getElementById('recentTabsContainer') || document.getElementById('langameSubscriptionWrapper')) {
+          if (document.getElementById('recentTabsContainer') || document.getElementById('js-subscription-container') || document.getElementById('langameSubscriptionWrapper')) {
             initGuestSearchOnMainPage();
           } else {
 
@@ -785,7 +793,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         });
       } else {
 
-        if (document.getElementById('recentTabsContainer') || document.getElementById('langameSubscriptionWrapper')) {
+        if (document.getElementById('recentTabsContainer') || document.getElementById('js-subscription-container') || document.getElementById('langameSubscriptionWrapper')) {
           initGuestSearchOnMainPage();
         } else {
 
@@ -830,7 +838,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
 
   function initRecentTabsTracking() {
-    const menuRoot = document.getElementById(MENU_ID);
+    const menuRoot = getMenuRootFromIds();
     if (!menuRoot) return;
 
 
@@ -846,6 +854,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     container.className = 'card';
     container.style.cssText = `
       margin-top: 15px;
+      margin-right: 20px;
+      margin-left:20px;
       padding: 15px;
       border: 1px solid #e0e0e0;
       border-radius: 8px;
@@ -856,11 +866,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       <div class="card-header">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <h5 class="mb-0">
-            <i class="fa fa-search"></i> <span id="modeTitle">Поиск гостей</span>
+            <span id="modeTitle">Поиск гостей</span>
           </h5>
           <div style="display: flex; gap: 4px; background: #f8f9fa; padding: 4px; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
             <button id="modeSearchBtn" class="btn btn-sm" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; box-shadow: 0 2px 4px rgba(220,53,69,0.3);">
-              <i class="fa fa-search"></i> Поиск гостей
+              Поиск гостей
             </button>
             <button id="modeInventBtn" class="btn btn-sm" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; opacity: 0.7;">
               <i class="fa fa-cubes"></i> Инвентаризация
@@ -1637,6 +1647,48 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
+  /**
+   * Главная: вставка после блока подписки (#js-subscription-container), перед партнёрами (#js-partners-page).
+   * Не используем document.querySelector('.container-fluid') — первый совпадает с header.
+   */
+  function insertMainDashboardWidget(element) {
+    const subscription = document.getElementById('js-subscription-container');
+    const partners = document.getElementById('js-partners-page');
+    const legacy = document.getElementById('langameSubscriptionWrapper');
+
+    if (subscription && partners && subscription.parentNode === partners.parentNode) {
+      subscription.parentNode.insertBefore(element, partners);
+      return true;
+    }
+    if (subscription && subscription.parentNode) {
+      const parent = subscription.parentNode;
+      const next = subscription.nextElementSibling;
+      if (next) {
+        parent.insertBefore(element, next);
+      } else {
+        parent.appendChild(element);
+      }
+      return true;
+    }
+    if (legacy && legacy.parentNode) {
+      legacy.parentNode.insertBefore(element, legacy.nextSibling);
+      return true;
+    }
+    const layoutContent = document.querySelector('#js-scrollable-area .layout__content');
+    if (layoutContent) {
+      const partnersOnly = document.getElementById('js-partners-page');
+      if (partnersOnly && partnersOnly.parentNode === layoutContent) {
+        layoutContent.insertBefore(element, partnersOnly);
+      } else {
+        layoutContent.appendChild(element);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  window.lanSearchInsertMainDashboardWidget = insertMainDashboardWidget;
+
 
   function initGuestSearchOnMainPage(attempts = 0) {
     console.log('Lan-Search: Инициализация поиска гостей на главной странице');
@@ -1658,28 +1710,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     if (recentTabsContainer) {
       insertTarget = recentTabsContainer.parentNode;
       insertTarget.insertBefore(createGuestSearchBlock(), recentTabsContainer.nextSibling);
-    } else {
-
-      const langameWrapper = document.getElementById('langameSubscriptionWrapper');
-      if (langameWrapper) {
-        insertTarget = langameWrapper.parentNode;
-        insertTarget.insertBefore(createGuestSearchBlock(), langameWrapper.nextSibling);
-      } else {
-
-        const containerFluid = document.querySelector('.container-fluid');
-        if (containerFluid) {
-          insertTarget = containerFluid;
-          insertTarget.appendChild(createGuestSearchBlock());
-        } else {
-
-          if (attempts < 10) {
-            setTimeout(() => initGuestSearchOnMainPage(attempts + 1), 200);
-            return;
-          } else {
-          return;
-          }
-        }
+    } else if (!insertMainDashboardWidget(createGuestSearchBlock())) {
+      if (attempts < 10) {
+        setTimeout(() => initGuestSearchOnMainPage(attempts + 1), 200);
       }
+      return;
     }
     
     console.log('Lan-Search: Блок поиска гостей добавлен');
@@ -7603,16 +7638,8 @@ async function processDomainInfoAPI(currentDomain) {
       
       if (langameWrapper) {
         langameWrapper.parentNode.insertBefore(createDomainInfoBlock(domainInfo), langameWrapper.nextSibling);
-      } else {
-        const containerFluid = document.querySelector('.container-fluid');
-        
-        if (containerFluid) {
-          containerFluid.appendChild(createDomainInfoBlock(domainInfo));
-        } else {
-          
-
-          document.body.appendChild(createDomainInfoBlock(domainInfo));
-        }
+      } else if (!insertMainDashboardWidget(createDomainInfoBlock(domainInfo))) {
+        document.body.appendChild(createDomainInfoBlock(domainInfo));
       }
     }
   }

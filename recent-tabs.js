@@ -630,7 +630,7 @@
   }
 
     // Отображение последних вкладок на главной странице для удобства или кому либо лишнее будет не ебу
-        displayOnMainPage() {
+        displayOnMainPage(attempts = 0) {
           // Проверяем, что мы на подходящем домене
           if (!this.isCurrentDomainSuitable()) {
             return;
@@ -645,13 +645,32 @@
 
       console.log('Lan-Search: Отображение избранных вкладок в порядке:', favoriteTabs.map(f => f.title));
 
-    const langameSubscriptionWrapper = document.getElementById('langameSubscriptionWrapper');
-    if (!langameSubscriptionWrapper) return;
-
     if (document.getElementById('recentTabsContainer')) return;
 
     const container = this.createTabsContainer(recentTabs, favoriteTabs);
-    langameSubscriptionWrapper.parentNode.insertBefore(container, langameSubscriptionWrapper.nextSibling);
+
+    const guestSearch = document.getElementById('guestSearchContainer');
+    if (guestSearch && guestSearch.parentNode) {
+      guestSearch.parentNode.insertBefore(container, guestSearch);
+      return;
+    }
+
+    const legacy = document.getElementById('langameSubscriptionWrapper');
+    if (legacy && legacy.parentNode) {
+      legacy.parentNode.insertBefore(container, legacy.nextSibling);
+      return;
+    }
+
+    if (typeof window.lanSearchInsertMainDashboardWidget === 'function' &&
+        window.lanSearchInsertMainDashboardWidget(container)) {
+      return;
+    }
+
+    if (attempts < 15) {
+      setTimeout(() => this.displayOnMainPage(attempts + 1), 200);
+    } else {
+      console.warn('Lan-Search: не удалось вставить блок recent tabs (нет якоря на главной)');
+    }
   });
   }
 
@@ -659,7 +678,7 @@
     const container = document.createElement('div');
     container.id = 'recentTabsContainer';
     container.style.cssText = `
-      margin: 20px 0;
+      margin: 20px;
       padding: 0 10px;
     `;
 
