@@ -161,6 +161,53 @@
       margin-top: -8px;
     }
 
+    .auth-paws-btn {
+      padding: 8px 14px;
+      background: transparent;
+      color: var(--secondary);
+      border: 1px solid var(--outline);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .auth-paws-btn:hover {
+      background: var(--outline-variant);
+      color: var(--on-surface);
+    }
+
+    .manual-auth-block {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--outline-variant);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .manual-auth-label {
+      font-size: 12px;
+      color: var(--secondary);
+    }
+
+    .manual-token-input {
+      width: 100%;
+      padding: 10px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      background: var(--surface-container);
+      border: 1px solid var(--outline-variant);
+      border-radius: var(--radius-sm);
+      color: var(--on-surface);
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    .manual-token-input::placeholder {
+      color: var(--secondary);
+    }
+
     .auth-sso-hint {
       font-size: 13px;
       color: var(--secondary);
@@ -486,6 +533,12 @@
     <div class="auth-form">
       <p class="auth-sso-hint">Войдите через msgtp.langame.ru</p>
       <button type="button" id="loginBtn" class="auth-btn">Авторизоваться через msgtp</button>
+      <button type="button" id="pawsBtn" class="auth-paws-btn">У меня лапки</button>
+      <div id="manualAuthBlock" class="manual-auth-block" style="display: none;">
+        <label class="manual-auth-label">Вставьте токен (msgtp >> localStorage >> token):</label>
+        <textarea id="manualTokenInput" class="manual-token-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." rows="3"></textarea>
+        <button type="button" id="manualTokenSubmit" class="auth-btn">Войти по токену</button>
+      </div>
       <div id="authError" class="auth-error" style="display: none;"></div>
     </div>
   </div>

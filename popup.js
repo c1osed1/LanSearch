@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Элементы интерфейса
   const authSection = document.getElementById('authSection');
   const loginBtn = document.getElementById('loginBtn');
+  const pawsBtn = document.getElementById('pawsBtn');
+  const manualAuthBlock = document.getElementById('manualAuthBlock');
+  const manualTokenInput = document.getElementById('manualTokenInput');
+  const manualTokenSubmit = document.getElementById('manualTokenSubmit');
   const authError = document.getElementById('authError');
   
   const accountInfo = document.getElementById('accountInfo');
@@ -42,12 +46,15 @@ document.addEventListener('DOMContentLoaded', function() {
   async function syncAuthFromStorage() {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
       const data = await new Promise(function (resolve) {
-        chrome.storage.local.get(['wikiToken', 'wikiUser'], resolve);
+        chrome.storage.local.get(['wikiToken', 'wikiUser', 'msgtpSessionToken'], resolve);
       });
       if (data.wikiToken && data.wikiUser) {
         localStorage.setItem('wikiToken', data.wikiToken);
         var userVal = data.wikiUser;
         localStorage.setItem('wikiUser', typeof userVal === 'string' ? userVal : JSON.stringify(userVal));
+      }
+      if (data.msgtpSessionToken) {
+        localStorage.setItem('msgtpSessionToken', data.msgtpSessionToken);
       }
     }
   }
@@ -69,6 +76,10 @@ document.addEventListener('DOMContentLoaded', function() {
     accountInfo.classList.remove('visible');
     mainContent.style.display = 'none';
     authError.style.display = 'none';
+    if (manualAuthBlock) {
+      manualAuthBlock.style.display = 'none';
+      if (manualTokenInput) manualTokenInput.value = '';
+    }
   }
 
   // Показать основной контент
@@ -108,12 +119,53 @@ document.addEventListener('DOMContentLoaded', function() {
     authError.style.display = 'block';
   }
 
+  // «У меня лапки» — показать поле для ручного ввода токена
+  if (pawsBtn && manualAuthBlock) {
+    pawsBtn.addEventListener('click', function() {
+      const isHidden = manualAuthBlock.style.display === 'none';
+      manualAuthBlock.style.display = isHidden ? 'flex' : 'none';
+      authError.style.display = 'none';
+      if (isHidden && manualTokenInput) manualTokenInput.focus();
+    });
+  }
+
+  // Войти по вставленному токену
+  if (manualTokenSubmit && manualTokenInput) {
+    manualTokenSubmit.addEventListener('click', async function() {
+      const token = (manualTokenInput.value || '').trim();
+      authError.style.display = 'none';
+      if (!token) {
+        showAuthError('Вставьте токен.');
+        return;
+      }
+      wikiAPI.setToken(token);
+      let user = null;
+      try {
+        user = await wikiAPI.getCurrentUser();
+      } catch (e) {
+        user = { username: 'По токену', id: 0 };
+      }
+      if (user) {
+        wikiAPI.setUser(user);
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({ wikiToken: token, wikiUser: user });
+        }
+        showMainContent(user);
+      } else {
+        showAuthError('Не удалось получить данные пользователя. Токен сохранён.');
+      }
+    });
+  }
+
   // Выход
   logoutBtn.addEventListener('click', function() {
     wikiAPI.logout();
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.remove(['wikiToken', 'wikiUser']);
+      chrome.storage.local.remove(['wikiToken', 'wikiUser', 'msgtpSessionToken']);
     }
+    try {
+      localStorage.removeItem('msgtpSessionToken');
+    } catch (e) {}
     showAuthForm();
   });
 
