@@ -1,0 +1,259 @@
+[
+  {
+    "id": "export-stock",
+    "name": "Парсер остатков товаров",
+    "description": "Экспорт остатков товаров в файл",
+    "file": "scripts/export-stock.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "club_id",
+        "label": "ID клуба для экспорта остатков",
+        "type": "number",
+        "default": "",
+        "required": true,
+        "integer": true,
+        "min": 1
+      }
+    ]
+  },
+  {
+    "id": "import-stock",
+    "name": "Импорт остатков товаров",
+    "description": "Импорт остатков товаров из файла",
+    "file": "scripts/import-stock.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "csv",
+        "label": "CSV файл",
+        "type": "file",
+        "accept": ".csv",
+        "required": true
+      },
+      {
+        "id": "club_id",
+        "label": "ID клуба для инвентаризации",
+        "type": "number",
+        "default": 1,
+        "required": true,
+        "integer": true,
+        "min": 1
+      }
+    ]
+  },
+  {
+    "id": "export-image",
+    "name": "Экспорт изображений товаров",
+    "description": "Экспорт изображений справочника товаров",
+    "file": "scripts/export-image.js",
+    "hasSettings": false,
+    "fields": []
+  },
+  {
+    "id": "import-image",
+    "name": "Импорт изображений товаров",
+    "description": "Импорт изображений в справочник товаров",
+    "file": "scripts/import-image.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "csv",
+        "label": "CSV файл",
+        "type": "file",
+        "accept": ".csv",
+        "required": true
+      },
+      {
+        "id": "images",
+        "label": "Папка с изображениями",
+        "type": "directory",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "export-productlistfull",
+    "name": "Экспорт учёта товаров и услуг",
+    "description": "Экспорт полного справочника товаров и услуг",
+    "file": "scripts/export-productlistfull.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "club_id",
+        "label": "ID клуба",
+        "type": "number",
+        "default": "",
+        "required": true,
+        "integer": true,
+        "min": 1
+      }
+    ]
+  },
+  {
+    "id": "import-productlistfull",
+    "name": "Импорт учёта товаров и услуг",
+    "description": "Импорт полного справочника товаров и услуг",
+    "file": "scripts/import-productlistfull.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "csv",
+        "label": "CSV файл",
+        "type": "file",
+        "accept": ".csv",
+        "required": true
+      },
+      {
+        "id": "club_id",
+        "label": "ID клуба",
+        "type": "number",
+        "default": "",
+        "required": true,
+        "integer": true,
+        "min": 1
+      }
+    ]
+  },
+  {
+    "id": "promocode-create",
+    "name": "Создание промокодов",
+    "description": "Создание промокодов со случайным наименованием",
+    "file": "scripts/promocode-create.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "count",
+        "label": "Количество промокодов",
+        "type": "number",
+        "default": 1,
+        "required": true,
+        "integer": true,
+        "min": 1
+      },
+      {
+        "id": "code_length",
+        "label": "Количество символов в промокоде",
+        "type": "number",
+        "default": 6,
+        "required": true,
+        "integer": true,
+        "min": 1
+      },
+      {
+        "id": "amount",
+        "label": "Сумма",
+        "type": "number",
+        "default": 300,
+        "required": true,
+        "min": 0
+      },
+      {
+        "id": "date_start",
+        "label": "Дата начала",
+        "type": "datetime",
+        "default": "2026-06-22T19:15",
+        "required": true
+      },
+      {
+        "id": "date_end",
+        "label": "Дата окончания",
+        "type": "datetime",
+        "default": "2030-10-16T19:20",
+        "required": true
+      },
+      {
+        "id": "is_money",
+        "label": "Денежный промокод",
+        "type": "checkbox",
+        "default": false
+      },
+      {
+        "id": "is_multi",
+        "label": "Многоразовый",
+        "type": "checkbox",
+        "default": false
+      },
+      {
+        "id": "is_first",
+        "label": "Только для первого посещения",
+        "type": "checkbox",
+        "default": false
+      },
+      {
+        "id": "active",
+        "label": "Активен",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "id": "only_register",
+        "label": "Только после регистрации",
+        "type": "checkbox",
+        "default": false
+      },
+      {
+        "id": "available_lk",
+        "label": "Доступен в личном кабинете",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "id": "available_mp",
+        "label": "Доступен в мобильном приложении",
+        "type": "checkbox",
+        "default": true
+      },
+      {
+        "id": "activate_comment",
+        "label": "Комментарий при активации",
+        "type": "text",
+        "default": ""
+      },
+      {
+        "id": "burn_hours",
+        "label": "Сгорает через (часов)",
+        "type": "number",
+        "default": "",
+        "min": 0
+      },
+      {
+        "id": "internal_club_ids",
+        "label": "ID клубов",
+        "type": "text",
+        "default": "1",
+        "required": true
+      }
+    ]
+  },
+  {
+    "id": "export-global-menu",
+    "name": "Экспорт прав доступа",
+    "description": "Экспорт прав основного меню и дополнительных разрешений /global_menu/",
+    "file": "scripts/export-global-menu.js",
+    "hasSettings": false,
+    "fields": []
+  },
+  {
+    "id": "import-global-menu",
+    "name": "Импорт прав доступа",
+    "description": "Перенос прав из CSV с сопоставлением пунктов и ролей по названиям",
+    "file": "scripts/import-global-menu.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "csv",
+        "label": "CSV с правами доступа",
+        "type": "file",
+        "accept": ".csv",
+        "required": true
+      },
+      {
+        "id": "preview_only",
+        "label": "Только проверить и скачать план (не менять права)",
+        "type": "checkbox",
+        "default": false
+      }
+    ]
+  }
+]

@@ -391,6 +391,15 @@ document.addEventListener('DOMContentLoaded', function() {
   searchInput.addEventListener('input', performSearch);
   categorySelect.addEventListener('change', performSearch);
 
+async function initScripts() {
+
+    const manager = new ScriptManager("scriptsList");
+
+    await manager.load();
+
+}
+
+
   // ========== НАСТРОЙКИ ==========
   
   // Инициализация всех настроек
@@ -1116,4 +1125,5 @@ document.addEventListener('DOMContentLoaded', function() {
   checkAuth();
   initSettings();
   initTheme();
+  initScripts();
 });
