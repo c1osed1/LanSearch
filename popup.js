@@ -104,9 +104,14 @@ document.addEventListener('DOMContentLoaded', function() {
     loginBtn.textContent = 'Открываю...';
     const extId = chrome.runtime?.id;
     const baseUrl = 'https://msgtp.langame.ru';
-    const ssoUrl = extId
+    // Firefox использует moz-extension://; бэкенд должен редиректить на этот протокол
+    const isFirefox = (chrome.runtime?.getURL?.('') || '').startsWith('moz-extension://');
+    let ssoUrl = extId
       ? baseUrl + '/lansearch-sso?ext_id=' + encodeURIComponent(extId)
       : baseUrl + '/auth';
+    if (extId && isFirefox) {
+      ssoUrl += '&proto=moz-extension';
+    }
     chrome.tabs.create({ url: ssoUrl }, function() {
       loginBtn.disabled = false;
       loginBtn.textContent = 'Авторизоваться через msgtp';
