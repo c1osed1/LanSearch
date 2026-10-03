@@ -424,32 +424,45 @@ async function initScripts() {
   // Чат поп-ап (LanSearch chat popup widget). Включён по умолчанию.
   let chatPopupEnabled = true;
 
+  // Источник правды — chrome.storage.sync (его же читает контент-скрипт);
+  // localStorage здесь только кэш для случая, когда storage API недоступен.
+  function applyChatPopupState(enabled) {
+    chatPopupEnabled = enabled;
+    setChatPopupState(enabled);
+    try {
+      localStorage.setItem('lanSearchChatPopup', enabled.toString());
+    } catch (e) {}
+  }
+
   function initChatPopup() {
     if (!chatPopupToggle) return;
-    try {
-      const localValue = localStorage.getItem('lanSearchChatPopup');
-      if (localValue !== null) {
-        chatPopupEnabled = localValue === 'true';
-        setChatPopupState(chatPopupEnabled);
-        return;
-      }
 
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+      try {
         chrome.storage.sync.get(['lanSearchChatPopup'], function (result) {
           const raw = result ? result.lanSearchChatPopup : undefined;
-          chatPopupEnabled = raw === undefined ? true : raw === true;
-          setChatPopupState(chatPopupEnabled);
-          try {
-            localStorage.setItem('lanSearchChatPopup', chatPopupEnabled.toString());
-          } catch (e) {}
+          applyChatPopupState(raw === undefined ? true : raw === true);
         });
-      } else {
-        chatPopupEnabled = true;
-        setChatPopupState(true);
+      } catch (e) {
+        applyChatPopupState(true);
       }
-    } catch (e) {
-      chatPopupEnabled = true;
-      setChatPopupState(true);
+    } else {
+      try {
+        const localValue = localStorage.getItem('lanSearchChatPopup');
+        applyChatPopupState(localValue === null ? true : localValue === 'true');
+      } catch (e) {
+        applyChatPopupState(true);
+      }
+    }
+
+    // Значение могло измениться в другой сессии/на другом устройстве — держим тумблер актуальным.
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      try {
+        chrome.storage.onChanged.addListener(function (changes, area) {
+          if (area !== 'sync' || !changes || !changes.lanSearchChatPopup || !chatPopupToggle) return;
+          applyChatPopupState(changes.lanSearchChatPopup.newValue === true);
+        });
+      } catch (e) {}
     }
   }
 
@@ -461,10 +474,7 @@ async function initScripts() {
 
   function toggleChatPopup() {
     chatPopupEnabled = !chatPopupEnabled;
-    setChatPopupState(chatPopupEnabled);
-    try {
-      localStorage.setItem('lanSearchChatPopup', chatPopupEnabled.toString());
-    } catch (e) {}
+    applyChatPopupState(chatPopupEnabled);
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
       chrome.storage.sync.set({ lanSearchChatPopup: chatPopupEnabled });
     }

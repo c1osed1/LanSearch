@@ -73,7 +73,7 @@ class ScriptManager {
             this.running = true;
             this.cards.forEach(ui => { ui.button.disabled = true; if (ui.settingsButton) ui.settingsButton.disabled = true; });
             button.textContent = 'Выполняется…';
-            summary.textContent = 'Подготовка и выполнение. Итог также появится на странице клуба.';
+            summary.textContent = 'Подготовка и выполнение. Прогресс и кнопка «Стоп» — на странице клуба; закрытие этого окна не прерывает уже начатую операцию.';
             try {
                 // An open form is used directly, so unsaved edits are not silently ignored.
                 const ui = this.cards.get(script.id);

@@ -33,8 +33,35 @@
   if (window.top !== window.self) return;
   if (document.getElementById(ROOT_HOST_ID)) return;
 
+  var syncStorage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync)
+    ? chrome.storage.sync
+    : null;
+
+  function cacheToggle(value) {
+    try {
+      localStorage.setItem(STORAGE_TOGGLE_KEY, value ? 'true' : 'false');
+    } catch (_) {}
+  }
+
+  /**
+   * Источник правды — chrome.storage.sync: его пишет тумблер в попапе.
+   * localStorage страницы используется только как кэш/фоллбэк (когда storage API
+   * недоступен). Раньше кэш читался первым, из-за чего выключенная фича
+   * «возвращалась» на сайте, где в localStorage осталось старое значение.
+   */
   function isToggleEnabled(callback) {
     var defaultEnabled = true;
+    if (syncStorage) {
+      try {
+        syncStorage.get([STORAGE_TOGGLE_KEY], function (result) {
+          var raw = result ? result[STORAGE_TOGGLE_KEY] : undefined;
+          var enabled = raw === undefined ? defaultEnabled : raw === true;
+          cacheToggle(enabled);
+          callback(enabled);
+        });
+        return;
+      } catch (_) {}
+    }
     try {
       var local = localStorage.getItem(STORAGE_TOGGLE_KEY);
       if (local !== null) {
@@ -42,19 +69,6 @@
         return;
       }
     } catch (_) {}
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-      try {
-        chrome.storage.sync.get([STORAGE_TOGGLE_KEY], function (result) {
-          var raw = result ? result[STORAGE_TOGGLE_KEY] : undefined;
-          var enabled = raw === undefined ? defaultEnabled : raw === true;
-          try {
-            localStorage.setItem(STORAGE_TOGGLE_KEY, enabled ? 'true' : 'false');
-          } catch (_) {}
-          callback(enabled);
-        });
-        return;
-      } catch (_) {}
-    }
     callback(defaultEnabled);
   }
 
@@ -352,9 +366,7 @@
           }
           if (area !== 'sync' || !changes || !changes[STORAGE_TOGGLE_KEY]) return;
           var enabled = changes[STORAGE_TOGGLE_KEY].newValue === true;
-          try {
-            localStorage.setItem(STORAGE_TOGGLE_KEY, enabled ? 'true' : 'false');
-          } catch (_) {}
+          cacheToggle(enabled);
           if (enabled && !ui) {
             ui = createUi(hostname);
             bindEvents();
