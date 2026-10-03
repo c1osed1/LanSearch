@@ -1649,7 +1649,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
   /**
    * Главная: вставка после блока подписки (#js-subscription-container), перед партнёрами (#js-partners-page).
-   * Не используем document.querySelector('.container-fluid') — первый совпадает с header.
+   * Текущая разметка главной — основной путь, legacy-обёртка и .container-fluid оставлены
+   * как фоллбэк для старых версий личного кабинета.
    */
   function insertMainDashboardWidget(element) {
     const subscription = document.getElementById('js-subscription-container');
@@ -1684,6 +1685,14 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       }
       return true;
     }
+    // Старый ЛК: единственный якорь — .container-fluid. Первый такой элемент на странице
+    // обычно принадлежит header, поэтому берём последний (контентный).
+    const fluidBlocks = document.querySelectorAll('.container-fluid');
+    const fluid = fluidBlocks[fluidBlocks.length - 1];
+    if (fluid) {
+      fluid.appendChild(element);
+      return true;
+    }
     return false;
   }
 
@@ -1713,6 +1722,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     } else if (!insertMainDashboardWidget(createGuestSearchBlock())) {
       if (attempts < 10) {
         setTimeout(() => initGuestSearchOnMainPage(attempts + 1), 200);
+      } else {
+        console.warn('Lan-Search: не найден якорь для блока поиска гостей на главной; блок не добавлен');
       }
       return;
     }
