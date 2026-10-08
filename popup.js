@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const checkUpdateBtn = document.getElementById('checkUpdateBtn');
   const updateStatus = document.getElementById('updateStatus');
   const themeToggle = document.getElementById('themeToggle');
-  const chatPopupToggle = document.getElementById('chatPopupToggle');
   const modalBypassToggle = document.getElementById('modalBypassToggle');
   const pcStylesToggle = document.getElementById('pcStylesToggle');
   const tableOptimizationToggle = document.getElementById('tableOptimizationToggle');
@@ -409,7 +408,6 @@ async function initScripts() {
   
   // Инициализация всех настроек
   function initSettings() {
-    initChatPopup();
     initModalBypass();
     initPCStyles();
     initTableOptimization();
@@ -421,69 +419,7 @@ async function initScripts() {
     initUpdaters3000();
   }
 
-  // Чат поп-ап (LanSearch chat popup widget). Включён по умолчанию.
-  let chatPopupEnabled = true;
-
-  // Источник правды — chrome.storage.sync (его же читает контент-скрипт);
-  // localStorage здесь только кэш для случая, когда storage API недоступен.
-  function applyChatPopupState(enabled) {
-    chatPopupEnabled = enabled;
-    setChatPopupState(enabled);
-    try {
-      localStorage.setItem('lanSearchChatPopup', enabled.toString());
-    } catch (e) {}
-  }
-
-  function initChatPopup() {
-    if (!chatPopupToggle) return;
-
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-      try {
-        chrome.storage.sync.get(['lanSearchChatPopup'], function (result) {
-          const raw = result ? result.lanSearchChatPopup : undefined;
-          applyChatPopupState(raw === undefined ? true : raw === true);
-        });
-      } catch (e) {
-        applyChatPopupState(true);
-      }
-    } else {
-      try {
-        const localValue = localStorage.getItem('lanSearchChatPopup');
-        applyChatPopupState(localValue === null ? true : localValue === 'true');
-      } catch (e) {
-        applyChatPopupState(true);
-      }
-    }
-
-    // Значение могло измениться в другой сессии/на другом устройстве — держим тумблер актуальным.
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
-      try {
-        chrome.storage.onChanged.addListener(function (changes, area) {
-          if (area !== 'sync' || !changes || !changes.lanSearchChatPopup || !chatPopupToggle) return;
-          applyChatPopupState(changes.lanSearchChatPopup.newValue === true);
-        });
-      } catch (e) {}
-    }
-  }
-
-  function setChatPopupState(enabled) {
-    if (!chatPopupToggle) return;
-    chatPopupToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    chatPopupToggle.classList.toggle('enabled', enabled);
-  }
-
-  function toggleChatPopup() {
-    chatPopupEnabled = !chatPopupEnabled;
-    applyChatPopupState(chatPopupEnabled);
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-      chrome.storage.sync.set({ lanSearchChatPopup: chatPopupEnabled });
-    }
-  }
-
-  if (chatPopupToggle) {
-    chatPopupToggle.addEventListener('click', toggleChatPopup);
-  }
-
+ 
   // Обход модальных окон
   let modalBypassEnabled = false;
   

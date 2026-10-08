@@ -1,0 +1,52 @@
+/* Scoped to the scripts tab; loaded by ScriptManager. */
+#scriptsTab > .description { display: none; }
+#scriptsList.lsc-root { display: block; color: #f3f3f3; font-size: 13px; }
+#scriptsList.lsc-root [hidden] { display: none !important; }
+#scriptsList.lsc-root button, #scriptsList.lsc-root input { font: inherit; }
+#scriptsList.lsc-root button { cursor: pointer; }
+#scriptsList.lsc-root button:focus-visible, #scriptsList.lsc-root input:focus-visible { outline: 2px solid #ff6565; outline-offset: 3px; }
+#scriptsList .lsc-catalog-header { position: sticky; top: -16px; z-index: 2; background: #252422; padding: 8px 0 12px; }
+#scriptsList .lsc-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-bottom: 12px; }
+#scriptsList .lsc-title { font-size: 16px; line-height: 1.4; margin: 0; font-weight: 650; }
+#scriptsList .lsc-total { font-size: 11px; color: #aaa7a4; }
+#scriptsList .lsc-search-row { display: flex; gap: 8px; align-items: center; }
+#scriptsList .lsc-search { width: 100%; min-width: 0; padding: 11px 12px; background: #171717; border: 1px solid #454545; border-radius: 10px; color: #fff; }
+#scriptsList .lsc-search::placeholder { color: #a7a4a2; }
+#scriptsList .lsc-clear { border: 0; padding: 8px 0; background: transparent; color: #dedbd8; font-size: 11px; }
+#scriptsList .lsc-found { margin-top: 8px; font-size: 11px; color: #aaa7a4; }
+#scriptsList .lsc-group + .lsc-group { margin-top: 18px; }
+#scriptsList .lsc-category { font-size: 11px; letter-spacing: .035em; color: #aba8a5; font-weight: 500; margin: 0 0 7px 2px; }
+#scriptsList .lsc-object { display: flex; width: 100%; align-items: center; gap: 12px; text-align: left; padding: 12px 14px; margin-top: 6px; border: 1px solid #383634; border-radius: 12px; background: #191919; color: #f5f5f5; }
+#scriptsList .lsc-object:hover { border-color: #69615d; background: #202020; }
+#scriptsList .lsc-object-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+#scriptsList .lsc-object-name { font-size: 13px; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
+#scriptsList .lsc-object-actions { font-size: 11px; font-weight: 400; color: #aaa7a4; }
+#scriptsList .lsc-arrow { font-size: 23px; color: #bdb7b2; font-weight: 400; }
+#scriptsList .lsc-back { color: #bdb7b2; background: transparent; border: 0; padding: 4px 0; margin-bottom: 12px; }
+#scriptsList .lsc-back:hover { color: #fff; }
+#scriptsList .lsc-detail-title { font-size: 20px; line-height: 1.3; font-weight: 650; margin: 0 0 16px; overflow-wrap: anywhere; }
+#scriptsList .lsc-actions { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #151515; border-radius: 11px; margin-bottom: 16px; }
+#scriptsList .lsc-action { flex: 1; border: 1px solid transparent; border-radius: 8px; padding: 9px 12px; background: transparent; color: #aaa7a4; }
+#scriptsList .lsc-action[aria-pressed="true"] { background: #33302e; color: #fff; border-color: #4b4643; }
+#scriptsList .lsc-description { color: #bbb6b2; line-height: 1.55; margin: 0 0 16px; font-size: 12px; }
+#scriptsList .lsc-fields { min-width: 0; border: 0; padding: 0; margin: 0; }
+#scriptsList .lsc-legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+#scriptsList .lsc-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+#scriptsList .lsc-field label { font-size: 12px; color: #dedbd8; }
+#scriptsList .lsc-field input:not([type="checkbox"]) { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; background: #171717; border: 1px solid #45413e; border-radius: 9px; color: #f5f5f5; color-scheme: dark; }
+#scriptsList .lsc-field input[type="file"] { font-size: 11px; padding: 8px; }
+#scriptsList .lsc-field input::file-selector-button { padding: 6px 8px; margin-right: 8px; border: 1px solid #555; border-radius: 5px; background: #333; color: #fff; cursor: pointer; }
+#scriptsList .lsc-field:has(input[type="checkbox"]) { flex-direction: row; align-items: center; gap: 10px; }
+#scriptsList .lsc-field:has(input[type="checkbox"]) label { order: 1; flex: 1; }
+#scriptsList .lsc-field input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: #dc0000; }
+#scriptsList .lsc-help { font-size: 11px; color: #aaa7a4; line-height: 1.5; margin: 0 0 14px; }
+#scriptsList .lsc-save { width: 100%; padding: 10px; border-radius: 9px; border: 1px solid #4b4643; background: transparent; color: #dedbd8; margin-bottom: 10px; }
+#scriptsList .lsc-run { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #dc0000; color: #fff; font-weight: 600; }
+#scriptsList .lsc-run:hover { background: #bc0000; }
+#scriptsList.lsc-root button:disabled { cursor: not-allowed; opacity: .5; }
+#scriptsList .lsc-result { margin-top: 14px; padding: 12px; border: 1px solid #4b4643; border-radius: 10px; background: #1c1c1c; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; max-height: 230px; overflow-y: auto; }
+#scriptsList .lsc-error { border-color: #a64949; color: #ffb7b7; }
+#scriptsList .lsc-hint { margin: 0 0 16px; border-left: 2px solid #ac8070; padding: 4px 0 4px 10px; font-size: 11px; color: #d0b6a8; line-height: 1.5; }
+#scriptsList .lsc-busy { width: 100%; margin-bottom: 12px; text-align: left; border: 1px solid #695342; border-radius: 9px; padding: 10px; background: #302820; color: #efcba5; font-size: 12px; }
+#scriptsList .lsc-empty { padding: 30px 12px; text-align: center; color: #bbb6b2; }
+#scriptsList .lsc-empty strong { display: block; color: #f3f3f3; margin-bottom: 8px; }

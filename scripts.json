@@ -1,7 +1,7 @@
 [
   {
     "id": "export-stock",
-    "name": "Парсер остатков товаров",
+    "name": "Экспорт остатков товаров",
     "description": "Экспорт остатков товаров в файл",
     "file": "scripts/export-stock.js",
     "hasSettings": true,
@@ -15,7 +15,18 @@
         "integer": true,
         "min": 1
       }
-    ]
+    ],
+    "catalog": {
+      "id": "stock",
+      "name": "Остатки товаров",
+      "category": "Товары и услуги",
+      "keywords": [
+        "остаток",
+        "склад",
+        "инвентаризация"
+      ],
+      "action": "Экспорт"
+    }
   },
   {
     "id": "import-stock",
@@ -40,7 +51,18 @@
         "integer": true,
         "min": 1
       }
-    ]
+    ],
+    "catalog": {
+      "id": "stock",
+      "name": "Остатки товаров",
+      "category": "Товары и услуги",
+      "keywords": [
+        "остаток",
+        "склад",
+        "инвентаризация"
+      ],
+      "action": "Импорт"
+    }
   },
   {
     "id": "export-image",
@@ -48,7 +70,18 @@
     "description": "Экспорт изображений справочника товаров",
     "file": "scripts/export-image.js",
     "hasSettings": false,
-    "fields": []
+    "fields": [],
+    "catalog": {
+      "id": "images",
+      "name": "Изображения товаров",
+      "category": "Товары и услуги",
+      "keywords": [
+        "фото",
+        "картинки",
+        "изображение"
+      ],
+      "action": "Экспорт"
+    }
   },
   {
     "id": "import-image",
@@ -70,7 +103,18 @@
         "type": "directory",
         "required": true
       }
-    ]
+    ],
+    "catalog": {
+      "id": "images",
+      "name": "Изображения товаров",
+      "category": "Товары и услуги",
+      "keywords": [
+        "фото",
+        "картинки",
+        "изображение"
+      ],
+      "action": "Импорт"
+    }
   },
   {
     "id": "export-productlistfull",
@@ -88,7 +132,19 @@
         "integer": true,
         "min": 1
       }
-    ]
+    ],
+    "catalog": {
+      "id": "products",
+      "name": "Учёт товаров и услуг",
+      "category": "Товары и услуги",
+      "keywords": [
+        "учет",
+        "справочник",
+        "цены",
+        "услуга"
+      ],
+      "action": "Экспорт"
+    }
   },
   {
     "id": "import-productlistfull",
@@ -113,7 +169,19 @@
         "integer": true,
         "min": 1
       }
-    ]
+    ],
+    "catalog": {
+      "id": "products",
+      "name": "Учёт товаров и услуг",
+      "category": "Товары и услуги",
+      "keywords": [
+        "учет",
+        "справочник",
+        "цены",
+        "услуга"
+      ],
+      "action": "Импорт"
+    }
   },
   {
     "id": "promocode-create",
@@ -126,14 +194,14 @@
         "id": "count",
         "label": "Количество промокодов",
         "type": "number",
-        "default": 1,
+        "default": 5,
         "required": true,
         "integer": true,
         "min": 1
       },
       {
         "id": "code_length",
-        "label": "Количество символов в промокоде",
+        "label": "Длина промокода",
         "type": "number",
         "default": 6,
         "required": true,
@@ -176,7 +244,7 @@
       },
       {
         "id": "is_first",
-        "label": "Только для первого посещения",
+        "label": "Только для первого заказа",
         "type": "checkbox",
         "default": false
       },
@@ -224,7 +292,19 @@
         "default": "1",
         "required": true
       }
-    ]
+    ],
+    "catalog": {
+      "id": "promo",
+      "name": "Промокоды",
+      "category": "Администрирование",
+      "keywords": [
+        "бонусы",
+        "рубли",
+        "скидка",
+        "промокод"
+      ],
+      "action": "Создание"
+    }
   },
   {
     "id": "export-global-menu",
@@ -232,7 +312,18 @@
     "description": "Экспорт прав основного меню и дополнительных разрешений /global_menu/",
     "file": "scripts/export-global-menu.js",
     "hasSettings": false,
-    "fields": []
+    "fields": [],
+    "catalog": {
+      "id": "rights",
+      "name": "Права доступа",
+      "category": "Администрирование",
+      "keywords": [
+        "роли",
+        "разрешения",
+        "global_menu"
+      ],
+      "action": "Экспорт"
+    }
   },
   {
     "id": "import-global-menu",
@@ -254,6 +345,116 @@
         "type": "checkbox",
         "default": false
       }
-    ]
+    ],
+    "catalog": {
+      "id": "rights",
+      "name": "Права доступа",
+      "category": "Администрирование",
+      "keywords": [
+        "роли",
+        "разрешения",
+        "global_menu"
+      ],
+      "action": "Импорт"
+    }
+  },
+  {
+    "id": "export-game-accounts",
+    "name": "Экспорт справочника игровых аккаунтов",
+    "description": "Экспорт /acc_steam/: логины, почты, пароли, типы и флаги доступности",
+    "file": "scripts/export-game-accounts.js",
+    "hasSettings": false,
+    "fields": [],
+    "catalog": {
+      "id": "accounts",
+      "name": "Игровые аккаунты",
+      "category": "Игры и аккаунты",
+      "keywords": [
+        "steam",
+        "логин",
+        "пароль",
+        "справочник",
+        "acc_steam"
+      ],
+      "action": "Экспорт"
+    }
+  },
+  {
+    "id": "import-game-accounts",
+    "name": "Импорт игровых аккаунтов",
+    "description": "Создание новых игровых аккаунтов из CSV с сохранением доступности и состояния «Отключён»",
+    "file": "scripts/import-game-accounts.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "csv",
+        "label": "CSV игровых аккаунтов",
+        "type": "file",
+        "accept": ".csv",
+        "required": true
+      }
+    ],
+    "catalog": {
+      "id": "accounts",
+      "name": "Игровые аккаунты",
+      "category": "Игры и аккаунты",
+      "keywords": [
+        "steam",
+        "логин",
+        "пароль",
+        "справочник",
+        "acc_steam"
+      ],
+      "action": "Импорт"
+    }
+  },
+  {
+    "id": "export-game-launch",
+    "name": "Экспорт настроек запуска игр",
+    "description": "Полная выгрузка /games_accounts_config/ с играми и порядком аккаунтов авторизации",
+    "file": "scripts/export-game-launch.js",
+    "hasSettings": false,
+    "fields": [],
+    "catalog": {
+      "id": "launch",
+      "name": "Настройка запуска игр",
+      "category": "Игры и аккаунты",
+      "keywords": [
+        "steam",
+        "лаунчер",
+        "авторизация",
+        "games_accounts_config"
+      ],
+      "action": "Экспорт"
+    }
+  },
+  {
+    "id": "import-game-launch",
+    "name": "Импорт настроек запуска игр",
+    "description": "Создание настроек из CSV с сопоставлением игр и аккаунтов на целевом сайте",
+    "file": "scripts/import-game-launch.js",
+    "hasSettings": true,
+    "fields": [
+      {
+        "id": "csv",
+        "label": "CSV настроек запуска игр",
+        "type": "file",
+        "accept": ".csv",
+        "required": true
+      }
+    ],
+    "catalog": {
+      "id": "launch",
+      "name": "Настройка запуска игр",
+      "category": "Игры и аккаунты",
+      "keywords": [
+        "steam",
+        "лаунчер",
+        "авторизация",
+        "games_accounts_config"
+      ],
+      "action": "Импорт",
+      "hint": "Создаёт новые записи, включая дубликаты. Повторный импорт создаст записи ещё раз."
+    }
   }
 ]
