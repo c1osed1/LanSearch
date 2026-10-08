@@ -646,6 +646,57 @@
     #scriptsList .favorite-btn:disabled:hover {
       background: var(--surface-container);
     }
+    /* Каталог объектов: раскладка поверх общих стилей popup. */
+    #scriptsTab > .description { display: none; }
+    #scriptsList.lsc-root { display: block; }
+    #scriptsList.lsc-root [hidden] { display: none !important; }
+    #scriptsList button, #scriptsList input { font-family: inherit; }
+    #scriptsList button:focus-visible, #scriptsList input:focus-visible {
+      outline: 2px solid var(--primary); outline-offset: 2px;
+    }
+    #scriptsList .lsc-catalog-header {
+      position: sticky; top: -16px; z-index: 2;
+      padding: 12px; margin: 0 0 12px;
+      background: var(--surface); border-radius: var(--radius-md);
+    }
+    #scriptsList .lsc-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-bottom: 12px; }
+    #scriptsList .lsc-title { margin: 0; font-size: 16px; }
+    #scriptsList .lsc-search-row { display: flex; gap: 8px; align-items: center; }
+    #scriptsList .lsc-search { width: 100%; min-width: 0; flex: 1; }
+    #scriptsList .lsc-clear { flex: 0 0 auto; min-width: 0; padding: 8px; }
+    #scriptsList .lsc-found { margin: 8px 0 0; }
+    #scriptsList .lsc-group + .lsc-group { margin-top: 18px; }
+    #scriptsList .lsc-category { font-weight: 500; margin: 0 0 7px 2px; }
+    #scriptsList .lsc-object {
+      flex-direction: row; width: 100%; align-items: center;
+      text-align: left; padding: 12px 14px; margin-top: 6px; cursor: pointer;
+    }
+    #scriptsList .lsc-object:hover { border-color: var(--outline); box-shadow: var(--shadow-1); }
+    #scriptsList .lsc-object-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
+    #scriptsList .lsc-arrow { font-size: 23px; }
+    #scriptsList .lsc-back { margin-bottom: 12px; }
+    #scriptsList .lsc-detail-title { font-size: 18px; margin: 0 0 16px; }
+    #scriptsList .lsc-actions { flex-wrap: wrap; margin-bottom: 16px; }
+    #scriptsList .lsc-action[aria-pressed="true"] {
+      background: var(--surface-container); border-color: var(--primary);
+    }
+    #scriptsList .lsc-description { margin: 0 0 14px; }
+    #scriptsList .lsc-fields { min-width: 0; margin: 0; }
+    #scriptsList .lsc-legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    #scriptsList .lsc-fields .script-field input { min-width: 0; }
+    #scriptsList .lsc-fields input[type="file"] { width: 100%; font-size: 12px; color: var(--on-surface); }
+    #scriptsList .lsc-fields input::file-selector-button {
+      padding: 6px 8px; margin-right: 8px; cursor: pointer;
+      background: var(--surface); color: var(--on-surface);
+      border: 1px solid var(--outline); border-radius: var(--radius-sm);
+    }
+    #scriptsList .lsc-help { margin: 12px 0 0; }
+    #scriptsList .lsc-run { width: 100%; margin-top: 12px; }
+    #scriptsList .lsc-result { margin-top: 14px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 230px; overflow-y: auto; }
+    #scriptsList .lsc-error { border-color: var(--primary); }
+    #scriptsList .lsc-hint { margin: 0 0 14px; }
+    #scriptsList .lsc-busy { width: 100%; margin-bottom: 12px; text-align: left; justify-content: flex-start; }
+    /* Конец раскладки каталога объектов. */
   </style>
 </head>
 <body>
@@ -746,16 +797,6 @@
         Не только добавляет поиск на доменах LanGame, но и создаёт набор удобных настроек для работы!
       </p>
       <span class="description">Не просто LanSearch, а LanPlus</span>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Чат поп-ап</span>
-          <div class="update-buttons">
-            <button id="chatPopupToggle" class="update-btn">Включен</button>
-          </div>
-        </div>
-        <div class="update-status">Показывает кнопку чата клуба внизу справа на странице домена (использует сессию msgtp)</div>
-      </div>
 
       <div class="update-section">
         <div class="update-header">

@@ -80,6 +80,12 @@ class ScriptRunner {
             if (['export-global-menu', 'import-global-menu'].includes(script.id)) {
                 await inject({ files: ['scripts/global-menu-common.js'] });
             }
+            if (['export-game-accounts', 'import-game-accounts'].includes(script.id)) {
+                await inject({ files: ['scripts/game-accounts-common.js'] });
+            }
+            if (['export-game-launch', 'import-game-launch'].includes(script.id)) {
+                await inject({ files: ['scripts/game-launch-common.js'] });
+            }
             // The last expression of each script is a Promise. Chrome waits for completion.
             const results = await inject({ files: [script.file] });
             const result = results.find(item => item.frameId === 0)?.result;
