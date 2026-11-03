@@ -5585,6 +5585,50 @@
       form.classList.remove('pc-manual-unlock');
     }
   }
+
+  // То же поведение меню, что у сетки Нового UI / style_pc
+  function wirePcCardDropdown(dropdown, { restyleToggle = false } = {}) {
+    if (!dropdown) return;
+
+    dropdown.classList.add('lan-search-dropdown');
+
+    const dropdownToggle = dropdown.querySelector('.btn-pc, #dropdownMenuButton, [data-toggle="dropdown"]');
+    if (!dropdownToggle) return;
+
+    dropdownToggle.classList.add('lan-search-dropdown-toggle');
+    if (restyleToggle) {
+      dropdownToggle.classList.remove('btn', 'btn-info', 'btn-sm', 'float-left');
+    }
+
+    if (dropdownToggle.dataset.lgsDropWired === '1') return;
+    dropdownToggle.dataset.lgsDropWired = '1';
+
+    dropdownToggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const menu = dropdown.querySelector('.dropdown-menu');
+      if (!menu) return;
+
+      document.querySelectorAll('.lan-search-dropdown .dropdown-menu.show').forEach((otherMenu) => {
+        if (otherMenu === menu) return;
+        otherMenu.classList.remove('show');
+        otherMenu.style.removeProperty('display');
+        otherMenu.style.removeProperty('transform');
+        const otherDropdown = otherMenu.closest('.lan-search-dropdown');
+        if (otherDropdown) otherDropdown.classList.remove('menu-open');
+      });
+
+      const willOpen = !menu.classList.contains('show');
+      menu.classList.toggle('show', willOpen);
+      menu.style.removeProperty('display');
+      menu.style.removeProperty('transform');
+      menu.style.removeProperty('top');
+      menu.style.removeProperty('left');
+      menu.style.removeProperty('will-change');
+      dropdown.classList.toggle('menu-open', willOpen);
+    });
+  }
   
   function applyPCStyles() {
 
@@ -5698,47 +5742,7 @@
        
        const dropdown = form.querySelector('.pc-dropdow');
        if (dropdown) {
-         dropdown.classList.add('lan-search-dropdown');
-         
-         const dropdownToggle = dropdown.querySelector('.btn-pc');
-         if (dropdownToggle) {
-           dropdownToggle.classList.add('lan-search-dropdown-toggle');
-           
-           dropdownToggle.classList.remove('btn', 'btn-info', 'btn-sm', 'float-left');
-         }
-         
-         
-         dropdownToggle.addEventListener('click', function(e) {
-           e.preventDefault();
-           e.stopPropagation();
-           
-           const menu = dropdown.querySelector('.dropdown-menu');
-           if (menu) {
-             
-
-            document.querySelectorAll('.lan-search-dropdown .dropdown-menu.show').forEach(otherMenu => {
-              if (otherMenu !== menu) {
-                otherMenu.classList.remove('show');
-                
-                const otherDropdown = otherMenu.closest('.lan-search-dropdown');
-                if (otherDropdown) {
-                  otherDropdown.classList.remove('menu-open');
-                }
-              }
-            });
-             
-             
-             const isOpen = menu.classList.contains('show');
-             menu.classList.toggle('show');
-             
-             
-             if (menu.classList.contains('show')) {
-               dropdown.classList.add('menu-open');
-             } else {
-               dropdown.classList.remove('menu-open');
-             }
-           }
-         });
+         wirePcCardDropdown(dropdown, { restyleToggle: true });
        }
       
       
@@ -5997,17 +6001,15 @@
      
      
      document.addEventListener('click', function(e) {
-       if (!e.target.closest('.lan-search-dropdown')) {
+       if (e.target.closest('.lan-search-dropdown')) return;
 
-        document.querySelectorAll('.lan-search-dropdown .dropdown-menu.show').forEach(menu => {
-          menu.classList.remove('show');
-          
-          const dropdown = menu.closest('.lan-search-dropdown');
-          if (dropdown) {
-            dropdown.classList.remove('menu-open');
-          }
-        });
-       }
+       document.querySelectorAll('.lan-search-dropdown .dropdown-menu.show').forEach((menu) => {
+         menu.classList.remove('show');
+         menu.style.removeProperty('display');
+         menu.style.removeProperty('transform');
+         const dropdown = menu.closest('.lan-search-dropdown');
+         if (dropdown) dropdown.classList.remove('menu-open');
+       });
      });
      
      
@@ -6389,6 +6391,11 @@
   function enhancePcCardChrome() {
     if (!isAllClubsPcPage()) return;
     if (!document.documentElement.classList.contains('lgs-new-ui')) return;
+
+    // меню ПК — как в сетке Нового UI (свой toggle, без bootstrap clip)
+    document.querySelectorAll('#layoutStatusPC form.pc .pc-dropdow, #layoutStatusPC form.pc .dropdow').forEach((dropdown) => {
+      wirePcCardDropdown(dropdown, { restyleToggle: false });
+    });
 
     // сетка ПК — раскладка в .lgs-pc-actions, пары разбираем
     if (document.documentElement.classList.contains('lgs-new-ui-pc')) {
