@@ -1,5 +1,13 @@
 (function() {
-  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
+  {
+    const h = (window.location.hostname || '').toLowerCase();
+    if (
+      h === 'msgtp.langame.ru'
+      || h === 'msgpublic.langame.ru'
+      || h.endsWith('.msgtp.langame.ru')
+      || h.endsWith('.msgpublic.langame.ru')
+    ) return;
+  }
 
   let searchWidget;
 
@@ -52,75 +60,88 @@
 
 
   createSearchWidget() {
-
-    const navbar = document.querySelector('#mainNav');
-    if (!navbar) {
-      console.log('SearchWidget: Навигация не найдена');
-      return;
-    }
-
-
-    const navbarResponsive = navbar.querySelector('#navbarResponsive');
-    if (!navbarResponsive) {
-      console.log('SearchWidget: Контейнер navbarResponsive не найден');
-      return;
-    }
-
+    if (document.querySelector('.search-widget-container[data-lgs-search-widget]')) return;
 
     const searchItem = document.createElement('div');
     searchItem.className = 'search-widget-container';
-    searchItem.style.cssText = `
-      position: absolute;
-      top: 50%;
-      left: 20px;
-      transform: translateY(-50%);
-      z-index: 10;
-      display: inline-block;
-    `;
-
+    searchItem.setAttribute('data-lgs-search-widget', '');
 
     this.searchInput = document.createElement('input');
     this.searchInput.type = 'text';
-    this.searchInput.placeholder = 'Поиск... (beta)';
+    this.searchInput.placeholder = 'Поиск по справке…';
     this.searchInput.className = 'search-input';
-    this.searchInput.style.cssText = `
-      width:450px;
-      padding: 6px 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background: #fff;
-      color: #333;
-      font-size: 14px;
-      outline: none;
-    `;
-
+    this.searchInput.setAttribute('autocomplete', 'off');
+    this.searchInput.setAttribute('spellcheck', 'false');
 
     this.resultsContainer = document.createElement('div');
     this.resultsContainer.className = 'search-results';
-    this.resultsContainer.style.cssText = `
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 450px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-top: none;
-      border-radius: 0 0 4px 4px;
-      max-height: 300px;
-      overflow-y: auto;
-      z-index: 1000;
-      display: none;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    `;
-
+    this.resultsContainer.hidden = true;
 
     searchItem.appendChild(this.searchInput);
     searchItem.appendChild(this.resultsContainer);
-    
 
-    navbarResponsive.appendChild(searchItem);
-
+    const mount = this.resolveSearchMount();
+    if (!mount) {
+      console.log('SearchWidget: контейнер шапки не найден');
+      return;
+    }
+    mount.appendChild(searchItem);
     console.log('SearchWidget: Поисковый виджет создан');
+  }
+
+  resolveSearchMount() {
+    // новый фронт: #js-header
+    const header = document.querySelector('#js-header') || document.querySelector('.layout__header .header');
+    if (header) {
+      const row = header.querySelector('.row.gx-1, .row.align-items-center, .container-fluid > .row');
+      const controlsCol = header.querySelector('.js-header-controls');
+      if (row && controlsCol) {
+        const titleCol = header.querySelector('.header__title')?.closest('.col, [class*="col"]');
+        // отдельная колонка ломала ряд (перенос) — сажаем поиск в левый title-col
+        const orphan = header.querySelector('.lgs-header-search-col');
+        if (orphan && titleCol && orphan !== titleCol) {
+          const widget = orphan.querySelector('.search-widget-container, [data-lgs-search-widget]');
+          if (widget) titleCol.appendChild(widget);
+          orphan.remove();
+        }
+        if (titleCol) {
+          titleCol.classList.add('lgs-header-search-col', 'd-flex', 'align-items-center');
+          return titleCol;
+        }
+        let mountCol = header.querySelector('.lgs-header-search-col');
+        if (!mountCol) {
+          mountCol = document.createElement('div');
+          mountCol.className = 'col-auto lgs-header-search-col d-flex align-items-center';
+          row.insertBefore(mountCol, controlsCol);
+        }
+        return mountCol;
+      }
+      const titleCol = header.querySelector('.header__title')?.closest('.col, [class*="col"]');
+      if (titleCol) return titleCol;
+      return header.querySelector('.container-fluid') || header;
+    }
+
+    // старый фронт: #mainNav (/all_clubs_pc/ и др.)
+    const navbar = document.querySelector('#mainNav');
+    if (navbar) {
+      const resp = navbar.querySelector('#navbarResponsive') || navbar;
+      let mount = resp.querySelector('.lgs-mainnav-search');
+      if (!mount) {
+        mount = document.createElement('div');
+        mount.className = 'lgs-mainnav-search lgs-header-search-col';
+        const existing = resp.querySelector('.search-widget-container, [data-lgs-search-widget]');
+        if (existing && existing.parentElement === resp) {
+          resp.insertBefore(mount, existing);
+          mount.appendChild(existing);
+        } else {
+          const controls = resp.querySelector('.header-controls');
+          if (controls) resp.insertBefore(mount, controls);
+          else resp.appendChild(mount);
+        }
+      }
+      return mount;
+    }
+    return null;
   }
 
 
@@ -236,55 +257,32 @@
       const noResults = document.createElement('div');
       noResults.className = 'search-no-results';
       noResults.textContent = 'Ничего не найдено';
-      noResults.style.cssText = `
-        padding: 10px;
-        color: #666;
-        text-align: center;
-        font-style: italic;
-      `;
       this.resultsContainer.appendChild(noResults);
       return;
     }
 
-
     const limitedResults = results.slice(0, 10);
 
-    limitedResults.forEach((result, index) => {
-      const resultItem = document.createElement('div');
+    limitedResults.forEach((result) => {
+      const resultItem = document.createElement('button');
+      resultItem.type = 'button';
       resultItem.className = 'search-result-item';
-      resultItem.style.cssText = `
-        padding: 8px 12px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      `;
-
+      if (result.isCurrentPage) resultItem.classList.add('is-current');
 
       const highlightedText = this.highlightMatch(result.text, this.searchInput.value);
-      
+
       resultItem.innerHTML = `
-        <div style="font-weight: 500; color: #333; margin-bottom: 2px;">
-          ${highlightedText}
-        </div>
-        <div style="font-size: 12px; color: #666;">
-          ${result.isCurrentPage ? '🟢 ' : '🔵 '}${result.pageName} • ${result.tag}
-        </div>
+        <span class="search-result-title">${highlightedText}</span>
+        <span class="search-result-meta">
+          <span class="search-result-dot ${result.isCurrentPage ? 'is-here' : ''}"></span>
+          ${result.pageName} · ${result.tag}
+        </span>
       `;
 
-
-        resultItem.addEventListener('click', () => {
-          this.navigateToPage(result.pageUrl, result.text);
-          this.hideResults();
-          this.searchInput.value = '';
-        });
-
-
-      resultItem.addEventListener('mouseenter', () => {
-        resultItem.style.backgroundColor = '#f5f5f5';
-      });
-
-      resultItem.addEventListener('mouseleave', () => {
-        resultItem.style.backgroundColor = 'transparent';
+      resultItem.addEventListener('click', () => {
+        this.navigateToPage(result.pageUrl, result.text);
+        this.hideResults();
+        this.searchInput.value = '';
       });
 
       this.resultsContainer.appendChild(resultItem);
@@ -294,9 +292,9 @@
 
   highlightMatch(text, query) {
     if (!query) return text;
-    
-    const regex = new RegExp(`(${query})`, 'gi');
-    return text.replace(regex, '<mark style="background: #ffeb3b; padding: 1px 2px; border-radius: 2px;">$1</mark>');
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return text.replace(regex, '<mark class="search-result-mark">$1</mark>');
   }
 
 
@@ -316,7 +314,8 @@
 
   showResults() {
     if (this.resultsContainer) {
-      this.resultsContainer.style.display = 'block';
+      this.resultsContainer.hidden = false;
+      this.resultsContainer.classList.add('is-open');
       this.isVisible = true;
     }
   }
@@ -324,7 +323,8 @@
 
   hideResults() {
     if (this.resultsContainer) {
-      this.resultsContainer.style.display = 'none';
+      this.resultsContainer.hidden = true;
+      this.resultsContainer.classList.remove('is-open');
       this.isVisible = false;
     }
   }

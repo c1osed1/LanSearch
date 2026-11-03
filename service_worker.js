@@ -1,6 +1,19 @@
+function isLanSearchExcludedUrl(url) {
+  try {
+    const h = new URL(url || '').hostname.toLowerCase();
+    return h === 'msgtp.langame.ru'
+      || h === 'msgpublic.langame.ru'
+      || h.endsWith('.msgtp.langame.ru')
+      || h.endsWith('.msgpublic.langame.ru');
+  } catch (_) {
+    return false;
+  }
+}
+
 // Обработчик клика по иконке расширения
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;
+  if (isLanSearchExcludedUrl(tab.url)) return;
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
@@ -124,6 +137,27 @@ chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) =
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Убираем попытку изменения заголовка вкладки, так как это не поддерживается в Chrome Extensions API
   // Заголовок вкладки изменяется только в content script через document.title
+});
+
+// После установки — тёмная тема + Новый UI + скрытие шума на ПК по умолчанию
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason !== 'install') return;
+
+  chrome.storage.sync.get([
+    'theme', 'newUi', 'newUiAllClubsPc',
+    'hideCheckboxes', 'hideComments', 'hideRemoteDownload'
+  ], (result) => {
+    const defaults = {};
+    if (result.theme === undefined) defaults.theme = 'dark';
+    if (result.newUi === undefined) defaults.newUi = true;
+    if (result.newUiAllClubsPc === undefined) defaults.newUiAllClubsPc = true;
+    if (result.hideCheckboxes === undefined) defaults.hideCheckboxes = true;
+    if (result.hideComments === undefined) defaults.hideComments = true;
+    if (result.hideRemoteDownload === undefined) defaults.hideRemoteDownload = true;
+    if (Object.keys(defaults).length) {
+      chrome.storage.sync.set(defaults);
+    }
+  });
 });
 
 // Проверяем обновления при запуске расширения 

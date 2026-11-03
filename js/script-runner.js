@@ -39,6 +39,18 @@ class ScriptRunner {
         if (!tab?.id || !/^https?:\/\//i.test(tab.url || '')) {
             throw new Error('Откройте страницу клуба (http/https) и повторите запуск');
         }
+        {
+            let host = '';
+            try { host = new URL(tab.url).hostname.toLowerCase(); } catch (_) {}
+            if (
+                host === 'msgtp.langame.ru'
+                || host === 'msgpublic.langame.ru'
+                || host.endsWith('.msgtp.langame.ru')
+                || host.endsWith('.msgpublic.langame.ru')
+            ) {
+                throw new Error('На msgtp/msgpublic расширение не работает');
+            }
+        }
         let target = { tabId: tab.id, frameIds: [0] };
         const inject = data => chrome.scripting.executeScript({ target, world: 'ISOLATED', ...data });
         const id = crypto.randomUUID();

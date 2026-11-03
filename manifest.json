@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Lan-Search",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Добавляет поиск по глобальному меню @qsoulmain",
   "author": "GlobalSearch Team",
   "homepage_url": "https://github.com/c1osed1/LanSearch",
   "permissions": ["scripting", "activeTab", "storage", "notifications", "tabs"],
-  "host_permissions": ["<all_urls>", "https://api.github.com/*", "https://msgtp.langame.ru/*", "https://lantp.ru/*"],
+  "host_permissions": ["<all_urls>", "https://api.github.com/*", "https://msgtp.langame.ru/*", "https://otdel404.langame.ru/*"],
   "externally_connectable": { "matches": ["https://msgtp.langame.ru/*"] },
   "action": {
     "default_title": "Добавить поиск по меню",
@@ -39,7 +39,7 @@
         "*://*.langame-pr.ru/*",
         "*://*.cls.expert/*",
         "*://*..ru/*",
-        "*://*.langamepro.ru/*",  
+        "*://*.langamepro.ru/*",
         "*://*.langamesoftware.ru/*",
         "*://*.langame.global/*",
         "*://*.langame-soft.ru/*",
@@ -51,7 +51,46 @@
       ],
       "exclude_matches": [
         "*://msgtp.langame.ru/*",
-        "*://msgpublic.langame.ru/*"
+        "*://*.msgtp.langame.ru/*",
+        "*://msgpublic.langame.ru/*",
+        "*://*.msgpublic.langame.ru/*"
+      ],
+      "js": ["new-ui-boot.js"],
+      "css": ["new-ui.css"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "*://*.langame.com/*",
+        "*://*.langame.ru/*",
+        "*://*.langame.net/*",
+        "*://*.langame.org/*",
+        "*://*.cls.com/*",
+        "*://*.cls.ru/*",
+        "*://*.cls.net/*",
+        "*://*.cls.org/*",
+        "*://*.langamesoft.ru/*",
+        "*://*.langamesoftware.ru/*",
+        "*://*.langamecloud.ru/*",
+        "*://*.langamesftw.ru/*",
+        "*://*.langame-pr.ru/*",
+        "*://*.cls.expert/*",
+        "*://*..ru/*",
+        "*://*.langamepro.ru/*",
+        "*://*.langamesoftware.ru/*",
+        "*://*.langame.global/*",
+        "*://*.langame-soft.ru/*",
+        "*://*.langame-server.ru/*",
+        "*://*.langame-pr.ru/*",
+        "*://*.langamecloud.ru/*",
+        "*://*.langamesftw.ru/*",
+        "*://*.f5center.com/*"
+      ],
+      "exclude_matches": [
+        "*://msgtp.langame.ru/*",
+        "*://*.msgtp.langame.ru/*",
+        "*://msgpublic.langame.ru/*",
+        "*://*.msgpublic.langame.ru/*"
       ],
       "js": ["recent-tabs.js", "search-widget.js", "content.js", "tariff.js", "gettarrifs.js"],
       "run_at": "document_end"
@@ -59,7 +98,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "theme.css", "style_pc.css", "Search.json", "callback.html"],
+      "resources": ["icons/*", "theme.css", "new-ui.css", "style_pc.css", "Search.json", "callback.html"],
       "matches": [
         "*://*.langame.com/*",
         "*://*.langame.ru/*",
@@ -85,7 +124,12 @@
         "*://*.langamesftw.ru/*",
         "*://*.f5center.com/*"
       ],
-      "exclude_matches":["*://msgpublic.langame.ru/*", "*://msgtp.langame.ru/*"]
+      "exclude_matches": [
+        "*://msgtp.langame.ru/*",
+        "*://*.msgtp.langame.ru/*",
+        "*://msgpublic.langame.ru/*",
+        "*://*.msgpublic.langame.ru/*"
+      ]
     }
   ]
 } 

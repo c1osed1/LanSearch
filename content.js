@@ -1,11 +1,12 @@
 
-let domainInfoCache = null;
-let domainInfoCacheTime = 0;
-const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
-
 (function () {
   const hostname = window.location.hostname.toLowerCase();
-  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(hostname)) return;
+  if (
+    hostname === 'msgtp.langame.ru'
+    || hostname === 'msgpublic.langame.ru'
+    || hostname.endsWith('.msgtp.langame.ru')
+    || hostname.endsWith('.msgpublic.langame.ru')
+  ) return;
   const MENU_ID = ["nav-accordion-parent", "globalMenuAccordion"];
   const SEARCH_ID = "globalMenuSearchInput";
   const STYLE_ID = "globalMenuSearchStyles";
@@ -26,11 +27,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
 
-  const EXCLUDED_HOSTS = ['msgtp.langame.ru', 'msgpublic.langame.ru'];
+  function isExcludedHost(hostname) {
+    const h = (hostname || '').toLowerCase();
+    return h === 'msgtp.langame.ru'
+      || h === 'msgpublic.langame.ru'
+      || h.endsWith('.msgtp.langame.ru')
+      || h.endsWith('.msgpublic.langame.ru');
+  }
 
   function isSuitableDomain() {
     const hostname = window.location.hostname.toLowerCase();
-    if (EXCLUDED_HOSTS.includes(hostname)) return false;
+    if (isExcludedHost(hostname)) return false;
     return hostname.includes('langame') || hostname.includes('cls') || hostname.includes('f5center');
   }
 
@@ -57,122 +64,204 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       themeLink.rel = "stylesheet";
       themeLink.href = chrome.runtime.getURL("theme.css");
       document.head.appendChild(themeLink);
-      
 
       try {
-        const savedTheme = localStorage.getItem('lanSearchTheme') || 'light';
+        const savedTheme = localStorage.getItem('lanSearchTheme') || 'dark';
         document.documentElement.setAttribute('data-theme', savedTheme);
       } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.setAttribute('data-theme', 'dark');
       }
+
+      // класс нового UI ставит new-ui-boot.js на document_start; CSS — через manifest
+      try {
+        if (localStorage.getItem('lanSearchNewUi') === 'true') {
+          document.documentElement.classList.add('lgs-new-ui');
+        }
+        if ((location.pathname || '').includes('/all_clubs_pc/') &&
+            localStorage.getItem('lanSearchNewUiAllClubsPc') === 'true') {
+          document.documentElement.classList.add('lgs-new-ui-pc');
+        }
+      } catch (_) {}
     }
     
     const style = document.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `
-      .gms-container { 
-        position: sticky; top: 0; z-index: 100; padding: 8px; 
-        background: rgba(255,255,255,0.03); backdrop-filter: blur(6px);
-        border-bottom: 1px solid rgba(0,0,0,0.08);
-        margin-bottom: 8px;
+      .gms-container {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 12px 16px 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(8px);
+        padding-top:0px;
       }
-      .gms-input { 
-        width: 100%; padding: 8px 12px; border-radius: 10px; 
-        border: 1px solid rgba(0,0,0,0.2); outline: none;
-        font-size: 14px; line-height: 20px;
-        background: rgba(255,255,255,0.9);
-        color: #333;
-        padding-left: 32px; /* room for icon */
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'></circle><line x1='21' y1='21' x2='16.65' y2='16.65'></line></svg>");
-        background-repeat: no-repeat; background-position: 10px center; background-size: 16px;
-      }
-      .gms-input:focus { border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,0.2); }
-      .gms-no-results { padding: 8px 12px; color: #888; font-size: 13px; }
-      .gms-hidden { display: none !important; }
-      
-      /* Темная тема */
-      [data-theme="dark"] .gms-container {
-        background: rgba(45,45,45,0.95); backdrop-filter: blur(6px);
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-      }
-      [data-theme="dark"] .gms-input {
-        background: rgba(45,45,45,0.9);
-        border: 1px solid rgba(255,255,255,0.2);
-        color: #ffffff;
-      }
-      [data-theme="dark"] .gms-input:focus {
-        border-color: #4c8bf5;
-        box-shadow: 0 0 0 3px rgba(76,139,245,0.3);
-      }
-      [data-theme="dark"] .gms-input::placeholder {
-        color: rgba(255,255,255,0.6);
-      }
-      [data-theme="dark"] .gms-no-results {
-        color: rgba(255,255,255,0.6);
-      }
-      
-      /* Стили для блока информации по домену */
-      #domainInfoContainer {
-        --domain-info-bg: #f8f9fa;
-        --domain-info-border: #e9ecef;
-        --domain-info-color: #333333;
-        --domain-info-title-color: #495057;
-        --domain-info-block-bg: white;
-        --domain-info-block-border: #dee2e6;
-        --domain-info-label-color: #495057;
-        --domain-info-value-color: #212529;
-      }
-      
-      [data-theme="dark"] #domainInfoContainer {
-        --domain-info-bg: #3a3a3a;
-        --domain-info-border: #444444;
-        --domain-info-color: #ffffff;
-        --domain-info-title-color: #ffffff;
-        --domain-info-block-bg: #2d2d2d;
-        --domain-info-block-border: #444444;
-        --domain-info-label-color: #ffffff;
-        --domain-info-value-color: #ffffff;
-      }
-      
-      /* Стили для кнопки обновления команды */
-      #domainInfoContainer button {
-        background: transparent;
-        color: #28a745;
-        border: 1px solid #28a745;
-        border-radius: 4px;
-        padding: 4px 12px;
-        font-size: 11px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
+      .gms-field {
+        position: relative;
         display: flex;
         align-items: center;
+      }
+      .gms-field-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+        opacity: 0.55;
+        color: rgba(255,253,253,0.85);
+      }
+      .gms-field-icon svg {
+        display: block;
+        width: 14px;
+        height: 14px;
+      }
+      .gms-input {
+        width: 100%;
+        height: 36px;
+        padding: 8px 58px 8px 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.12);
+        outline: none !important;
+        box-shadow: none !important;
+        font-size: 12px;
+        line-height: 18px;
+        background: rgba(255,255,255,0.06);
+        color: #fffdfd;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+      .gms-input::placeholder {
+        color: rgba(255,253,253,0.45);
+      }
+      .gms-input::-webkit-search-decoration,
+      .gms-input::-webkit-search-cancel-button,
+      .gms-input::-webkit-search-results-button,
+      .gms-input::-webkit-search-results-decoration {
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .gms-input:hover {
+        border-color: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.08);
+      }
+      .gms-input:focus {
+        border-color: rgba(255,255,255,0.28);
+        background: rgba(255,255,255,0.09);
+        box-shadow: none !important;
+        outline: none !important;
+      }
+      .gms-field-actions {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .gms-kbd {
+        display: inline-flex;
+        align-items: center;
         justify-content: center;
-        min-width: 140px;
-        height: 28px;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 5px;
+        border-radius: 4px;
+        border: 1px solid rgba(255,255,255,0.14);
+        background: rgba(0,0,0,0.25);
+        color: rgba(255,253,253,0.55);
+        font-size: 10px;
+        font-weight: 600;
+        line-height: 1;
+        pointer-events: none;
       }
-      
-      #domainInfoContainer button:hover:not(:disabled) {
-        background: rgba(40, 167, 69, 0.1);
-        border-color: #218838;
-        color: #218838;
+      .gms-clear {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border: none;
+        border-radius: 6px;
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,253,253,0.75);
+        cursor: pointer;
       }
-      
-      #domainInfoContainer button:active:not(:disabled) {
-        background: rgba(40, 167, 69, 0.2);
+      .gms-clear:hover {
+        background: rgba(255,255,255,0.14);
+        color: #fff;
       }
-      
-      #domainInfoContainer button:disabled {
-        background: transparent;
-        color: #6c757d;
-        border-color: #6c757d;
-        cursor: not-allowed;
+      .gms-container.is-filled .gms-clear { display: inline-flex; }
+      .gms-container.is-filled .gms-kbd,
+      .gms-container.is-focused .gms-kbd { display: none; }
+      .gms-meta {
+        display: none;
+        margin-top: 8px;
+        font-size: 11px;
+        color: rgba(255,253,253,0.45);
       }
-      
-      /* Анимации */
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
+      .gms-container.is-active .gms-meta { display: block; }
+      .gms-no-results {
+        padding: 14px 16px;
+        color: rgba(255,253,253,0.5);
+        font-size: 12px;
+      }
+      .gms-hidden { display: none !important; }
+      .gms-highlight {
+        color: #fff;
+        background: rgba(220, 53, 69, 0.35);
+        border-radius: 3px;
+        padding: 0 2px;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+      }
+
+      /* Светлый сайдбар / старые кабинеты */
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-container,
+      .sidebar:not(.bg-dark) .gms-container,
+      #accordionSidebar .gms-container {
+        background: rgba(248,249,250,0.96);
+        border-bottom-color: rgba(0,0,0,0.08);
+      }
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-input,
+      .sidebar:not(.bg-dark) .gms-input,
+      #accordionSidebar .gms-input {
+        background: #fff;
+        border-color: rgba(0,0,0,0.12);
+        color: #212529;
+      }
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-input::placeholder,
+      .sidebar:not(.bg-dark) .gms-input::placeholder,
+      #accordionSidebar .gms-input::placeholder {
+        color: rgba(33,37,41,0.45);
+      }
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-field-icon,
+      .sidebar:not(.bg-dark) .gms-field-icon,
+      #accordionSidebar .gms-field-icon {
+        color: rgba(33,37,41,0.45);
+      }
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-kbd,
+      .sidebar:not(.bg-dark) .gms-kbd,
+      #accordionSidebar .gms-kbd {
+        background: rgba(0,0,0,0.04);
+        border-color: rgba(0,0,0,0.12);
+        color: rgba(33,37,41,0.5);
+      }
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-clear,
+      .sidebar:not(.bg-dark) .gms-clear,
+      #accordionSidebar .gms-clear {
+        background: rgba(0,0,0,0.05);
+        color: rgba(33,37,41,0.65);
+      }
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-meta,
+      .sidebar:not(.bg-dark) .gms-meta,
+      #accordionSidebar .gms-meta,
+      html:not([data-theme="dark"]) .nav:not(.bg-dark) .gms-no-results,
+      .sidebar:not(.bg-dark) .gms-no-results,
+      #accordionSidebar .gms-no-results {
+        color: rgba(33,37,41,0.5);
       }
       
       @keyframes fadeIn {
@@ -189,11 +278,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function applyThemeToPage() {
 
     try {
-      const theme = localStorage.getItem('lanSearchTheme') || 'light';
+      const theme = localStorage.getItem('lanSearchTheme') || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
     } catch (e) {
 
-      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
     
 
@@ -216,7 +305,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
 
 
-  let currentTheme = 'light';
+  let currentTheme = 'dark';
   let themeApplied = false;
 
 
@@ -231,15 +320,20 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(['theme'], function(result) {
           try {
-            currentTheme = result.theme || 'light';
+            const missing = !result || result.theme === undefined;
+            currentTheme = missing ? 'dark' : result.theme;
             themeApplied = true;
+            if (missing) {
+              try { chrome.storage.sync.set({ theme: 'dark' }); } catch (_) {}
+            }
+            try { localStorage.setItem('lanSearchTheme', currentTheme); } catch (_) {}
             callback(currentTheme);
           } catch (e) {
 
             try {
-              currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+              currentTheme = localStorage.getItem('lanSearchTheme') || 'dark';
             } catch (e2) {
-              currentTheme = 'light';
+              currentTheme = 'dark';
             }
             themeApplied = true;
             callback(currentTheme);
@@ -248,9 +342,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       } else {
 
         try {
-          currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+          currentTheme = localStorage.getItem('lanSearchTheme') || 'dark';
         } catch (e2) {
-          currentTheme = 'light';
+          currentTheme = 'dark';
         }
         themeApplied = true;
         callback(currentTheme);
@@ -258,9 +352,9 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     } catch (e) {
 
       try {
-        currentTheme = localStorage.getItem('lanSearchTheme') || 'light';
+        currentTheme = localStorage.getItem('lanSearchTheme') || 'dark';
       } catch (e2) {
-        currentTheme = 'light';
+        currentTheme = 'dark';
       }
       themeApplied = true;
       callback(currentTheme);
@@ -324,28 +418,65 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     });
   }
 
+  function isNewNavLayout(menuRoot) {
+    if (!menuRoot || !menuRoot.classList) return false;
+    if (
+      menuRoot.classList.contains('nav__content') ||
+      menuRoot.classList.contains('nav__item') ||
+      menuRoot.classList.contains('nav__list') ||
+      menuRoot.id === 'nav-accordion-parent'
+    ) {
+      return true;
+    }
+    return !!menuRoot.querySelector?.('.nav__list, .nav__item, .nav__sublink, .nav__link');
+  }
+
+  function getMenuSearchItems(menuRoot) {
+    if (isNewNavLayout(menuRoot)) {
+      return $all("li.nav__item, .nav__sublist > li", menuRoot);
+    }
+    return $all("li", menuRoot);
+  }
+
   function createSearchBar(menuRoot) {
-
     if (document.getElementById(SEARCH_ID)) return document.getElementById(SEARCH_ID);
-
 
     const container = document.createElement("div");
     container.className = "gms-container";
-
-    const input = document.createElement("input");
-    input.type = "search";
-    input.placeholder = "Поиск по меню... /";
-    input.id = SEARCH_ID;
-    input.className = "gms-input";
-    input.autocomplete = "off";
-    input.setAttribute("aria-label", "Поиск по меню");
-
-    container.appendChild(input);
-    
+    container.innerHTML = `
+      <div class="gms-field">
+        <span class="gms-field-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </span>
+        <input type="search" placeholder="Поиск по меню" id="${SEARCH_ID}" class="gms-input" autocomplete="off" aria-label="Поиск по меню" />
+        <div class="gms-field-actions">
+          <button type="button" class="gms-clear" id="globalMenuSearchClear" aria-label="Очистить поиск" title="Очистить">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <kbd class="gms-kbd" title="Клавиша /">/</kbd>
+        </div>
+      </div>
+      <div class="gms-meta" id="globalMenuSearchMeta" aria-live="polite"></div>
+    `;
 
     menuRoot.insertBefore(container, menuRoot.firstChild);
-    
-    return input;
+    return container.querySelector('#' + SEARCH_ID);
+  }
+
+  function updateSearchChrome(input, metaText = '') {
+    const container = input?.closest('.gms-container');
+    if (!container) return;
+    const hasValue = !!(input.value || '').trim();
+    container.classList.toggle('is-filled', hasValue);
+    container.classList.toggle('is-active', hasValue);
+    const meta = container.querySelector('#globalMenuSearchMeta');
+    if (meta) meta.textContent = metaText || '';
   }
 
   function normalize(text) {
@@ -353,40 +484,61 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
   function getItemLabel(el) {
-
-    if (window.location.hostname.includes('f5center')) {
-
-      const textSelectors = [
-        '.nav-link-text', 'a', '.title', '.name', '.label', 
-        '[role="menuitem"]', '.menu-text', '.item-text'
-      ];
-      
-      for (const selector of textSelectors) {
-        const labelNode = el.querySelector(selector);
-        if (labelNode && labelNode.textContent.trim()) {
-          return normalize(labelNode.textContent);
-        }
-      }
-      
-
-      return normalize(el.textContent);
-    } else {
-
-      const labelNode = el.querySelector(".nav-link-text") || el.querySelector("a");
-      const text = labelNode ? labelNode.textContent : el.textContent;
-    return normalize(text);
+    const menuRoot = el.closest('#nav-accordion-parent, .nav__content, #globalMenuAccordion');
+    if (isNewNavLayout(menuRoot || el)) {
+      // Own title only — collapse/submenu lives inside li, so don't use el.textContent
+      const labelNode =
+        el.querySelector(":scope > .nav__link > span:not(.nav__link-icon):not(.nav__link-arrow)") ||
+        el.querySelector(":scope > .nav__sublink") ||
+        el.querySelector(":scope > .nav__link") ||
+        el.querySelector(":scope > a");
+      const text = labelNode
+        ? (labelNode.matches('a.nav__link')
+            ? (labelNode.querySelector('span:not(.nav__link-icon):not(.nav__link-arrow)')?.textContent || labelNode.textContent)
+            : labelNode.textContent)
+        : '';
+      return normalize(text);
     }
+
+    const labelNode = el.querySelector(".nav-link-text") || el.querySelector("a");
+    const text = labelNode ? labelNode.textContent : el.textContent;
+    return normalize(text);
   }
 
   function clearHighlights(root) {
     $all(".gms-highlight", root).forEach((el) => {
-      const text = el.textContent;
-      if (el.parentNode) el.replaceWith(document.createTextNode(text || ""));
+      const parent = el.parentNode;
+      if (!parent) return;
+      parent.replaceChild(document.createTextNode(el.textContent || ""), el);
+      parent.normalize();
     });
   }
 
-  function highlightMatch() {
+  function highlightMatch(el, query) {
+    if (!query) return;
+    const targets = $all(":scope > .nav__link span:not(.nav__link-icon):not(.nav__link-arrow), :scope > .nav__sublink, :scope > a, .nav-link-text", el);
+    const nodes = targets.length ? targets : [el];
+    nodes.forEach((node) => {
+      const text = node.textContent || "";
+      const lower = normalize(text);
+      const idx = lower.indexOf(query);
+      if (idx < 0 || node.querySelector('.gms-highlight')) return;
 
+      // Align index against original text roughly via lowercased scan
+      const rawLower = text.toLowerCase();
+      const rawIdx = rawLower.indexOf(query);
+      if (rawIdx < 0) return;
+      const before = text.slice(0, rawIdx);
+      const match = text.slice(rawIdx, rawIdx + query.length);
+      const after = text.slice(rawIdx + query.length);
+      node.textContent = "";
+      if (before) node.appendChild(document.createTextNode(before));
+      const mark = document.createElement("mark");
+      mark.className = "gms-highlight";
+      mark.textContent = match;
+      node.appendChild(mark);
+      if (after) node.appendChild(document.createTextNode(after));
+    });
   }
 
   function expandAncestors(li) {
@@ -397,8 +549,11 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         parent.style.height = "auto";
       }
       if (parent.id && parent.id.startsWith("collapse")) {
-        const trigger = document.querySelector(`[href="#${parent.id}"]`);
-        if (trigger?.classList.contains("collapsed")) {
+        const trigger =
+          document.querySelector(`[href="#${parent.id}"]`) ||
+          document.querySelector(`[data-bs-target="#${parent.id}"]`) ||
+          document.querySelector(`[aria-controls="${parent.id}"]`);
+        if (trigger) {
           trigger.classList.remove("collapsed");
           trigger.setAttribute("aria-expanded", "true");
         }
@@ -419,40 +574,29 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     Object.entries(initialCollapseState).forEach(([id, wasShown]) => {
       const el = document.getElementById(id);
       if (!el) return;
+      const trigger =
+        document.querySelector(`[href="#${id}"]`) ||
+        document.querySelector(`[data-bs-target="#${id}"]`) ||
+        document.querySelector(`[aria-controls="${id}"]`);
       if (wasShown) {
         el.classList.add("show");
         el.style.height = "auto";
-        const trigger = document.querySelector(`[href="#${id}"]`);
         if (trigger) { trigger.classList.remove("collapsed"); trigger.setAttribute("aria-expanded", "true"); }
       } else {
         el.classList.remove("show");
         el.style.height = "";
-        const trigger = document.querySelector(`[href="#${id}"]`);
         if (trigger) { trigger.classList.add("collapsed"); trigger.setAttribute("aria-expanded", "false"); }
       }
     });
   }
 
   function getVisibleLeafLinks(menuRoot) {
-    let visibleElements = [];
-    
-    if (window.location.hostname.includes('f5center')) {
+    const visibleElements = getMenuSearchItems(menuRoot)
+      .filter((li) => !li.classList.contains("gms-hidden"));
 
-      visibleElements = $all("a, button, .nav-item, .menu-item, .link, [role='menuitem'], .card, .item", menuRoot)
-        .filter((el) => !el.classList.contains("gms-hidden"));
-    } else {
-
-      visibleElements = $all("li", menuRoot).filter((li) => !li.classList.contains("gms-hidden"));
-    }
-    
     const links = [];
     visibleElements.forEach((el) => {
-      let a;
-      if (el.tagName === 'A') {
-        a = el;
-      } else {
-        a = el.querySelector("a[href]");
-      }
+      const a = el.querySelector(":scope > .nav__sublink[href], :scope > .nav__link[href], :scope > a[href], a[href]");
       if (a && !a.getAttribute("href")?.startsWith("#")) links.push({ li: el, a });
     });
     return links;
@@ -460,28 +604,22 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
   function filterMenu(menuRoot, queryRaw) {
     const query = normalize(queryRaw);
-    
-
-    let searchElements = [];
-    if (window.location.hostname.includes('f5center')) {
-
-      searchElements = $all("a, button, .nav-item, .menu-item, .link, [role='menuitem'], .card, .item", menuRoot);
-    } else {
-
-      searchElements = $all("li", menuRoot);
-    }
+    const searchElements = getMenuSearchItems(menuRoot);
+    const input = document.getElementById(SEARCH_ID);
+    const noResHost = menuRoot.querySelector('.gms-container') || menuRoot;
 
     clearHighlights(menuRoot);
 
     if (!query) {
       searchElements.forEach((el) => el.classList.remove("gms-hidden"));
-      const noRes = $(".gms-no-results", menuRoot.parentElement);
+      const noRes = $(".gms-no-results", menuRoot);
       if (noRes) noRes.remove();
       restoreInitialCollapseState(menuRoot);
+      updateSearchChrome(input, '');
       return;
     }
 
-    let matches = [];
+    const matches = [];
 
     searchElements.forEach((el) => {
       const label = getItemLabel(el);
@@ -494,8 +632,16 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       }
     });
 
+    // If parent category matches — show its children too
+    matches.forEach((li) => {
+      if (li.classList.contains('nav__item')) {
+        $all('.nav__sublist > li', li).forEach((child) => child.classList.remove('gms-hidden'));
+      }
+    });
+
     matches.forEach((li) => {
       expandAncestors(li);
+      highlightMatch(li, query);
       let parent = li.parentElement;
       while (parent && parent !== menuRoot) {
         if (parent.tagName === "UL") parent.classList.remove("gms-hidden");
@@ -504,16 +650,21 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       }
     });
 
-    let noRes = $(".gms-no-results", menuRoot.parentElement);
+    let noRes = $(".gms-no-results", menuRoot);
     if (!matches.length) {
       if (!noRes) {
         noRes = document.createElement("div");
         noRes.className = "gms-no-results";
         noRes.textContent = "Ничего не найдено";
-        menuRoot.parentElement?.insertBefore(noRes, menuRoot);
+        const list = menuRoot.querySelector('.nav__list, ul');
+        if (list) menuRoot.insertBefore(noRes, list);
+        else noResHost.appendChild(noRes);
       }
-    } else if (noRes) {
-      noRes.remove();
+      updateSearchChrome(input, 'Ничего не найдено');
+    } else {
+      if (noRes) noRes.remove();
+      const leafCount = getVisibleLeafLinks(menuRoot).length;
+      updateSearchChrome(input, leafCount ? `Найдено: ${leafCount}` : `Совпадений: ${matches.length}`);
     }
   }
 
@@ -531,30 +682,22 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     return isSuitableDomain();
   }
 
+  function isAuthPage() {
+    const path = (window.location.pathname || '').toLowerCase();
+    return path.includes('/auth') || path.endsWith('auth.php');
+  }
+
   function init() {
+    if (isAuthPage()) {
+      console.log('Lan-Search: пропуск инициализации поиска на странице авторизации');
+      return;
+    }
+
     let menuRoot = getMenuRootFromIds();
     const menuFromKnownIds = !!menuRoot;
 
-    if (!menuRoot && window.location.hostname.includes('f5center')) {
-
-      const possibleContainers = [
-        'nav', 'header', 'main', '.navbar', '.menu', '.navigation',
-        '.sidebar', '.nav-menu', '[role="navigation"]', '.main-content'
-      ];
-      
-      for (const selector of possibleContainers) {
-        menuRoot = document.querySelector(selector);
-        if (menuRoot) {
-          break;
-        }
-      }
-      
-
-      if (!menuRoot) {
-        menuRoot = document.body;
-      }
-    }
-    
+    // Не подставляем body/nav/header: на auth и страницах без меню
+    // это вставляет "Поиск по меню" куда попало (в т.ч. в document.body).
     if (!menuRoot) {
       if (shouldAutoActivate()) {
         console.log("Lan-Search: ни #nav-accordion-parent, ни #globalMenuAccordion не найдены на подходящем домене");
@@ -569,42 +712,59 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
     injectStylesOnce();
     const input = createSearchBar(menuRoot);
-    
+    const container = input.closest('.gms-container');
+    const clearBtn = container?.querySelector('#globalMenuSearchClear');
 
     if (menuFromKnownIds) {
       captureInitialCollapseState(menuRoot);
     }
 
     let handle;
-    input.addEventListener("input", (e) => {
-      const value = e.target.value;
+    const runFilter = () => {
+      updateSearchChrome(input);
+      filterMenu(menuRoot, input.value);
+    };
+
+    input.addEventListener("input", () => {
+      updateSearchChrome(input);
       clearTimeout(handle);
-      handle = setTimeout(() => filterMenu(menuRoot, value), 120);
+      handle = setTimeout(runFilter, 120);
     });
+
+    input.addEventListener("focus", () => container?.classList.add('is-focused'));
+    input.addEventListener("blur", () => container?.classList.remove('is-focused'));
 
     input.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         input.value = "";
-        filterMenu(menuRoot, "");
+        runFilter();
+        input.blur();
       } else if (e.key === "Enter") {
         const visible = getVisibleLeafLinks(menuRoot);
         if (visible.length === 1) {
-          const { a } = visible[0];
-          a.click();
+          visible[0].a.click();
         }
       }
+    });
+
+    clearBtn?.addEventListener("click", () => {
+      input.value = "";
+      runFilter();
+      input.focus();
     });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "/" && document.activeElement !== input) {
         const tag = (document.activeElement?.tagName || "").toLowerCase();
-        if (tag !== "input" && tag !== "textarea") {
+        if (tag !== "input" && tag !== "textarea" && !document.activeElement?.isContentEditable) {
           e.preventDefault();
           input.focus();
+          input.select();
         }
       }
     });
 
+    updateSearchChrome(input);
 
     if (!shouldAutoActivate()) {
       input.focus();
@@ -804,6 +964,28 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
 
+  const LGS_ICONS = {
+    search: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    plus: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    minus: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    gift: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>',
+    cubes: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+    spinner: '<svg class="lgs-ico lgs-ico-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+    arrowLeft: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+    save: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+    userSlash: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    box: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+    monitor: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+    lock: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    unlock: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>',
+    power: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>',
+    powerOn: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    // сброс сессии — выход, не «перезагрузка»
+    reset: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    wrench: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+    stop: '<svg class="lgs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><rect x="9" y="9" width="6" height="6" rx="0.5" fill="currentColor" stroke="none"/></svg>'
+  };
+
   initGuestSearch();
 
 
@@ -851,51 +1033,38 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function createGuestSearchBlock() {
     const container = document.createElement('div');
     container.id = 'guestSearchContainer';
-    container.className = 'card';
-    container.style.cssText = `
-      margin-top: 15px;
-      margin-right: 20px;
-      margin-left:20px;
-      padding: 15px;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      background-color: var(--bg-secondary, #ffffff);
-    `;
+    container.className = 'lgs-guest-panel';
 
     container.innerHTML = `
-      <div class="card-header">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h5 class="mb-0">
-            <span id="modeTitle">Поиск гостей</span>
-          </h5>
-          <div style="display: flex; gap: 4px; background: #f8f9fa; padding: 4px; border-radius: 8px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
-            <button id="modeSearchBtn" class="btn btn-sm" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; box-shadow: 0 2px 4px rgba(220,53,69,0.3);">
-              Поиск гостей
-            </button>
-            <button id="modeInventBtn" class="btn btn-sm" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; opacity: 0.7;">
-              <i class="fa fa-cubes"></i> Инвентаризация
-            </button>
-          </div>
+      <div class="lgs-guest-header">
+        <div class="lgs-guest-title-wrap">
+          <h3 class="lgs-guest-title" id="modeTitle">Поиск гостей</h3>
+        </div>
+        <div class="lgs-guest-tabs" role="tablist">
+          <button type="button" id="modeSearchBtn" class="lgs-guest-tab is-active" role="tab" aria-selected="true">
+            Поиск гостей
+          </button>
+          <button type="button" id="modeInventBtn" class="lgs-guest-tab" role="tab" aria-selected="false">
+            ${LGS_ICONS.cubes} Инвентаризация
+          </button>
         </div>
       </div>
-      <div class="card-body">
-        <!-- Режим поиска гостей -->
+
+      <div class="lgs-guest-body">
         <div id="guestSearchMode">
-          <div class="row mb-3">
-            <div class="col-12">
-              <div class="input-group">
-                <input style="min-height: 38px;" type="text" id="guestSearchInput" class="form-control" placeholder="Введите номер телефона, ФИО или email гостя..." />
-                <div class="input-group-append">
-                  <button class="btn btn-primary" type="button" id="searchGuestBtn" style="min-height: 38px; padding: 8px 16px;">
-                    <i class="fa fa-search"></i> Найти
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div class="lgs-guest-searchbar input-group">
+            <span class="input-group-text lgs-guest-search-icon" aria-hidden="true">
+              ${LGS_ICONS.search}
+            </span>
+            <input type="search" id="guestSearchInput" class="form-control" placeholder="Введите номер телефона, ФИО или email гостя..." autocomplete="off" />
+            <button class="btn btn-primary" type="button" id="searchGuestBtn">
+              ${LGS_ICONS.search} Найти
+            </button>
           </div>
-          <div id="guestSearchResults" style="display: none;">
+
+          <div id="guestSearchResults" class="lgs-guest-results" hidden>
             <div class="table-responsive">
-              <table class="table table-sm table-hover">
+              <table class="table table-hover lgs-guest-table mb-0">
                 <thead>
                   <tr>
                     <th>ФИО</th>
@@ -906,67 +1075,48 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
                     <th>Действия</th>
                   </tr>
                 </thead>
-                <tbody id="guestSearchResultsBody">
-                </tbody>
+                <tbody id="guestSearchResultsBody"></tbody>
               </table>
             </div>
           </div>
-          <div id="guestSearchNoResults" style="display: none;" class="alert alert-info">
-            <i class="fa fa-info-circle"></i> Гости не найдены
+          <div id="guestSearchNoResults" class="lgs-guest-empty" hidden>
+            ${LGS_ICONS.userSlash}
+            <span>Гости не найдены</span>
           </div>
         </div>
-        
-        <!-- Режим инвентаризации -->
-        <div id="inventMode" style="display: none;">
-          <!-- Выбор клуба -->
+
+        <div id="inventMode" hidden>
           <div id="inventClubsSelection">
-            <div class="row mb-3">
-              <div class="col-12">
-                <div id="clubsList" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
-                  <div style="width: 100%; text-align: center; padding: 10px;">
-                    <i class="fa fa-spinner fa-spin"></i> Загрузка клубов...
-                  </div>
-                </div>
+            <p class="lgs-guest-hint">Выберите клуб для инвентаризации</p>
+            <div id="clubsList" class="lgs-guest-clubs">
+              <div class="lgs-guest-loading">
+                ${LGS_ICONS.spinner} Загрузка клубов...
               </div>
             </div>
           </div>
-          
-          <!-- Список продуктов -->
-          <div id="inventProductsSection" style="display: none;">
-            <div class="row mb-3">
-              <div class="col-12">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <button id="backToClubsBtn" class="btn btn-secondary btn-sm">
-                      <i class="fa fa-arrow-left"></i> Назад
-                    </button>
-                    <div id="selectedClubName" style="font-weight: bold; font-size: 14px;"></div>
-                  </div>
-                  <button id="saveInventBtnTop" class="btn btn-success" style="min-height: 38px; padding: 8px 16px; display: none;">
-                    <i class="fa fa-save"></i> Сохранить инвентаризацию
-                  </button>
-                </div>
+
+          <div id="inventProductsSection" hidden>
+            <div class="lgs-guest-invent-toolbar">
+              <div class="lgs-guest-invent-toolbar-left">
+                <button type="button" id="backToClubsBtn" class="btn btn-outline-secondary btn-sm">
+                  ${LGS_ICONS.arrowLeft} Назад
+                </button>
+                <div id="selectedClubName" class="lgs-guest-club-name"></div>
               </div>
+              <button type="button" id="saveInventBtnTop" class="btn btn-success btn-sm" hidden>
+                ${LGS_ICONS.save} Сохранить
+              </button>
             </div>
-            <div id="inventResults" style="display: none;">
-              <div class="row mb-3">
-                <div class="col-12">
-                  <div class="input-group">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text">
-                        <i class="fa fa-search"></i>
-                      </span>
-                    </div>
-                    <input type="text" 
-                           id="inventSearchInput" 
-                           class="form-control" 
-                           placeholder="Поиск по ID или наименованию..." 
-                           style="min-height: 38px;">
-                  </div>
-                </div>
+
+            <div id="inventResults" hidden>
+              <div class="lgs-guest-searchbar input-group mb-3">
+                <span class="input-group-text lgs-guest-search-icon" aria-hidden="true">
+                  ${LGS_ICONS.search}
+                </span>
+                <input type="search" id="inventSearchInput" class="form-control" placeholder="Поиск по ID или наименованию..." autocomplete="off" />
               </div>
               <div class="table-responsive">
-                <table class="table table-sm table-hover">
+                <table class="table table-hover lgs-guest-table mb-0">
                   <thead>
                     <tr>
                       <th>ID</th>
@@ -975,94 +1125,156 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
                       <th>Фактический остаток</th>
                     </tr>
                   </thead>
-                  <tbody id="inventResultsBody">
-                  </tbody>
+                  <tbody id="inventResultsBody"></tbody>
                 </table>
               </div>
-              <div class="row mt-3">
-                <div class="col-12">
-                  <button id="saveInventBtn" class="btn btn-success" style="min-height: 38px; padding: 8px 16px; width: 100%;">
-                    <i class="fa fa-save"></i> Сохранить инвентаризацию
-                  </button>
-                </div>
-              </div>
+              <button type="button" id="saveInventBtn" class="btn btn-success w-100 mt-3">
+                ${LGS_ICONS.save} Сохранить инвентаризацию
+              </button>
             </div>
-            <div id="inventNoResults" style="display: none;" class="alert alert-info">
-              <i class="fa fa-info-circle"></i> Продукты не загружены
+            <div id="inventNoResults" class="lgs-guest-empty" hidden>
+              ${LGS_ICONS.box}
+              <span>Продукты не загружены</span>
             </div>
           </div>
         </div>
       </div>
     `;
 
-
-    const modal = document.createElement('div');
-    modal.id = 'addBalanceModal';
-    modal.className = 'modal fade';
-    modal.setAttribute('tabindex', '-1');
-    modal.setAttribute('role', 'dialog');
-        modal.innerHTML = `
-          <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Пополнить баланс</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <form name="addBalanceForm">
-                  <input type="hidden" name="guest_id" value="">
-                  <div class="form-group mb-2">
-                    <label for="balanceAmount">Сумма:</label>
-                    <input tabindex="0" type="number" class="form-control" max="999999" step="0.01" name="balance" placeholder="пополнить" autocomplete="off" required>
-                  </div>
-                  <button tabindex="1" type="submit" class="btn btn-primary mb-2 pull-right">Сохранить</button>
-                </form>
-              </div>
+    if (!document.getElementById('addBalanceModal')) {
+      const modal = document.createElement('div');
+      modal.id = 'addBalanceModal';
+      modal.className = 'modal fade';
+      modal.setAttribute('tabindex', '-1');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content lgs-guest-modal">
+            <div class="modal-header">
+              <h5 class="modal-title">Пополнить баланс</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form name="addBalanceForm">
+                <input type="hidden" name="guest_id" value="">
+                <div class="mb-3">
+                  <label class="form-label" for="balanceAmount">Сумма</label>
+                  <input id="balanceAmount" tabindex="0" type="number" class="form-control" max="999999" step="0.01" name="balance" placeholder="0.00" autocomplete="off" required>
+                </div>
+                <button tabindex="1" type="submit" class="btn btn-primary w-100">Сохранить</button>
+              </form>
             </div>
           </div>
-        `;
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
 
-
-    document.body.appendChild(modal);
-
-
-    const bonusModal = document.createElement('div');
-    bonusModal.id = 'addBonusModal';
-    bonusModal.className = 'modal fade';
-    bonusModal.setAttribute('tabindex', '-1');
-    bonusModal.setAttribute('role', 'dialog');
-        bonusModal.innerHTML = `
-          <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Управление бонусами</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">×</span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <form name="addBonusForm">
-                  <input type="hidden" name="guest_id" value="">
-                  <input type="hidden" name="action" value="">
-                  <div class="form-group mb-2">
-                    <label for="bonusAmount">Сумма бонусов:</label>
-                    <input tabindex="0" type="number" class="form-control" max="999999" step="0.01" name="bonus_balance" placeholder="сумма" autocomplete="off" required>
-                  </div>
-                  <button tabindex="1" type="submit" class="btn btn-primary mb-2 pull-right">Сохранить</button>
-                </form>
-              </div>
+    if (!document.getElementById('addBonusModal')) {
+      const bonusModal = document.createElement('div');
+      bonusModal.id = 'addBonusModal';
+      bonusModal.className = 'modal fade';
+      bonusModal.setAttribute('tabindex', '-1');
+      bonusModal.setAttribute('aria-hidden', 'true');
+      bonusModal.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content lgs-guest-modal">
+            <div class="modal-header">
+              <h5 class="modal-title">Управление бонусами</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form name="addBonusForm">
+                <input type="hidden" name="guest_id" value="">
+                <input type="hidden" name="action" value="">
+                <div class="mb-3">
+                  <label class="form-label" for="bonusAmount">Сумма бонусов</label>
+                  <input id="bonusAmount" tabindex="0" type="number" class="form-control" max="999999" step="0.01" name="bonus_balance" placeholder="0.00" autocomplete="off" required>
+                </div>
+                <button tabindex="1" type="submit" class="btn btn-primary w-100">Сохранить</button>
+              </form>
             </div>
           </div>
-        `;
-
-
-    document.body.appendChild(bonusModal);
+        </div>
+      `;
+      document.body.appendChild(bonusModal);
+    }
 
     return container;
   }
 
+
+  function getMasterApiToken() {
+    try {
+      const fromCookie =
+        getCookie('token_master_api') ||
+        getCookie('token') ||
+        getCookie('auth_token') ||
+        getCookie('access_token');
+      if (fromCookie) return decodeURIComponent(fromCookie);
+    } catch (e) {}
+    try {
+      return localStorage.getItem('token_master_api') || localStorage.getItem('token') || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function getMasterApiLanguage() {
+    return document.querySelector('meta[name="language"]')?.getAttribute('content') || 'ru';
+  }
+
+  async function masterApiRequest(path, { method = 'GET', body = null, query = null } = {}) {
+    const token = getMasterApiToken();
+    if (!token) {
+      throw new Error('Не найден token_master_api. Обновите страницу или войдите заново.');
+    }
+
+    let url = path.startsWith('http') ? path : `/master_api${path.startsWith('/') ? path : '/' + path}`;
+    if (query) {
+      const qs = query instanceof URLSearchParams ? query : new URLSearchParams(query);
+      const q = qs.toString();
+      if (q) url += (url.includes('?') ? '&' : '?') + q;
+    }
+
+    const language = getMasterApiLanguage();
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Language': language,
+      'X-Language': language,
+      'X-Requested-With': 'XMLHttpRequest',
+      'Accept': 'application/json, text/javascript, */*; q=0.01'
+    };
+
+    const options = { method, headers, credentials: 'include' };
+    if (body != null && method.toUpperCase() !== 'GET') {
+      if (body instanceof FormData) {
+        options.body = body;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify(body);
+      }
+    }
+
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const message = data.error_message || `HTTP ${response.status}`;
+      const err = new Error(message);
+      err.status = response.status;
+      err.data = data;
+      throw err;
+    }
+
+    if (data && typeof data.error_code !== 'undefined' && data.error_code !== 0) {
+      const err = new Error(data.error_message || 'Ошибка master_api');
+      err.data = data;
+      throw err;
+    }
+
+    return data;
+  }
 
   async function searchGuests(query) {
     if (!query || query.trim().length < 3) {
@@ -1071,133 +1283,23 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
 
     try {
-      const response = await fetch('/guests_search/search.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include',
-        body: new URLSearchParams({
-          'draw': '1',
-          'columns[0][data]': '0',
-          'columns[0][name]': '',
-          'columns[0][searchable]': 'true',
-          'columns[0][orderable]': 'true',
-          'columns[0][search][value]': '',
-          'columns[0][search][regex]': 'false',
-          'columns[1][data]': '1',
-          'columns[1][name]': '',
-          'columns[1][searchable]': 'true',
-          'columns[1][orderable]': 'true',
-          'columns[1][search][value]': '',
-          'columns[1][search][regex]': 'false',
-          'columns[2][data]': '2',
-          'columns[2][name]': '',
-          'columns[2][searchable]': 'true',
-          'columns[2][orderable]': 'true',
-          'columns[2][search][value]': '',
-          'columns[2][search][regex]': 'false',
-          'columns[3][data]': '3',
-          'columns[3][name]': '',
-          'columns[3][searchable]': 'true',
-          'columns[3][orderable]': 'true',
-          'columns[3][search][value]': '',
-          'columns[3][search][regex]': 'false',
-          'columns[4][data]': '4',
-          'columns[4][name]': '',
-          'columns[4][searchable]': 'true',
-          'columns[4][orderable]': 'true',
-          'columns[4][search][value]': '',
-          'columns[4][search][regex]': 'false',
-          'columns[5][data]': '5',
-          'columns[5][name]': '',
-          'columns[5][searchable]': 'true',
-          'columns[5][orderable]': 'true',
-          'columns[5][search][value]': '',
-          'columns[5][search][regex]': 'false',
-          'columns[6][data]': '6',
-          'columns[6][name]': '',
-          'columns[6][searchable]': 'true',
-          'columns[6][orderable]': 'true',
-          'columns[6][search][value]': '',
-          'columns[6][search][regex]': 'false',
-          'columns[7][data]': '7',
-          'columns[7][name]': '',
-          'columns[7][searchable]': 'true',
-          'columns[7][orderable]': 'true',
-          'columns[7][search][value]': '',
-          'columns[7][search][regex]': 'false',
-          'columns[8][data]': '8',
-          'columns[8][name]': '',
-          'columns[8][searchable]': 'true',
-          'columns[8][orderable]': 'true',
-          'columns[8][search][value]': '',
-          'columns[8][search][regex]': 'false',
-          'columns[9][data]': '9',
-          'columns[9][name]': '',
-          'columns[9][searchable]': 'true',
-          'columns[9][orderable]': 'false',
-          'columns[9][search][value]': '',
-          'columns[9][search][regex]': 'false',
-          'columns[10][data]': '10',
-          'columns[10][name]': '',
-          'columns[10][searchable]': 'true',
-          'columns[10][orderable]': 'false',
-          'columns[10][search][value]': '',
-          'columns[10][search][regex]': 'false',
-          'columns[11][data]': '11',
-          'columns[11][name]': '',
-          'columns[11][searchable]': 'true',
-          'columns[11][orderable]': 'true',
-          'columns[11][search][value]': '',
-          'columns[11][search][regex]': 'false',
-          'columns[12][data]': '12',
-          'columns[12][name]': '',
-          'columns[12][searchable]': 'true',
-          'columns[12][orderable]': 'true',
-          'columns[12][search][value]': '',
-          'columns[12][search][regex]': 'false',
-          'columns[13][data]': '13',
-          'columns[13][name]': '',
-          'columns[13][searchable]': 'true',
-          'columns[13][orderable]': 'true',
-          'columns[13][search][value]': '',
-          'columns[13][search][regex]': 'false',
-          'columns[14][data]': '14',
-          'columns[14][name]': '',
-          'columns[14][searchable]': 'true',
-          'columns[14][orderable]': 'false',
-          'columns[14][search][value]': '',
-          'columns[14][search][regex]': 'false',
-          'order[0][column]': '0',
-          'order[0][dir]': 'asc',
-          'start': '0',
-          'length': '10',
-          'search[value]': query,
-          'search[regex]': 'false',
-          'guests_group': '0',
-          'last_visit_from': '',
-          'last_visit_to': '',
-          'date_insert_from': '',
-          'date_insert_to': '',
-          'balance_from': '',
-          'balance_to': '',
-          'bonus_balance_from': '',
-          'bonus_balance_to': '',
-          'guests_group_hand': '0'
-        })
+      const params = new URLSearchParams({
+        page: '1',
+        onpage: '20',
+        order_by: 'fio',
+        order_dir: 'asc',
+        search: query.trim()
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await masterApiRequest('/guests/search/list', { query: params });
       return data;
     } catch (error) {
       console.error('Ошибка при поиске гостей:', error);
-      showNotification('Ошибка при поиске гостей', 'error');
+      if (error?.data?.error_code === 9) {
+        showNotification('Ошибка авторизации. Войдите заново', 'error');
+      } else {
+        showNotification(error.message || 'Ошибка при поиске гостей', 'error');
+      }
       return null;
     }
   }
@@ -1273,33 +1375,32 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     clubsList.innerHTML = '';
 
     if (!clubs || clubs.length === 0) {
-      clubsList.innerHTML = '<div style="width: 100%; text-align: center; padding: 10px; color: #dc3545;">Клубы не найдены</div>';
+      clubsList.innerHTML = '<div class="lgs-guest-empty is-error">Клубы не найдены</div>';
       return;
     }
 
     clubs.forEach(club => {
       const clubBtn = document.createElement('button');
-      clubBtn.className = 'btn btn-outline-primary';
-      clubBtn.style.cssText = 'min-height: 38px; padding: 8px 16px; margin: 4px;';
+      clubBtn.type = 'button';
+      clubBtn.className = 'lgs-guest-club-btn';
       clubBtn.textContent = club.name;
       clubBtn.setAttribute('data-club-id', club.id);
-      
+
       clubBtn.addEventListener('click', async () => {
         const clubId = clubBtn.getAttribute('data-club-id');
         const clubName = clubBtn.textContent;
-        
-        // Показываем секцию продуктов
-        document.getElementById('inventClubsSelection').style.display = 'none';
-        document.getElementById('inventProductsSection').style.display = 'block';
-        document.getElementById('selectedClubName').textContent = `Клуб: ${clubName}`;
-        
-        // Сохраняем club_id в элементе для последующего использования
-        document.getElementById('selectedClubName').setAttribute('data-club-id', clubId);
-        
-        // Загружаем продукты для выбранного клуба
+
+        setHidden(document.getElementById('inventClubsSelection'), true);
+        setHidden(document.getElementById('inventProductsSection'), false);
+        const selectedClubName = document.getElementById('selectedClubName');
+        if (selectedClubName) {
+          selectedClubName.textContent = clubName;
+          selectedClubName.setAttribute('data-club-id', clubId);
+        }
+
         await loadProductsForInvent(clubId);
       });
-      
+
       clubsList.appendChild(clubBtn);
     });
   }
@@ -1439,31 +1540,27 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   function displayInventProducts(products) {
     const resultsContainer = document.getElementById('inventResults');
     const noResultsContainer = document.getElementById('inventNoResults');
-    const resultsBody = document.getElementById('inventResultsBody');
     const saveInventBtnTop = document.getElementById('saveInventBtnTop');
     const searchInput = document.getElementById('inventSearchInput');
 
     if (!products || products.length === 0) {
-      resultsContainer.style.display = 'none';
-      noResultsContainer.style.display = 'block';
-      if (saveInventBtnTop) saveInventBtnTop.style.display = 'none';
+      setHidden(resultsContainer, true);
+      setHidden(noResultsContainer, false);
+      setHidden(saveInventBtnTop, true);
       allInventProducts = [];
       return;
     }
 
-    // Сохраняем все продукты для фильтрации
     allInventProducts = products;
 
-    resultsContainer.style.display = 'block';
-    noResultsContainer.style.display = 'none';
-    if (saveInventBtnTop) saveInventBtnTop.style.display = 'block';
+    setHidden(resultsContainer, false);
+    setHidden(noResultsContainer, true);
+    setHidden(saveInventBtnTop, false);
 
-    // Очищаем поле поиска
     if (searchInput) {
       searchInput.value = '';
     }
 
-    // Отображаем все продукты
     displayInventProductsTable(products);
   }
 
@@ -1551,6 +1648,17 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
+  function setHidden(el, hidden) {
+    if (!el) return;
+    if (hidden) {
+      el.setAttribute('hidden', '');
+      el.style.display = 'none';
+    } else {
+      el.removeAttribute('hidden');
+      el.style.display = '';
+    }
+  }
+
   function switchMode(mode) {
     const guestSearchMode = document.getElementById('guestSearchMode');
     const inventMode = document.getElementById('inventMode');
@@ -1559,31 +1667,25 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     const modeInventBtn = document.getElementById('modeInventBtn');
 
     if (mode === 'search') {
-      guestSearchMode.style.display = 'block';
-      inventMode.style.display = 'none';
-      modeTitle.textContent = 'Поиск гостей';
-      modeSearchBtn.style.background = '#dc3545';
-      modeSearchBtn.style.opacity = '1';
-      modeSearchBtn.style.boxShadow = '0 2px 4px rgba(220,53,69,0.3)';
-      modeInventBtn.style.background = '#6c757d';
-      modeInventBtn.style.opacity = '0.7';
-      modeInventBtn.style.boxShadow = 'none';
+      setHidden(guestSearchMode, false);
+      setHidden(inventMode, true);
+      if (modeTitle) modeTitle.textContent = 'Поиск гостей';
+      modeSearchBtn?.classList.add('is-active');
+      modeInventBtn?.classList.remove('is-active');
+      modeSearchBtn?.setAttribute('aria-selected', 'true');
+      modeInventBtn?.setAttribute('aria-selected', 'false');
     } else if (mode === 'invent') {
-      guestSearchMode.style.display = 'none';
-      inventMode.style.display = 'block';
-      modeTitle.textContent = 'Инвентаризация';
-      modeSearchBtn.style.background = '#6c757d';
-      modeSearchBtn.style.opacity = '0.7';
-      modeSearchBtn.style.boxShadow = 'none';
-      modeInventBtn.style.background = '#dc3545';
-      modeInventBtn.style.opacity = '1';
-      modeInventBtn.style.boxShadow = '0 2px 4px rgba(220,53,69,0.3)';
-      
-      // Показываем выбор клубов и скрываем секцию продуктов
-      document.getElementById('inventClubsSelection').style.display = 'block';
-      document.getElementById('inventProductsSection').style.display = 'none';
-      
-      // Загружаем список клубов
+      setHidden(guestSearchMode, true);
+      setHidden(inventMode, false);
+      if (modeTitle) modeTitle.textContent = 'Инвентаризация';
+      modeSearchBtn?.classList.remove('is-active');
+      modeInventBtn?.classList.add('is-active');
+      modeSearchBtn?.setAttribute('aria-selected', 'false');
+      modeInventBtn?.setAttribute('aria-selected', 'true');
+
+      setHidden(document.getElementById('inventClubsSelection'), false);
+      setHidden(document.getElementById('inventProductsSection'), true);
+
       loadClubsForInvent().then(clubs => {
         if (clubs) {
           displayClubsForInvent(clubs);
@@ -1592,54 +1694,64 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     }
   }
 
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   function displayGuestSearchResults(data) {
     const resultsContainer = document.getElementById('guestSearchResults');
     const noResultsContainer = document.getElementById('guestSearchNoResults');
     const resultsBody = document.getElementById('guestSearchResultsBody');
+    const items = Array.isArray(data?.items) ? data.items : [];
 
-    if (!data || !data.data || data.data.length === 0) {
-      resultsContainer.style.display = 'none';
-      noResultsContainer.style.display = 'block';
+    if (!items.length) {
+      setHidden(resultsContainer, true);
+      setHidden(noResultsContainer, false);
       return;
     }
 
-    resultsContainer.style.display = 'block';
-    noResultsContainer.style.display = 'none';
+    setHidden(resultsContainer, false);
+    setHidden(noResultsContainer, true);
 
     resultsBody.innerHTML = '';
 
-    data.data.forEach(guest => {
+    items.forEach(guest => {
       const row = document.createElement('tr');
-      
-
-      const nameMatch = guest[0]?.match(/onclick="showGuestAnketa\((\d+)\)">([^<]+)<\/div>/);
-      const phoneMatch = guest[3]?.match(/onclick="showGuestAnketa\((\d+)\)">([^<]+)<\/div>/);
-      const guestId = nameMatch ? nameMatch[1] : (phoneMatch ? phoneMatch[1] : '');
-      const name = nameMatch ? nameMatch[2] : guest[0]?.replace(/<[^>]*>/g, '') || '';
-      const phone = phoneMatch ? phoneMatch[2] : guest[3]?.replace(/<[^>]*>/g, '') || '';
-      const email = guest[4] || '';
-      const balance = guest[6] || '0';
-      const bonusBalance = guest[7] || '0';
+      const guestId = String(guest.guest_id ?? '');
+      const name = guest.fio || guest.guest_group || 'Без имени';
+      const phone = guest.phone || '';
+      const email = guest.email || '';
+      const balance = guest.balance ?? 0;
+      const bonusBalance = guest.bonus_balance ?? 0;
 
       row.innerHTML = `
-        <td>${name}</td>
-        <td>${phone}</td>
-        <td>${email}</td>
-        <td>${balance}</td>
-        <td>${bonusBalance}</td>
         <td>
-          <button class="btn btn-outline-success btn-sm addBalance" data-guest-id="${guestId}" title="Пополнить баланс">
-            <i class="fa fa-plus"></i>
-          </button>
-          <button class="btn btn-outline-danger btn-sm subBalance" data-guest-id="${guestId}" title="Списать баланс">
-            <i class="fa fa-minus"></i>
-          </button>
-          <button class="btn btn-success btn-sm addBonusBalance" data-guest-id="${guestId}" title="Добавить бонусы">
-            <i class="fa fa-gift"></i>
-          </button>
-          <button class="btn btn-danger btn-sm subBonusBalance" data-guest-id="${guestId}" title="Списать бонусы">
-            <i class="fa fa-gift"></i>
-          </button>
+          <div class="lgs-guest-name">${escapeHtml(name)}</div>
+          ${guestId ? `<div class="lgs-guest-id">ID ${escapeHtml(guestId)}</div>` : ''}
+        </td>
+        <td>${escapeHtml(phone)}</td>
+        <td class="lgs-guest-email">${escapeHtml(email)}</td>
+        <td><span class="lgs-guest-money">${escapeHtml(balance)}</span></td>
+        <td><span class="lgs-guest-money is-bonus">${escapeHtml(bonusBalance)}</span></td>
+        <td>
+          <div class="lgs-guest-actions">
+            <button type="button" class="btn btn-outline-success btn-sm addBalance" data-guest-id="${escapeHtml(guestId)}" title="Пополнить баланс">
+              ${LGS_ICONS.plus}
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm subBalance" data-guest-id="${escapeHtml(guestId)}" title="Списать баланс">
+              ${LGS_ICONS.minus}
+            </button>
+            <button type="button" class="btn btn-success btn-sm addBonusBalance" data-guest-id="${escapeHtml(guestId)}" title="Добавить бонусы">
+              ${LGS_ICONS.gift}
+            </button>
+            <button type="button" class="btn btn-danger btn-sm subBonusBalance" data-guest-id="${escapeHtml(guestId)}" title="Списать бонусы">
+              ${LGS_ICONS.gift}
+            </button>
+          </div>
         </td>
       `;
 
@@ -1752,7 +1864,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         if (!query) return;
 
         searchBtn.disabled = true;
-        searchBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Поиск...';
+        searchBtn.innerHTML = `${LGS_ICONS.spinner} Поиск...`;
 
         try {
           const results = await searchGuests(query);
@@ -1761,7 +1873,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           }
         } finally {
           searchBtn.disabled = false;
-          searchBtn.innerHTML = '<i class="fa fa-search"></i> Найти';
+          searchBtn.innerHTML = `${LGS_ICONS.search} Найти`;
         }
       };
 
@@ -1781,8 +1893,8 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
     if (backToClubsBtn) {
       backToClubsBtn.addEventListener('click', () => {
-        document.getElementById('inventClubsSelection').style.display = 'block';
-        document.getElementById('inventProductsSection').style.display = 'none';
+        setHidden(document.getElementById('inventClubsSelection'), false);
+        setHidden(document.getElementById('inventProductsSection'), true);
       });
     }
 
@@ -1805,7 +1917,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       
       btn.disabled = true;
       const originalText = btn.innerHTML;
-      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Сохранение...';
+      btn.innerHTML = `${LGS_ICONS.spinner} Сохранение...`;
 
       try {
         await saveInvent();
@@ -1827,45 +1939,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     setTimeout(() => {
       addBalanceHandlers();
     }, 50);
-    
 
     setTimeout(() => {
       addModalCloseHandlers();
     }, 50);
-    
-
-    const partnersDiv = document.getElementById('partners_div');
-    if (partnersDiv) {
-      partnersDiv.style.display = 'none';
-    }
-    
-
-    const partnersHeading = document.querySelector('h3');
-    if (partnersHeading && partnersHeading.textContent.includes('Предложения партнёров')) {
-      partnersHeading.style.display = 'none';
-    }
-    
-
-    const partnersDescription = document.querySelector('p');
-    if (partnersDescription && partnersDescription.textContent.includes('Здесь мы собираем для пользователей LANGAME Software выгодные предложения от наших партнёров')) {
-      partnersDescription.style.display = 'none';
-    }
-    
-
-    const allHeadings = document.querySelectorAll('h3');
-    const allParagraphs = document.querySelectorAll('p');
-    
-    allHeadings.forEach(heading => {
-      if (heading.textContent.includes('Предложения партнёров')) {
-        heading.style.display = 'none';
-      }
-    });
-    
-    allParagraphs.forEach(paragraph => {
-      if (paragraph.textContent.includes('Здесь мы собираем для пользователей LANGAME Software выгодные предложения от наших партнёров')) {
-        paragraph.style.display = 'none';
-      }
-    });
   }
 
 
@@ -1873,7 +1950,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
     const addBalanceModal = document.getElementById('addBalanceModal');
     if (addBalanceModal) {
-      const closeBtn = addBalanceModal.querySelector('.close, [data-dismiss="modal"]');
+      const closeBtn = addBalanceModal.querySelector('.close, .btn-close, [data-dismiss="modal"], [data-bs-dismiss="modal"]');
       if (closeBtn) {
         closeBtn.addEventListener('click', () => {
           if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -1882,12 +1959,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             addBalanceModal.style.display = 'none';
             addBalanceModal.classList.remove('show');
             document.body.classList.remove('modal-open');
-            
 
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
-              backdrop.style.display = 'none';
-              backdrop.classList.remove('show');
+              backdrop.remove();
             }
           }
         });
@@ -1897,7 +1972,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
 
     const addBonusModal = document.getElementById('addBonusModal');
     if (addBonusModal) {
-      const closeBtn = addBonusModal.querySelector('.close, [data-dismiss="modal"]');
+      const closeBtn = addBonusModal.querySelector('.close, .btn-close, [data-dismiss="modal"], [data-bs-dismiss="modal"]');
       if (closeBtn) {
         closeBtn.addEventListener('click', () => {
           if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
@@ -1906,12 +1981,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
             addBonusModal.style.display = 'none';
             addBonusModal.classList.remove('show');
             document.body.classList.remove('modal-open');
-            
 
             const backdrop = document.querySelector('.modal-backdrop');
             if (backdrop) {
-              backdrop.style.display = 'none';
-              backdrop.classList.remove('show');
+              backdrop.remove();
             }
           }
         });
@@ -2230,234 +2303,97 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
 
+  function hideGuestModal(modalOrId) {
+    const modal = typeof modalOrId === 'string' ? document.getElementById(modalOrId) : modalOrId;
+    if (!modal) return;
+    if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
+      $(modal).modal('hide');
+      return;
+    }
+    modal.style.display = 'none';
+    modal.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    document.querySelector('.modal-backdrop')?.remove();
+  }
+
+  async function refreshGuestSearchResults() {
+    const searchInput = document.getElementById('guestSearchInput');
+    if (!searchInput?.value.trim()) return;
+    const results = await searchGuests(searchInput.value.trim());
+    if (results) displayGuestSearchResults(results);
+  }
+
+  function notifyGuestBalanceError(error, fallbackMessage) {
+    const code = error?.data?.error_code;
+    if (code === 9) {
+      showNotification('Ошибка авторизации. Войдите заново', 'error');
+    } else if (code === 4) {
+      showNotification('Недостаточно средств для списания указанной суммы', 'error');
+    } else {
+      showNotification(error?.message || fallbackMessage, 'error');
+    }
+  }
+
+  async function postGuestBalance(guestId, type, sum) {
+    return masterApiRequest(`/guests/${guestId}/balance`, {
+      method: 'POST',
+      body: { type, sum }
+    });
+  }
+
   async function submitAddBalanceForm(guestId, formData, action = 'add') {
     try {
       const balance = formData.get('balance');
       const sum = action === 'sub' ? -parseFloat(balance) : parseFloat(balance);
-
-
-      const authToken = getCookie('auth_token') || getCookie('token') || getCookie('access_token');
-      
-      const headers = {
-        'content-type': 'application/json'
-      };
-      
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-
-      const response = await fetch(`/master_api/guests/${guestId}/balance`, {
-        method: 'POST',
-        headers: headers,
-        credentials: 'include',
-        body: JSON.stringify({
-          type: 'balance',
-          sum: sum
-        })
-      });
-
-      if (response.ok) {
-        showNotification(`${action === 'sub' ? 'Баланс списан' : 'Баланс пополнен'} успешно`, 'success');
-
-        const addBalanceModal = document.getElementById('addBalanceModal');
-        if (addBalanceModal) {
-          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
-            $('#addBalanceModal').modal('hide');
-          } else {
-            addBalanceModal.style.display = 'none';
-            addBalanceModal.classList.remove('show');
-            document.body.classList.remove('modal-open');
-            
-
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-              backdrop.style.display = 'none';
-              backdrop.classList.remove('show');
-            }
-          }
-        }
-
-        const searchInput = document.getElementById('guestSearchInput');
-        if (searchInput && searchInput.value.trim()) {
-          const results = await searchGuests(searchInput.value.trim());
-          if (results) {
-            displayGuestSearchResults(results);
-          }
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.error_code === 9) {
-          showNotification('Ошибка авторизации. Пожалуйста, войдите в систему заново', 'error');
-        } else if (errorData.error_code === 4) {
-          showNotification('Недостаточно средств для списания указанной суммы', 'error');
-        } else {
-          showNotification(errorData.error_message || 'Ошибка при пополнении баланса', 'error');
-        }
-        throw new Error(errorData.error_message || 'Ошибка при пополнении баланса');
-      }
+      await postGuestBalance(guestId, 'balance', sum);
+      showNotification(`${action === 'sub' ? 'Баланс списан' : 'Баланс пополнен'} успешно`, 'success');
+      hideGuestModal('addBalanceModal');
+      await refreshGuestSearchResults();
     } catch (error) {
       console.error('Ошибка при пополнении баланса:', error);
-      if (!error.message.includes('Ошибка при пополнении баланса')) {
-        showNotification('Ошибка при пополнении баланса', 'error');
-      }
+      notifyGuestBalanceError(error, 'Ошибка при пополнении баланса');
     }
   }
-
 
   async function submitBalanceForm(guestId, action, formData) {
     try {
-      const response = await fetch('/guests_search/balance_update.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        credentials: 'include',
-        body: new URLSearchParams(formData)
-      });
-
-      if (response.ok) {
-        showNotification(`${action === 'add' ? 'Баланс пополнен' : 'Баланс списан'} успешно`, 'success');
-
-        const balanceModal = document.getElementById(`balanceModal_${guestId}_${action}`);
-        if (balanceModal) {
-          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
-            $(`#balanceModal_${guestId}_${action}`).modal('hide');
-          } else {
-            balanceModal.style.display = 'none';
-            balanceModal.classList.remove('show');
-            document.body.classList.remove('modal-open');
-          }
-        }
-
-        const searchInput = document.getElementById('guestSearchInput');
-        if (searchInput && searchInput.value.trim()) {
-          const results = await searchGuests(searchInput.value.trim());
-          if (results) {
-            displayGuestSearchResults(results);
-          }
-        }
-      } else {
-        throw new Error('Ошибка при обновлении баланса');
-      }
+      const balance = formData.get('balance');
+      const sum = action === 'sub' ? -parseFloat(balance) : parseFloat(balance);
+      await postGuestBalance(guestId, 'balance', sum);
+      showNotification(`${action === 'add' ? 'Баланс пополнен' : 'Баланс списан'} успешно`, 'success');
+      hideGuestModal(`balanceModal_${guestId}_${action}`);
+      await refreshGuestSearchResults();
     } catch (error) {
       console.error('Ошибка при обновлении баланса:', error);
-      showNotification('Ошибка при обновлении баланса', 'error');
+      notifyGuestBalanceError(error, 'Ошибка при обновлении баланса');
     }
   }
-
 
   async function submitAddBonusForm(guestId, action, formData) {
     try {
       const bonusBalance = formData.get('bonus_balance');
       const sum = action === 'add' ? parseFloat(bonusBalance) : -parseFloat(bonusBalance);
-
-
-      const authToken = getCookie('auth_token') || getCookie('token') || getCookie('access_token');
-      
-      const headers = {
-        'content-type': 'application/json'
-      };
-      
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-
-      const response = await fetch(`/master_api/guests/${guestId}/balance`, {
-        method: 'POST',
-        headers: headers,
-        credentials: 'include',
-        body: JSON.stringify({
-          type: 'bonus_balance',
-          sum: sum
-        })
-      });
-
-      if (response.ok) {
-        showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
-
-        const addBonusModal = document.getElementById('addBonusModal');
-        if (addBonusModal) {
-          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
-            $('#addBonusModal').modal('hide');
-          } else {
-            addBonusModal.style.display = 'none';
-            addBonusModal.classList.remove('show');
-            document.body.classList.remove('modal-open');
-            
-
-            const backdrop = document.querySelector('.modal-backdrop');
-            if (backdrop) {
-              backdrop.style.display = 'none';
-              backdrop.classList.remove('show');
-            }
-          }
-        }
-
-        const searchInput = document.getElementById('guestSearchInput');
-        if (searchInput && searchInput.value.trim()) {
-          const results = await searchGuests(searchInput.value.trim());
-          if (results) {
-            displayGuestSearchResults(results);
-          }
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        if (errorData.error_code === 9) {
-          showNotification('Ошибка авторизации. Пожалуйста, войдите в систему заново', 'error');
-        } else if (errorData.error_code === 4) {
-          showNotification('Недостаточно бонусов для списания указанной суммы', 'error');
-        } else {
-          showNotification(errorData.error_message || 'Ошибка при обновлении бонусов', 'error');
-        }
-        throw new Error(errorData.error_message || 'Ошибка при обновлении бонусов');
-      }
+      await postGuestBalance(guestId, 'bonus_balance', sum);
+      showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
+      hideGuestModal('addBonusModal');
+      await refreshGuestSearchResults();
     } catch (error) {
       console.error('Ошибка при обновлении бонусов:', error);
-      if (!error.message.includes('Ошибка при обновлении бонусов')) {
-        showNotification('Ошибка при обновлении бонусов', 'error');
-      }
+      notifyGuestBalanceError(error, 'Ошибка при обновлении бонусов');
     }
   }
 
-
   async function submitBonusForm(guestId, action, formData) {
     try {
-      const response = await fetch('/guests_search/bonus_update.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        credentials: 'include',
-        body: new URLSearchParams(formData)
-      });
-
-      if (response.ok) {
-        showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
-
-        const bonusModal = document.getElementById(`bonusModal_${guestId}_${action}`);
-        if (bonusModal) {
-          if (typeof $ !== 'undefined' && $.fn && $.fn.modal) {
-            $(`#bonusModal_${guestId}_${action}`).modal('hide');
-          } else {
-            bonusModal.style.display = 'none';
-            bonusModal.classList.remove('show');
-            document.body.classList.remove('modal-open');
-          }
-        }
-
-        const searchInput = document.getElementById('guestSearchInput');
-        if (searchInput && searchInput.value.trim()) {
-          const results = await searchGuests(searchInput.value.trim());
-          if (results) {
-            displayGuestSearchResults(results);
-          }
-        }
-      } else {
-        throw new Error('Ошибка при обновлении бонусов');
-      }
+      const bonusBalance = formData.get('bonus_balance');
+      const sum = action === 'add' ? parseFloat(bonusBalance) : -parseFloat(bonusBalance);
+      await postGuestBalance(guestId, 'bonus_balance', sum);
+      showNotification(`${action === 'add' ? 'Бонусы добавлены' : 'Бонусы списаны'} успешно`, 'success');
+      hideGuestModal(`bonusModal_${guestId}_${action}`);
+      await refreshGuestSearchResults();
     } catch (error) {
       console.error('Ошибка при обновлении бонусов:', error);
-      showNotification('Ошибка при обновлении бонусов', 'error');
+      notifyGuestBalanceError(error, 'Ошибка при обновлении бонусов');
     }
   }
 
@@ -2856,7 +2792,7 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener(function(changes, namespace) {
         if (namespace === 'sync' && changes.theme) {
-          const newTheme = changes.theme.newValue || 'light';
+          const newTheme = changes.theme.newValue || 'dark';
           currentTheme = newTheme; 
           document.documentElement.setAttribute('data-theme', newTheme);
 
@@ -3689,18 +3625,19 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         selectionMode = true;
         addSelectionStyles();
         showNotification('Режим выбора активирован! Кликните на блок ПК для выделения', 'success', 3000);
-        
 
         getModalBypassSetting(function(currentState) {
           savedModalBypassState = currentState;
           if (currentState) {
-
             restoreDivsToButtons();
           }
         });
-        
+
         if (window.location.pathname.includes('/all_clubs_pc/')) {
           showMassiveSelectionPanelForAllClubs();
+          setTimeout(() => {
+            try { enhanceSelectActionsPanel(); } catch (_) {}
+          }, 0);
         }
       }
       
@@ -3759,22 +3696,6 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         }, 300);
       }
       
-      // Обработка кнопки "Управлять" с классом lan-search-manage-btn
-      if (event.target && event.target.classList.contains('lan-search-manage-btn')) {
-        // Проверяем, включен ли переключатель "Обновляторы3000"
-        getUpdaters3000Setting(function(enabled) {
-          if (enabled) {
-            // Извлекаем UUID из onclick атрибута
-            const onclickAttr = event.target.getAttribute('onclick');
-            const uuidMatch = onclickAttr.match(/StartRemote\('([^']+)'\)/);
-            if (uuidMatch) {
-              const uuid = uuidMatch[1];
-              // Отправляем запрос на игнорирование энергосбережения
-              handleEnergySavingIgnore(uuid);
-            }
-          }
-        });
-      }
     });
 
     
@@ -4376,17 +4297,20 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function restoreHiddenElements() {
-    
-
     document.body.classList.remove('lan-search-hide-checkboxes');
     document.body.classList.remove('lan-search-hide-comments');
-    
 
-    document.body.removeAttribute('data-page');
-    
+    try {
+      localStorage.setItem('lanSearchHideCheckboxes', 'false');
+      localStorage.setItem('lanSearchHideComments', 'false');
+    } catch (_) {}
+    try {
+      chrome.storage.sync.set({ hideCheckboxes: false, hideComments: false });
+    } catch (_) {}
+    clearHideCheckboxesCache();
+    clearHideCommentsCache();
 
     showNotification('Скрытые элементы восстановлены!', 'success', 3000);
-    
   }
   
   function createMassiveSelectionPanelForAllClubs() {
@@ -4591,47 +4515,37 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     
 
     const restoreBtn = document.createElement('button');
-    restoreBtn.textContent = '🔄 Восстановить';
-    restoreBtn.title = 'Восстановить скрытые элементы (чекбоксы и комментарии)';
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'lgs-massive-restore';
+    restoreBtn.textContent = 'Восстановить скрытое';
+    restoreBtn.title = 'Показать чекбоксы и комментарии ПК';
     restoreBtn.style.cssText = `
-      flex: 1;
-      padding: 6px;
-      background: #17a2b8;
+      width: 100%;
+      padding: 6px 8px;
+      background: color-mix(in srgb, #17a2b8 70%, #000);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
-      margin-bottom: 8px;
+      margin: 0;
     `;
-    
-    restoreBtn.addEventListener('mouseenter', () => {
-      restoreBtn.style.background = '#138496';
-      restoreBtn.style.transform = 'scale(1.02)';
-    });
-    
-    restoreBtn.addEventListener('mouseleave', () => {
-      restoreBtn.style.background = '#17a2b8';
-      restoreBtn.style.transform = 'scale(1)';
-    });
-    
     restoreBtn.addEventListener('click', () => {
       restoreHiddenElements();
     });
-    
+
     buttonsContainer.appendChild(selectBtn);
     buttonsContainer.appendChild(deselectBtn);
-    
+
     quickButtons.appendChild(selectAllBtn);
     quickButtons.appendChild(clearAllBtn);
     quickButtons.appendChild(invertBtn);
-    
+
     panel.appendChild(input);
-    panel.appendChild(restoreBtn);
     panel.appendChild(buttonsContainer);
     panel.appendChild(quickButtons);
+    panel.appendChild(restoreBtn);
     
     
     nextRowElement.parentNode.insertBefore(panel, nextRowElement);
@@ -4832,406 +4746,252 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
 
   
-  function addCheckDisksButton() {
-    
+  function addCheckDisksButton(attempt = 0) {
     if (document.getElementById('checkDisksBtn')) return;
-    
-    
-    const selectPCBtn = document.getElementById('selectPC');
-    if (!selectPCBtn) return;
-    
-    
-    const checkDisksBtn = document.createElement('a');
+
+    const anchor =
+      document.getElementById('selectPC') ||
+      document.querySelector('.select-actions a, .select-actions button, a[href*="selectPC"]');
+
+    if (!anchor) {
+      if (attempt < 20) {
+        setTimeout(() => addCheckDisksButton(attempt + 1), 250);
+      }
+      return;
+    }
+
+    const checkDisksBtn = document.createElement('button');
+    checkDisksBtn.type = 'button';
     checkDisksBtn.id = 'checkDisksBtn';
-    checkDisksBtn.href = '#';
     checkDisksBtn.className = 'btn btn-outline-info mb-3 mr-1';
     checkDisksBtn.innerHTML = '<i class="fa fa-hdd-o"></i> Проверить диски';
     checkDisksBtn.title = 'Проверить состояние дисков FreeNAS';
-    
-    
-    selectPCBtn.parentNode.insertBefore(checkDisksBtn, selectPCBtn.nextSibling);
-    
-    
+
+    anchor.parentNode.insertBefore(checkDisksBtn, anchor.nextSibling);
+
     checkDisksBtn.addEventListener('click', function(e) {
       e.preventDefault();
       checkDisksStatus();
     });
-    
   }
-  
-  function getClubIdFromUrl() {
+
+  function resolveDiskClubId() {
+    const isRealClubId = (value) => {
+      if (value == null || value === '') return false;
+      const s = String(value).trim();
+      return s !== '' && s !== '0';
+    };
+
     const urlParams = new URLSearchParams(window.location.search);
-    const clubId = urlParams.get('club_id');
-    return clubId || '1';
+    const fromUrl = urlParams.get('club_id');
+    if (isRealClubId(fromUrl)) return String(fromUrl);
+
+    const select =
+      document.querySelector('select[name="club_id"]') ||
+      document.querySelector('#club_id') ||
+      document.querySelector('select.club_id, select[id*="club"]');
+    if (select) {
+      const firstReal = Array.from(select.options).find((opt) => isRealClubId(opt.value));
+      if (firstReal) return String(firstReal.value);
+      if (isRealClubId(select.value)) return String(select.value);
+    }
+
+    const dataClub = document.querySelector('[data-club-id]');
+    if (dataClub && isRealClubId(dataClub.getAttribute('data-club-id'))) {
+      return String(dataClub.getAttribute('data-club-id'));
+    }
+
+    const clubLink = document.querySelector('a[href*="club_id="]');
+    if (clubLink) {
+      try {
+        const href = new URL(clubLink.href, window.location.origin);
+        const id = href.searchParams.get('club_id');
+        if (isRealClubId(id)) return String(id);
+      } catch (_) {}
+    }
+
+    const hidden = document.querySelector('input[name="club_id"]');
+    if (hidden && isRealClubId(hidden.value)) return String(hidden.value);
+
+    // Без ?club_id= в URL — первый клуб (обычно 1)
+    return '1';
   }
-  
-  function checkDisksStatus() {
-    const clubId = getClubIdFromUrl();
-    
+
+  function getPcFormUuid(form) {
+    if (!form) return null;
+    if (form.id && /[0-9a-f-]{8,}/i.test(form.id)) return form.id;
+
+    const dataUuid =
+      form.getAttribute('data-uuid') ||
+      form.querySelector('[data-uuid]')?.getAttribute('data-uuid');
+    if (dataUuid) return dataUuid;
+
+    const remoteBtn = form.querySelector('[onclick*="StartRemote"]');
+    const match = remoteBtn?.getAttribute('onclick')?.match(/StartRemote\(['"]([^'"]+)['"]\)/);
+    return match ? match[1] : null;
+  }
+
+  function extractSnapshotDate(statusText) {
+    if (!statusText) return null;
+    const match =
+      String(statusText).match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/) ||
+      String(statusText).match(/@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/) ||
+      String(statusText).match(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
+    return match ? match[1].substring(0, 16) : null;
+  }
+
+  function formatDiskStatus(pc) {
+    const statusText = (pc.status_text || '').replace(/\s+/g, ' ').trim();
+    const snapshotDate = extractSnapshotDate(statusText);
+    if (snapshotDate) return { label: snapshotDate, ok: true };
+    if (/не существует|not exist|error|ошиб/i.test(statusText)) {
+      return { label: statusText.replace(/^[\s\-–—]+/, '') || 'Snapshot не найден', ok: false };
+    }
+    if (statusText && statusText !== '-') {
+      return { label: statusText.replace(/^[\s\-–—]+/, ''), ok: !/не|error|ошиб/i.test(statusText) };
+    }
+    return { label: pc.disk_name ? `disk ${pc.disk_name}` : 'Нет данных', ok: false };
+  }
+
+  function extractLatestSnapshotFromApi(item) {
+    const snapshots = Array.isArray(item?.snapshots) ? item.snapshots : [];
+    let latestDate = null;
+    let latestDateStr = null;
+
+    snapshots.forEach((snap) => {
+      const raw = [snap?.name, snap?.snapshot_name, snap?.created, snap?.date, snap?.text]
+        .filter(Boolean)
+        .join(' ');
+      const dateMatch = String(raw).match(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
+      if (!dateMatch) return;
+      const dateStr = dateMatch[1];
+      const date = new Date(
+        dateStr.split(' ')[0].split('.').reverse().join('-') + ' ' + dateStr.split(' ')[1]
+      );
+      if (!latestDate || date > latestDate) {
+        latestDate = date;
+        latestDateStr = dateStr.substring(0, 16);
+      }
+    });
+
+    if (latestDateStr) return latestDateStr;
+    if (item?.reference) {
+      const fromRef = extractSnapshotDate(item.reference);
+      if (fromRef) return fromRef;
+    }
+    return null;
+  }
+
+  async function checkDisksStatus() {
+    const clubId = resolveDiskClubId();
+    if (!clubId) {
+      showNotification('Не удалось определить club_id для проверки дисков', 'error', 3000);
+      return;
+    }
 
     const checkDisksBtn = document.getElementById('checkDisksBtn');
+    const originalText = checkDisksBtn ? checkDisksBtn.innerHTML : null;
+    const restoreButton = () => {
+      if (!checkDisksBtn || originalText == null) return;
+      checkDisksBtn.innerHTML = originalText;
+      checkDisksBtn.disabled = false;
+      checkDisksBtn.style.opacity = '1';
+    };
+
     if (checkDisksBtn) {
-
-      const originalText = checkDisksBtn.innerHTML;
-      
-
       checkDisksBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Проверяем...';
       checkDisksBtn.disabled = true;
       checkDisksBtn.style.opacity = '0.7';
-      
+    }
 
-      const restoreButton = () => {
-        checkDisksBtn.innerHTML = originalText;
-        checkDisksBtn.disabled = false;
-        checkDisksBtn.style.opacity = '1';
-      };
-    
     showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
-    
-      fetch('/freenas_wrap/', {
-        method: 'GET',
-        headers: {
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      })
-      .then(response => response.text())
-      .then(html => {
-        parseDisksData(html);
-        restoreButton();
-      })
-      .catch(error => {
-        console.error('Lan-Search: Ошибка при проверке дисков:', error);
-        showNotification('Ошибка при проверке дисков', 'error', 3000);
-        restoreButton();
-      });
-    } else {
 
-      showNotification(`Проверяем состояние дисков для клуба ${clubId}...`, 'success', 2000);
-    
-    fetch('/freenas_wrap/', {
-      method: 'GET',
-      headers: {
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => response.text())
-    .then(html => {
-      parseDisksData(html);
-    })
-    .catch(error => {
+    try {
+      const data = await masterApiRequest(`/freenas_wrap/${encodeURIComponent(clubId)}`);
+      applyFreenasDiskData(data?.item || data);
+      restoreButton();
+    } catch (error) {
       console.error('Lan-Search: Ошибка при проверке дисков:', error);
-      showNotification('Ошибка при проверке дисков', 'error', 3000);
-    });
+      showNotification(error.message || 'Ошибка при проверке дисков', 'error', 3500);
+      restoreButton();
     }
   }
-  
-  function parseDisksData(html) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const rows = doc.querySelectorAll('tr[id^="pcID-"]');
-    
-    if (rows.length === 0) {
-      showNotification('Диски не найдены', 'warning', 3000);
+
+  function applyFreenasDiskData(item) {
+    if (!item || typeof item !== 'object') {
+      showNotification('Пустой ответ FreeNAS', 'warning', 3000);
       return;
     }
-    
-    
-    const allHeadings = doc.querySelectorAll('.alert-heading');
-    let snapshotAlert = null;
-    
-    
-    allHeadings.forEach((heading, index) => {
-      const text = heading.textContent.trim();
-      
-      if (text === 'Снимки') {
-        snapshotAlert = heading.closest('.alert.alert-info');
-      }
-    });
-    
-    
-    if (snapshotAlert) {
-      const latestSnapshotDate = extractLatestSnapshotDate(snapshotAlert);
-      
-      if (latestSnapshotDate) {
-        addSnapshotInfoButton(latestSnapshotDate);
-      } else {
-      }
-    } else {
-    }
-    
-    addDiskInfoToPCs(rows);
-    addDiskManagementButton(rows);
-    showNotification(`Найдено ${rows.length} дисков`, 'success', 2000);
-  }
-  
-  function createDisksPanel(rows) {
-    
-    const existingPanel = document.getElementById('disksInfoPanel');
-    if (existingPanel) {
-      existingPanel.remove();
-    }
-    
-    const panel = document.createElement('div');
-    panel.id = 'disksInfoPanel';
-    panel.style.cssText = `
-      background: linear-gradient(135deg, rgba(248, 249, 250, 0.98), rgba(255, 255, 255, 0.95));
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      padding: 15px;
-      margin: 15px auto;
-      max-width: 800px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    `;
-    
-    const title = document.createElement('h5');
-    title.textContent = 'Состояние дисков FreeNAS';
-    title.style.cssText = 'margin-bottom: 15px; text-align: center; color: #333;';
-    
-    const table = document.createElement('table');
-    table.className = 'table table-sm table-striped';
-    table.style.cssText = 'margin-bottom: 0;';
-    
-    const thead = document.createElement('thead');
-    thead.innerHTML = `
-      <tr>
-        <th>ПК</th>
-        <th>Snapshot</th>
-        <th>Статус</th>
-      </tr>
-    `;
-    
-    const tbody = document.createElement('tbody');
-    
-    rows.forEach(row => {
-      const pcCell = row.querySelector('td[data-uuid]');
-      const statusCell = row.querySelector('td:nth-child(3)');
-      const switchCell = row.querySelector('td .switch');
-      
-      if (!pcCell || !statusCell) return;
-      
-      const pcName = pcCell.textContent.trim();
-      const uuid = pcCell.getAttribute('data-uuid');
-      const status = statusCell.textContent.trim();
-      const isExcluded = switchCell && switchCell.querySelector('input[type="checkbox"]').checked;
-      const snapshotDate = extractSnapshotDate(status);
-      
-      
-      const substitutionStatus = isExcluded ? 'Подмена отключена' : 'Подмена включена';
-      const statusColor = isExcluded ? '#dc3545' : '#28a745'; 
-      
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td><strong>${pcName}</strong></td>
-        <td>${snapshotDate}</td>
-        <td style="color: ${statusColor}; font-weight: 500;">
-          ${substitutionStatus}
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-    
-    table.appendChild(thead);
-    table.appendChild(tbody);
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.innerHTML = '×';
-    closeBtn.style.cssText = `
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #666;
-    `;
-    closeBtn.addEventListener('click', () => panel.remove());
-    
-    panel.appendChild(closeBtn);
-    panel.appendChild(title);
-    panel.appendChild(table);
-    
-    
-    const selectActions = document.querySelector('.select-actions');
-    if (selectActions) {
-      selectActions.parentNode.insertBefore(panel, selectActions.nextSibling);
-    } else {
-      document.body.appendChild(panel);
-    }
-  }
-  
-  function extractSnapshotDate(statusText) {
 
-    const match = statusText.match(/bigPool\/reference@(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
-    if (match) {
-      const dateTime = match[1];
+    const pcs = Array.isArray(item.pcs) ? item.pcs : [];
+    window.__lanSearchDiskPcs = pcs;
 
-      return dateTime.substring(0, 16); 
+    const existingMgmt = document.getElementById('diskManagementBtn');
+    if (existingMgmt) existingMgmt.remove();
+
+    const latestSnapshot = extractLatestSnapshotFromApi(item);
+    if (latestSnapshot) {
+      addSnapshotInfoButton(latestSnapshot);
+    } else {
+      const oldSnap = document.getElementById('snapshotInfoBtn');
+      if (oldSnap) oldSnap.remove();
     }
-    return 'Не определено';
+
+    if (item.truenas && item.truenas.is_alive === false && item.truenas.text) {
+      showNotification(String(item.truenas.text).trim(), 'warning', 4000);
+    }
+
+    addDiskInfoToPCs(pcs);
+
+    if (pcs.length === 0) {
+      showNotification('ПК с дисками не найдены', 'warning', 3000);
+    } else {
+      showNotification(`Найдено ${pcs.length} дисков`, 'success', 2000);
+    }
   }
-  
-  function extractLatestSnapshotDate(snapshotAlert) {
-    const dateCells = snapshotAlert.querySelectorAll('.col-4');
-    
-    let latestDate = null;
-    let latestDateStr = null;
-    
-    dateCells.forEach((cell, index) => {
-      const dateText = cell.textContent.trim();
-      
-      const dateMatch = dateText.match(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
-      if (dateMatch) {
-        const dateStr = dateMatch[1];
-        
-        const date = new Date(dateStr.split(' ')[0].split('.').reverse().join('-') + ' ' + dateStr.split(' ')[1]);
-        
-        if (!latestDate || date > latestDate) {
-          latestDate = date;
-          latestDateStr = dateStr;
-        }
-      }
-    });
-    
-    return latestDateStr;
-  }
-  
+
   function addSnapshotInfoButton(latestDate) {
-    
-    
     const existingBtn = document.getElementById('snapshotInfoBtn');
-    if (existingBtn) {
-      existingBtn.remove();
-    }
-    
-    
-    const snapshotBtn = document.createElement('a');
+    if (existingBtn) existingBtn.remove();
+
+    const snapshotBtn = document.createElement('button');
+    snapshotBtn.type = 'button';
     snapshotBtn.id = 'snapshotInfoBtn';
-    snapshotBtn.href = '#';
     snapshotBtn.className = 'btn btn-outline-success mb-3 mr-1';
     snapshotBtn.innerHTML = `<i class="fa fa-clock-o"></i> ${latestDate}`;
     snapshotBtn.title = 'Последний снимок FreeNAS';
-    
-    
+
     const checkDisksBtn = document.getElementById('checkDisksBtn');
-    
     if (checkDisksBtn) {
       checkDisksBtn.parentNode.insertBefore(snapshotBtn, checkDisksBtn.nextSibling);
-    } else {
     }
   }
-  
-  function findLatestSnapshot(doc) {
-    
-    const alertBlock = doc.querySelector('.alert.alert-info');
-    if (!alertBlock) return null;
-    
-    
-    const dateRows = alertBlock.querySelectorAll('.row');
-    let latestDate = null;
-    let latestRow = null;
-    
-    dateRows.forEach(row => {
-      const dateCell = row.querySelector('.col-4:first-child');
-      if (dateCell) {
-        const dateText = dateCell.textContent.trim();
-        const dateMatch = dateText.match(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})/);
-        if (dateMatch) {
-          const dateStr = dateMatch[1];
-          const date = new Date(dateStr.split(' ')[0].split('.').reverse().join('-') + ' ' + dateStr.split(' ')[1]);
-          
-          if (!latestDate || date > latestDate) {
-            latestDate = date;
-            latestRow = row;
-          }
-        }
-      }
-    });
-    
-    return latestRow;
-  }
-  
-  function showLatestSnapshot(snapshotRow) {
-    
-    const existingBlock = document.getElementById('latestSnapshotInfo');
-    if (existingBlock) {
-      existingBlock.remove();
-    }
-    
-    
-    const snapshotInfo = document.createElement('div');
-    snapshotInfo.id = 'latestSnapshotInfo';
-    snapshotInfo.style.cssText = `
-      margin-top: 10px;
-      padding: 8px 12px;
-      background: #d1ecf1;
-      border: 1px solid #bee5eb;
-      border-radius: 4px;
-      font-size: 12px;
-      color: #0c5460;
-    `;
-    
-    
-    const dateCell = snapshotRow.querySelector('.col-4:first-child');
-    const dateText = dateCell ? dateCell.textContent.trim() : 'Не определено';
-    
-    
-    const cleanDate = dateText.replace(/(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}):\d{2}/, '$1');
-    
-    snapshotInfo.innerHTML = `
-      <div style="font-weight: 500; margin-bottom: 2px;">Самый свежий снимок:</div>
-      <div style="font-size: 11px;">${cleanDate}</div>
-    `;
-    
-    
-    const checkDisksBtn = document.getElementById('checkDisksBtn');
-    if (checkDisksBtn) {
-      checkDisksBtn.parentNode.insertBefore(snapshotInfo, checkDisksBtn.nextSibling);
-    }
-  }
-  
-  function addDiskInfoToPCs(rows) {
-    
+
+  function addDiskInfoToPCs(pcs) {
     const diskDataMap = new Map();
-    
-    rows.forEach(row => {
-      const pcCell = row.querySelector('td[data-uuid]');
-      const statusCell = row.querySelector('td:nth-child(3)');
-      const switchCell = row.querySelector('td .switch');
-      
-      if (!pcCell || !statusCell) return;
-      
-      const uuid = pcCell.getAttribute('data-uuid');
-      const status = statusCell.textContent.trim();
-      const isExcluded = switchCell && switchCell.querySelector('input[type="checkbox"]').checked;
-      const snapshotDate = extractSnapshotDate(status);
-      
-      diskDataMap.set(uuid, {
-        snapshotDate,
-        isExcluded
-      });
+    (pcs || []).forEach((pc) => {
+      if (!pc?.uuid) return;
+      diskDataMap.set(String(pc.uuid).toUpperCase(), pc);
     });
-    
-    
-    const pcForms = document.querySelectorAll('form.pc');
-    pcForms.forEach(form => {
-      const uuid = form.id;
-      if (!uuid || !diskDataMap.has(uuid)) return;
-      
-      const diskData = diskDataMap.get(uuid);
-      
-      
+
+    const pcForms = document.querySelectorAll('form.pc, .lan-search-pc-container');
+    let matched = 0;
+
+    pcForms.forEach((form) => {
+      const uuid = getPcFormUuid(form);
+      if (!uuid) return;
+
+      const pc = diskDataMap.get(uuid.toUpperCase());
+      if (!pc) return;
+      matched += 1;
+
       const existingDiskInfo = form.querySelector('.disk-info');
-      if (existingDiskInfo) {
-        existingDiskInfo.remove();
-      }
-      
-      
+      if (existingDiskInfo) existingDiskInfo.remove();
+
+      const status = formatDiskStatus(pc);
       const diskInfo = document.createElement('div');
       diskInfo.className = 'disk-info';
+      diskInfo.setAttribute('data-uuid', uuid);
       diskInfo.style.cssText = `
         margin-top: 5px;
         padding: 5px;
@@ -5239,249 +4999,29 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         color: #666;
         text-align: center;
       `;
-      
-      
-      const substitutionStatus = diskData.isExcluded ? 'Подмена отключена' : 'Подмена включена';
-      const statusColor = diskData.isExcluded ? '#dc3545' : '#28a745'; 
-      
+
+      const statusColor = status.ok ? '#28a745' : '#dc3545';
+      const nameLine = pc.name ? `<div style="font-size: 8px; color: #888;">${escapeHtml(String(pc.name))}</div>` : '';
       diskInfo.innerHTML = `
-        <div style="font-size: 8px; color: #666;">${diskData.snapshotDate}</div>
-        <div style="margin-top: 3px; font-size: 8px; color: ${statusColor}; font-weight: 500;">
-          ${substitutionStatus}
+        ${nameLine}
+        <div style="margin-top: 2px; font-size: 8px; color: ${statusColor}; font-weight: 500;">
+          ${escapeHtml(status.label)}
         </div>
       `;
-      
-      
-      const allBrs = form.querySelectorAll('br');
-      if (allBrs.length > 0) {
-        const lastBr = allBrs[allBrs.length - 1];
-        lastBr.remove();
-      }
-      
-      
-      const emptyDiv = form.querySelector('div.col-12.text-center');
-      if (emptyDiv) {
-        emptyDiv.remove();
-      }
-      
+
       const unlockButton = form.querySelector('[data-type="UnLock"]');
-      if (unlockButton) {
-        unlockButton.parentNode.insertBefore(diskInfo, unlockButton.nextSibling);
+      const manageButton = form.querySelector('.lan-search-manage-btn');
+      const insertAfter = manageButton || unlockButton;
+      if (insertAfter && insertAfter.parentNode) {
+        insertAfter.parentNode.insertBefore(diskInfo, insertAfter.nextSibling);
       } else {
-        
         form.appendChild(diskInfo);
       }
     });
-  }
-  
-  function addDiskManagementButton(rows) {
 
-    const existingBtn = document.getElementById('diskManagementBtn');
-    if (existingBtn) {
-      existingBtn.remove();
+    if (matched === 0 && diskDataMap.size > 0) {
+      showNotification('Данные дисков получены, но не сопоставлены с карточками ПК', 'warning', 3500);
     }
-    
-
-    const managementBtn = document.createElement('a');
-    managementBtn.id = 'diskManagementBtn';
-    managementBtn.href = '#';
-    managementBtn.className = 'btn btn-outline-warning mb-3 mr-1';
-    managementBtn.innerHTML = '<i class="fa fa-cogs"></i> Управлять дисками';
-    managementBtn.title = 'Управление состоянием подмены дисков';
-    
-
-    const checkDisksBtn = document.getElementById('checkDisksBtn');
-    if (checkDisksBtn) {
-      checkDisksBtn.parentNode.insertBefore(managementBtn, checkDisksBtn.nextSibling);
-    }
-    
-
-    managementBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      addDiskTogglesToPCForms(rows);
-      
-      // Увеличиваем max-height карточек до 370px
-      const pcCards = document.querySelectorAll('form.pc.lan-search-styled.lan-search-pc-card, form.pc.lan-search-pc-card, .lan-search-pc-card');
-      pcCards.forEach(card => {
-        card.style.setProperty('max-height', '370px', 'important');
-      });
-    });
-    
-  }
-  
-  function addDiskTogglesToPCForms(rows) {
-
-    const pcForms = document.querySelectorAll('form.pc');
-    pcForms.forEach(form => {
-      const uuid = form.id;
-      if (!uuid) return;
-      
-
-      const existingToggle = form.querySelector('.disk-toggle-container');
-      if (existingToggle) {
-        existingToggle.remove();
-      }
-      
-
-      if (!document.getElementById('ios-toggle-styles')) {
-        const style = document.createElement('style');
-        style.id = 'ios-toggle-styles';
-        style.textContent = `
-          .disk-toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 5px;
-                margin-left: 20%;
-          }
-          
-          .disk-toggle-label {
-            font-size: 10px;
-            color: #666;
-            font-weight: 500;
-          }
-          
-          .ios-toggle {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 24px;
-              margin: 0;
-          
-            }
-          
-          .ios-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-          }
-          
-          .ios-toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-          }
-          
-          .ios-toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-          }
-          
-          .ios-toggle input:checked + .ios-toggle-slider {
-            background-color: #28a745;
-          }
-          
-          .ios-toggle input:checked + .ios-toggle-slider:before {
-            transform: translateX(16px);
-          }
-          
-          .ios-toggle input:focus + .ios-toggle-slider {
-            box-shadow: 0 0 1px #28a745;
-          }
-        `;
-        document.head.appendChild(style);
-      }
-      
-
-      const toggleContainer = document.createElement('div');
-      toggleContainer.className = 'disk-toggle-container';
-      toggleContainer.setAttribute('data-uuid', uuid);
-      
-
-      const toggle = document.createElement('label');
-      toggle.className = 'ios-toggle';
-      
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      
-
-      const existingDiskInfo = form.querySelector('.disk-info');
-      if (existingDiskInfo) {
-        const statusText = existingDiskInfo.textContent;
-
-        const isSubstitutionEnabled = statusText.includes('Подмена включена');
-        checkbox.checked = isSubstitutionEnabled;
-      }
-      
-      const slider = document.createElement('span');
-      slider.className = 'ios-toggle-slider';
-      
-      toggle.appendChild(checkbox);
-      toggle.appendChild(slider);
-      
-      toggleContainer.appendChild(toggle);
-      
-
-      toggleContainer.addEventListener('click', function(e) {
-        if (e.target.type === 'checkbox') {
-          const newValue = e.target.checked;
-          
-          
-          toggleDiskExclusion(uuid, newValue, this);
-        }
-      });
-      
-
-      const targetDiskInfo = form.querySelector('.disk-info');
-      if (targetDiskInfo) {
-        targetDiskInfo.appendChild(toggleContainer);
-      } else {
-        form.appendChild(toggleContainer);
-      }
-    });
-    
-    showNotification('Переключатели управления дисками добавлены в формы ПК', 'success', 2000);
-  }
-  
-  function toggleDiskExclusion(uuid, value, container) {
-    const clubId = getClubIdFromUrl();
-
-    const invertedValue = !value;
-    const url = `/freenas_wrap/crud.php?action=toggle_exclusion&club_id=${clubId}&machine_id=${uuid}&value=${invertedValue}`;
-    
-    
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json, text/javascript, */*; q=0.8',
-        'X-Requested-With': 'XMLHttpRequest'
-      }
-    })
-    .then(response => {
-      
-      if (response.status === 200) {
-        showNotification(`Состояние диска обновлено: ${value ? 'включена' : 'отключена'}`, 'success', 2000);
-      } else {
-        showNotification('Ошибка при обновлении состояния диска', 'error', 3000);
-
-        const checkbox = container.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-          checkbox.checked = !value;
-        }
-      }
-    })
-    .catch(error => {
-      console.error('Lan-Search: Ошибка при переключении диска:', error);
-      showNotification('Ошибка сети при обновлении диска', 'error', 3000);
-
-      const checkbox = container.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        checkbox.checked = !value;
-      }
-    });
   }
 
   
@@ -5737,40 +5277,28 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       
       chrome.storage.sync.get(['hideCheckboxes'], function(result) {
         if (chrome.runtime.lastError) {
-          
-          
           const localHideCheckboxes = localStorage.getItem('lanSearchHideCheckboxes');
-          const enabled = localHideCheckboxes === 'true';
-          
+          const enabled = localHideCheckboxes === null ? true : localHideCheckboxes === 'true';
           hideCheckboxesCache = enabled;
           hideCheckboxesCacheTime = now;
-          
           callback(enabled);
         } else {
-          const enabled = result.hideCheckboxes || false;
-          
-          
+          const missing = !result || result.hideCheckboxes === undefined;
+          const enabled = missing ? true : !!result.hideCheckboxes;
           hideCheckboxesCache = enabled;
           hideCheckboxesCacheTime = now;
-          
-          
-          try {
-            localStorage.setItem('lanSearchHideCheckboxes', enabled.toString());
-          } catch (e) {
+          try { localStorage.setItem('lanSearchHideCheckboxes', enabled.toString()); } catch (e) {}
+          if (missing) {
+            try { chrome.storage.sync.set({ hideCheckboxes: true }); } catch (_) {}
           }
-          
           callback(enabled);
         }
       });
     } catch (e) {
-      
-      
       const localHideCheckboxes = localStorage.getItem('lanSearchHideCheckboxes');
-      const enabled = localHideCheckboxes === 'true';
-      
+      const enabled = localHideCheckboxes === null ? true : localHideCheckboxes === 'true';
       hideCheckboxesCache = enabled;
       hideCheckboxesCacheTime = now;
-      
       callback(enabled);
     }
   }
@@ -5780,67 +5308,50 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
     hideCheckboxesCacheTime = 0;
   }
   
-  function applyHideCheckboxes() {
-    console.log('applyHideCheckboxes called');
-    console.log('Current pathname:', window.location.pathname);
-    if (window.location.pathname.includes('/all_clubs_pc/')) {
-      document.body.setAttribute('data-page', 'all_clubs_pc');
-    document.body.classList.add('lan-search-hide-checkboxes');
-      console.log('Added data-page and lan-search-hide-checkboxes class to body');
-      console.log('Body classes:', document.body.className);
-      console.log('Body data-page:', document.body.getAttribute('data-page'));
-    } else {
-      console.log('Not on all_clubs_pc page');
-    }
+  function refreshPcInfoRowsAfterHideChange() {
+    if (!document.documentElement.classList.contains('lgs-new-ui-pc')) return;
+    document.querySelectorAll('#layoutStatusPC form.pc').forEach((form) => {
+      try { syncNewUiPcInfoRows(form); } catch (_) {}
+    });
   }
-  
+
+  function applyHideCheckboxes() {
+    if (!window.location.pathname.includes('/all_clubs_pc/')) return;
+    document.body.setAttribute('data-page', 'all_clubs_pc');
+    document.body.classList.add('lan-search-hide-checkboxes');
+    refreshPcInfoRowsAfterHideChange();
+  }
+
   function removeHideCheckboxes() {
     document.body.classList.remove('lan-search-hide-checkboxes');
-
     if (!window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.removeAttribute('data-page');
     }
+    refreshPcInfoRowsAfterHideChange();
   }
   
   function initHideCheckboxes() {
-    console.log('initHideCheckboxes called');
-    if (!shouldAutoActivate()) {
-      console.log('shouldAutoActivate returned false');
-      return;
-    }
-    
-    console.log('Current pathname:', window.location.pathname);
-    if (!window.location.pathname.includes('/all_clubs_pc/')) {
-      console.log('Not on all_clubs_pc page, returning');
-      return;
-    }
-    
+    if (!shouldAutoActivate()) return;
+    if (!window.location.pathname.includes('/all_clubs_pc/')) return;
 
-
-    
     let processingHideCheckboxes = false;
-    
+
     function processHideCheckboxes() {
-      console.log('processHideCheckboxes called');
       if (processingHideCheckboxes) return;
       processingHideCheckboxes = true;
-      
+
       getHideCheckboxesSetting(function(hideCheckboxesEnabled) {
-        console.log('getHideCheckboxesSetting callback, enabled:', hideCheckboxesEnabled);
         if (hideCheckboxesEnabled) {
           applyHideCheckboxes();
         } else {
           removeHideCheckboxes();
         }
-        
         processingHideCheckboxes = false;
       });
     }
-    
-    
 
-    
-    
+    processHideCheckboxes();
+
     chrome.storage.onChanged.addListener(function(changes, namespace) {
       if (namespace === 'sync' && changes.hideCheckboxes) {
         clearHideCheckboxesCache();
@@ -5878,40 +5389,28 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       
       chrome.storage.sync.get(['hideComments'], function(result) {
         if (chrome.runtime.lastError) {
-          
-          
           const localHideComments = localStorage.getItem('lanSearchHideComments');
-          const enabled = localHideComments === 'true';
-          
+          const enabled = localHideComments === null ? true : localHideComments === 'true';
           hideCommentsCache = enabled;
           hideCommentsCacheTime = now;
-          
           callback(enabled);
         } else {
-          const enabled = result.hideComments || false;
-          
-          
+          const missing = !result || result.hideComments === undefined;
+          const enabled = missing ? true : !!result.hideComments;
           hideCommentsCache = enabled;
           hideCommentsCacheTime = now;
-          
-          
-          try {
-            localStorage.setItem('lanSearchHideComments', enabled.toString());
-          } catch (e) {
+          try { localStorage.setItem('lanSearchHideComments', enabled.toString()); } catch (e) {}
+          if (missing) {
+            try { chrome.storage.sync.set({ hideComments: true }); } catch (_) {}
           }
-          
           callback(enabled);
         }
       });
     } catch (e) {
-      
-      
       const localHideComments = localStorage.getItem('lanSearchHideComments');
-      const enabled = localHideComments === 'true';
-      
+      const enabled = localHideComments === null ? true : localHideComments === 'true';
       hideCommentsCache = enabled;
       hideCommentsCacheTime = now;
-      
       callback(enabled);
     }
   }
@@ -5922,66 +5421,42 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   }
   
   function applyHideComments() {
-    console.log('applyHideComments called');
-    console.log('Current pathname:', window.location.pathname);
-    if (window.location.pathname.includes('/all_clubs_pc/')) {
-      document.body.setAttribute('data-page', 'all_clubs_pc');
+    if (!window.location.pathname.includes('/all_clubs_pc/')) return;
+    document.body.setAttribute('data-page', 'all_clubs_pc');
     document.body.classList.add('lan-search-hide-comments');
-      console.log('Added data-page and lan-search-hide-comments class to body');
-      console.log('Body classes:', document.body.className);
-      console.log('Body data-page:', document.body.getAttribute('data-page'));
-    } else {
-      console.log('Not on all_clubs_pc page');
-    }
+    refreshPcInfoRowsAfterHideChange();
   }
-  
+
   function removeHideComments() {
     document.body.classList.remove('lan-search-hide-comments');
-
     if (!window.location.pathname.includes('/all_clubs_pc/')) {
       document.body.removeAttribute('data-page');
     }
+    refreshPcInfoRowsAfterHideChange();
   }
   
   function initHideComments() {
-    console.log('initHideComments called');
-    if (!shouldAutoActivate()) {
-      console.log('shouldAutoActivate returned false');
-      return;
-    }
-    
-    console.log('Current pathname:', window.location.pathname);
-    if (!window.location.pathname.includes('/all_clubs_pc/')) {
-      console.log('Not on all_clubs_pc page, returning');
-      return;
-    }
-    
+    if (!shouldAutoActivate()) return;
+    if (!window.location.pathname.includes('/all_clubs_pc/')) return;
 
-
-    
     let processingHideComments = false;
-    
+
     function processHideComments() {
-      console.log('processHideComments called');
       if (processingHideComments) return;
       processingHideComments = true;
-      
+
       getHideCommentsSetting(function(hideCommentsEnabled) {
-        console.log('getHideCommentsSetting callback, enabled:', hideCommentsEnabled);
         if (hideCommentsEnabled) {
           applyHideComments();
         } else {
           removeHideComments();
         }
-        
         processingHideComments = false;
       });
     }
-    
-    
 
-    
-    
+    processHideComments();
+
     chrome.storage.onChanged.addListener(function(changes, namespace) {
       if (namespace === 'sync' && changes.hideComments) {
         clearHideCommentsCache();
@@ -5989,6 +5464,84 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       }
     });
   }
+
+  /* —— скрыть «ПО для управления» —— */
+  let hideRemoteDownloadCache = null;
+  let hideRemoteDownloadCacheTime = 0;
+
+  function getHideRemoteDownloadSetting(callback) {
+    const now = Date.now();
+    if (hideRemoteDownloadCache !== null && (now - hideRemoteDownloadCacheTime) < CACHE_DURATION) {
+      callback(hideRemoteDownloadCache);
+      return;
+    }
+    try {
+      chrome.storage.sync.get(['hideRemoteDownload'], function(result) {
+        if (chrome.runtime.lastError) {
+          const local = localStorage.getItem('lanSearchHideRemoteDownload');
+          const enabled = local === null ? true : local === 'true';
+          hideRemoteDownloadCache = enabled;
+          hideRemoteDownloadCacheTime = now;
+          callback(enabled);
+        } else {
+          const missing = !result || result.hideRemoteDownload === undefined;
+          const enabled = missing ? true : !!result.hideRemoteDownload;
+          hideRemoteDownloadCache = enabled;
+          hideRemoteDownloadCacheTime = now;
+          try { localStorage.setItem('lanSearchHideRemoteDownload', enabled.toString()); } catch (_) {}
+          if (missing) {
+            try { chrome.storage.sync.set({ hideRemoteDownload: true }); } catch (_) {}
+          }
+          callback(enabled);
+        }
+      });
+    } catch (e) {
+      const local = localStorage.getItem('lanSearchHideRemoteDownload');
+      const enabled = local === null ? true : local === 'true';
+      hideRemoteDownloadCache = enabled;
+      hideRemoteDownloadCacheTime = now;
+      callback(enabled);
+    }
+  }
+
+  function applyHideRemoteDownload() {
+    document.body.classList.add('lan-search-hide-remote-download');
+  }
+
+  function removeHideRemoteDownload() {
+    document.body.classList.remove('lan-search-hide-remote-download');
+  }
+
+  function initHideRemoteDownload() {
+    if (!shouldAutoActivate()) return;
+    if (!window.location.pathname.includes('/all_clubs_pc/')) return;
+
+    function process() {
+      getHideRemoteDownloadSetting(function(enabled) {
+        if (enabled) applyHideRemoteDownload();
+        else removeHideRemoteDownload();
+      });
+    }
+
+    process();
+
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+      if (namespace === 'sync' && changes.hideRemoteDownload) {
+        hideRemoteDownloadCache = null;
+        hideRemoteDownloadCacheTime = 0;
+        process();
+      }
+    });
+  }
+
+  window.lanSearchSyncHideRemoteDownload = function() {
+    hideRemoteDownloadCache = null;
+    hideRemoteDownloadCacheTime = 0;
+    getHideRemoteDownloadSetting(function(enabled) {
+      if (enabled) applyHideRemoteDownload();
+      else removeHideRemoteDownload();
+    });
+  };
   
   
   window.lanSearchSyncHideComments = function() {
@@ -6350,50 +5903,60 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
   
   
   function addManageButtonsToPCs() {
-    console.log('addManageButtonsToPCs called');
-    
-
     if (!window.location.pathname.includes('/all_clubs_pc/')) {
       return;
     }
-    
 
     const pcForms = document.querySelectorAll('form.pc, .lan-search-pc-container');
-    
-    pcForms.forEach(form => {
 
-      const unlockButton = form.querySelector('[data-type="UnLock"]');
-      if (!unlockButton) return;
-      
-
+    pcForms.forEach((form) => {
       if (form.querySelector('.lan-search-manage-btn')) return;
-      
 
-      const manageButton = form.querySelector('button[onclick*="StartRemote"]');
-      if (!manageButton) return;
-      
+      const unlockButton =
+        form.querySelector('[data-type="UnLock"]') ||
+        form.querySelector('[data-type="Lock"]') ||
+        form.querySelector('.teh_time_ullock, .teh_time_lock, .shutdown, .poweron');
 
-      const onclickAttr = manageButton.getAttribute('onclick');
-      const uuidMatch = onclickAttr.match(/StartRemote\('([^']+)'\)/);
-      if (!uuidMatch) return;
-      
-      const uuid = uuidMatch[1];
-      
+      const manageButton =
+        form.querySelector('button[onclick*="StartRemote"]') ||
+        form.querySelector('[data-call="StartRemote"]') ||
+        form.querySelector('button.connect_pc');
 
+      let uuid = null;
+      const onclickAttr = manageButton?.getAttribute('onclick') || '';
+      const uuidMatch = onclickAttr.match(/StartRemote\(['"]([^'"]+)['"]\)/);
+      if (uuidMatch) {
+        uuid = uuidMatch[1];
+      } else {
+        uuid = getPcFormUuid(form);
+      }
+      if (!uuid) return;
+
+      const insertTarget =
+        unlockButton ||
+        form.querySelector('.action.god') ||
+        form.querySelector('.pc-telemetry') ||
+        form;
+
+      const newUiPcOn = document.documentElement.classList.contains('lgs-new-ui-pc');
       const newManageButton = document.createElement('button');
-      newManageButton.className = 'btn btn-primary btn-block lan-search-manage-btn';
-      newManageButton.innerHTML = '<i class="fa fa-desktop"></i> Управлять';
-      newManageButton.title = 'Управлять ПК';
-      newManageButton.setAttribute('onclick', `StartRemote('${uuid}')`);
-      
+      newManageButton.type = 'button';
+      newManageButton.className = newUiPcOn
+        ? 'btn btn-primary lan-search-manage-btn lgs-pc-ico-btn'
+        : 'btn btn-primary btn-block lan-search-manage-btn';
+      newManageButton.innerHTML = newUiPcOn ? LGS_ICONS.monitor : '<i class="fa fa-desktop"></i> Управлять';
+      newManageButton.title = 'Управлять ПК (Landesk)';
+      newManageButton.setAttribute('aria-label', 'Управлять');
+      newManageButton.setAttribute('data-call', 'StartRemote');
+      newManageButton.setAttribute('onclick', `StartRemote("${uuid}")`);
 
-      unlockButton.parentNode.insertBefore(newManageButton, unlockButton.nextSibling);
-      
-
-      const allBrs = form.querySelectorAll('br');
-      allBrs.forEach(br => br.remove());
-      
-      console.log('Added manage button for PC:', uuid);
+      if (unlockButton && unlockButton.parentNode) {
+        unlockButton.parentNode.insertBefore(newManageButton, unlockButton.nextSibling);
+      } else if (insertTarget && insertTarget !== form && insertTarget.parentNode) {
+        insertTarget.parentNode.insertBefore(newManageButton, insertTarget);
+      } else {
+        form.appendChild(newManageButton);
+      }
     });
   }
   
@@ -6408,7 +5971,16 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
       processingStyles = true;
       
       getPCStylesSetting(function(stylesEnabled) {
-        
+        const newUiPcOn = document.documentElement.classList.contains('lgs-new-ui-pc');
+
+        // сетка Нового UI сама раскладывает панель ПК — старый style_pc не трогаем
+        if (newUiPcOn) {
+          removePCStyles();
+          prepareNewUiPcMap();
+          processingStyles = false;
+          return;
+        }
+
         if (stylesEnabled) {
           injectPCStyles();
           applyPCStyles();
@@ -6453,7 +6025,10 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
           
           if (hasNewPCCards) {
             clearTimeout(observerTimeout);
-            observerTimeout = setTimeout(processStyles, 500);
+            observerTimeout = setTimeout(() => {
+              processStyles();
+              addManageButtonsToPCs();
+            }, 500);
           }
         }
       });
@@ -6487,6 +6062,557 @@ const DOMAIN_INFO_CACHE_DURATION = 5 * 60 * 1000; // 5 минут
         removePCStylesFromCards();
       }
     });
+  };
+
+  function isAllClubsPcPage() {
+    return (window.location.pathname || '').includes('/all_clubs_pc/');
+  }
+
+  function readLocalNewUiFlags() {
+    let newUi = true;
+    let newUiAllClubsPc = true;
+    try {
+      const ui = localStorage.getItem('lanSearchNewUi');
+      newUi = ui === null ? true : ui === 'true';
+      const pc = localStorage.getItem('lanSearchNewUiAllClubsPc');
+      newUiAllClubsPc = pc === null ? newUi : pc === 'true';
+    } catch (_) {}
+    return { newUi, newUiAllClubsPc };
+  }
+
+  function writeLocalNewUiFlags(settings) {
+    try {
+      localStorage.setItem('lanSearchNewUi', (!!settings.newUi).toString());
+      localStorage.setItem('lanSearchNewUiAllClubsPc', (!!settings.newUiAllClubsPc).toString());
+    } catch (_) {}
+  }
+
+  function getNewUiSetting(callback) {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['newUi', 'newUiAllClubsPc'], function(result) {
+          if (chrome.runtime.lastError) {
+            callback(readLocalNewUiFlags());
+            return;
+          }
+          const newUi = result && result.newUi === undefined ? true : !!(result && result.newUi);
+          const newUiAllClubsPc = result && result.newUiAllClubsPc === undefined
+            ? newUi
+            : !!(result && result.newUiAllClubsPc);
+          const settings = { newUi, newUiAllClubsPc };
+          writeLocalNewUiFlags(settings);
+          if (result && (result.newUi === undefined || result.newUiAllClubsPc === undefined)) {
+            try {
+              chrome.storage.sync.set({
+                newUi: settings.newUi,
+                newUiAllClubsPc: settings.newUiAllClubsPc
+              });
+            } catch (_) {}
+          }
+          callback(settings);
+        });
+        return;
+      }
+    } catch (_) {}
+    callback(readLocalNewUiFlags());
+  }
+
+  function iconifyPcCardToolbar(form) {
+    if (!form) return;
+
+    const box = form.querySelector(':scope > div.mb-3, :scope > div.border, :scope > div');
+    if (!box) return;
+
+    let toolbar = form.querySelector('.lgs-pc-actions');
+    if (!toolbar) {
+      toolbar = document.createElement('div');
+      toolbar.className = 'lgs-pc-actions';
+    }
+
+    const ensureRow = (cls) => {
+      let row = toolbar.querySelector('.' + cls);
+      if (!row) {
+        row = document.createElement('div');
+        row.className = cls;
+      }
+      return row;
+    };
+
+    const powerRow = ensureRow('lgs-pc-actions-power');
+    const opsRow = ensureRow('lgs-pc-actions-ops');
+
+    const placeIcoBtn = (btn, spec) => {
+      if (!btn || btn.closest('.dropdown-menu')) return;
+      btn.classList.remove('btn-block', 'col-12', 'text-truncate', 'mb-1', 'w-100', 'btn-group', 'lgs-pc-text-btn');
+      btn.classList.add('lgs-pc-ico-btn');
+      btn.title = spec.title;
+      btn.setAttribute('aria-label', spec.title);
+      if (spec.kind) btn.setAttribute('data-lgs-kind', spec.kind);
+      else btn.removeAttribute('data-lgs-kind');
+      if (!btn.querySelector('.lgs-ico')) {
+        btn.innerHTML = LGS_ICONS[spec.icon] || '';
+      }
+      if (!spec.row.contains(btn)) spec.row.appendChild(btn);
+    };
+
+    // всё SVG: питание / управлять + тех / блок
+    const specs = [
+      { sel: '.session_stop', icon: 'reset', title: 'Сброс', row: powerRow },
+      { sel: '.shutdown, [data-type="Shutdown"]', icon: 'power', title: 'Выключить', row: powerRow },
+      { sel: '.poweron, [data-type="Poweron"]', icon: 'powerOn', title: 'Включить', row: powerRow },
+      { sel: '.teh_time_ullock, [data-type="startTehTime"]', icon: 'wrench', title: 'Тех.старт', kind: 'tech-start', row: opsRow },
+      { sel: '.teh_time_lock, [data-type="stopTehTime"]', icon: 'stop', title: 'Тех.стоп', kind: 'tech-stop', row: opsRow },
+      // ПК: Lock/UnLock; ТВ/реле (name=rele_type): LockPS/UnLockPS
+      { sel: '[data-type="Lock"], [data-type="LockPS"]', icon: 'lock', title: 'Заблокировать', kind: 'lock', row: opsRow },
+      { sel: '[data-type="UnLock"], [data-type="UnLockPS"]', icon: 'unlock', title: 'Разблокировать', kind: 'unlock', row: opsRow }
+    ];
+
+    specs.forEach((spec) => placeIcoBtn(form.querySelector(spec.sel), spec));
+
+    // Управлять: наша кнопка и/или landesk-ссылка connect_pc (Admin PC и т.п.)
+    const manageSpec = { icon: 'monitor', title: 'Управлять', row: powerRow };
+    const manageCandidates = [...form.querySelectorAll('.lan-search-manage-btn, a.connect_pc, .connect_pc')]
+      .filter((el) => !el.closest('.dropdown-menu'));
+    if (manageCandidates.length) {
+      placeIcoBtn(manageCandidates[0], manageSpec);
+      manageCandidates.slice(1).forEach((el) => {
+        el.classList.add('lgs-pc-row-empty');
+        el.style.display = 'none';
+      });
+    }
+
+    const rows = [powerRow, opsRow].filter((row) => row.childElementCount);
+    if (rows.length) {
+      if (toolbar.querySelector('.lgs-pc-actions-power') !== powerRow || toolbar.querySelector('.lgs-pc-actions-ops') !== opsRow) {
+        toolbar.replaceChildren(...rows);
+      }
+
+      if (!toolbar.isConnected) {
+        const status = box.querySelector('[data-type="status"]');
+        const anchorRow = status?.closest('.row') || box.querySelector('.pc_name')?.closest('.row');
+        if (anchorRow && anchorRow.parentNode === box) {
+          anchorRow.insertAdjacentElement('afterend', toolbar);
+        } else {
+          box.appendChild(toolbar);
+        }
+      }
+    }
+
+    // статус-строка даже если кнопок нет (Admin PC)
+    syncNewUiPcInfoRows(form, box);
+
+    form.dataset.lgsIcoToolbar = '1';
+  }
+
+  function shortenPcStatus(text) {
+    const t = (text || '').trim();
+    const map = {
+      'Разблокирован': 'Разблок',
+      'Заблокирован': 'Блок',
+      'Свободен': 'Свободен',
+      'Занят': 'Занят',
+      'Тех.режим': 'Тех',
+      'Тех режим': 'Тех',
+      'Тех. время': 'Тех',
+      'Тех.время': 'Тех',
+      'Тех время': 'Тех',
+      'Соединение': '…',
+      'Offline': 'Offline',
+      'Оффлайн': 'Оффлайн'
+    };
+    return map[t] || t;
+  }
+
+  function syncNewUiStatusLine(form) {
+    const status = form.querySelector('[data-type="status"]');
+    if (!status) return;
+
+    status.classList.add('lgs-pc-status-src');
+    let line = form.querySelector('.lgs-pc-status-line');
+    if (!line) {
+      line = document.createElement('div');
+      line.className = 'lgs-pc-status-line';
+      status.insertAdjacentElement('afterend', line);
+    }
+
+    // переносим цветовой класс статуса на строку
+    line.className = 'lgs-pc-status-line';
+    ['bg-success', 'bg-warning', 'bg-danger', 'bg-secondary', 'bg-info', 'bg-primary', 'bg-dark'].forEach((c) => {
+      if (status.classList.contains(c)) line.classList.add(c);
+    });
+
+    const raw = (status.textContent || '').trim();
+    const remain = (form.querySelector('.remain')?.textContent || '').trim();
+    const timeLock = (form.querySelector('.timeLock')?.textContent || '').trim();
+    const fio = (form.querySelector('.fio, .text.fio')?.textContent || '').replace(/\u00a0/g, ' ').trim();
+
+    let text = shortenPcStatus(raw);
+    if (remain) text += ' · ' + remain;
+    line.textContent = text;
+    line.title = [raw, remain, timeLock ? 'до ' + timeLock : '', fio].filter(Boolean).join(' · ');
+  }
+
+  function syncNewUiPcInfoRows(form, box) {
+    box = box || form?.querySelector(':scope > div.mb-3, :scope > div.border, :scope > div');
+    if (!box) return;
+
+    syncNewUiStatusLine(form);
+
+    box.querySelectorAll(':scope > .row').forEach((row) => {
+      row.classList.remove('lgs-pc-row-empty');
+      if (row.querySelector('.dropdown-menu, .pc-dropdow, .dropdow, .pc_name, [data-type="status"], .lgs-pc-actions, .lgs-pc-status-line')) {
+        return;
+      }
+
+      // время ушло в статус-строку — pc_info всегда скрыт
+      if (row.classList.contains('pc_info') || row.querySelector('.remain, .timeLock, .locker')) {
+        row.style.minHeight = '';
+        row.style.removeProperty('min-height');
+        row.classList.add('lgs-pc-row-empty');
+        return;
+      }
+
+      const fio = row.querySelector('.fio, .text.fio, .text-body.fio');
+      if (fio) {
+        // ФИО в title статус-строки; ряд не резервируем — ровная высота
+        row.classList.add('lgs-pc-row-empty');
+        return;
+      }
+
+      // чекбоксы / комментарии — только если включены соответствующие галочки
+      const hasComment = row.querySelector('.comment_input, input[id^="comment_"]');
+      const hasCheckbox = row.querySelector('.custom-checkbox');
+      if (hasComment || hasCheckbox) {
+        const hideCb = document.body.classList.contains('lan-search-hide-checkboxes');
+        const hideCm = document.body.classList.contains('lan-search-hide-comments');
+        if ((hasComment && hideCm) || (hasCheckbox && hideCb)) {
+          if ((!hasComment || hideCm) && (!hasCheckbox || hideCb)) {
+            row.classList.add('lgs-pc-row-empty');
+          }
+        }
+        return;
+      }
+      // пустые spacer-ряды сайта (min-height: 45px)
+      const leftover = row.querySelectorAll(
+        'button:not(.lgs-pc-ico-btn):not(.pc-telemetry), .btn:not(.lgs-pc-ico-btn):not(.connect_pc), a.btn:not(.connect_pc), a.connect_pc:not(.lgs-pc-ico-btn)'
+      );
+      if (!leftover.length && !row.querySelector('.pc-telemetry')) {
+        row.style.minHeight = '';
+        row.style.removeProperty('min-height');
+        row.classList.add('lgs-pc-row-empty');
+      }
+    });
+
+    // прячем connect_pc вне тулбара (дубль «Управлять»)
+    form.querySelectorAll('a.connect_pc, .connect_pc').forEach((el) => {
+      if (el.classList.contains('lgs-pc-ico-btn') || el.closest('.lgs-pc-actions')) return;
+      el.style.display = 'none';
+    });
+
+    const telemetry = form.querySelector('.pc-telemetry');
+    if (telemetry) {
+      telemetry.classList.add('lgs-pc-telemetry');
+      if (telemetry.parentNode !== box || box.lastElementChild !== telemetry) {
+        box.appendChild(telemetry);
+      }
+    }
+  }
+
+  function pairPcPowerButtons(form) {
+    if (!form) return;
+
+    // только Включить + Выключить (не «Сброс»)
+    const off = form.querySelector('button.shutdown, .shutdown[data-type], [data-type="Shutdown"]');
+    const on = form.querySelector('button.poweron, .poweron[data-type], [data-type="Poweron"]');
+
+    let pair = form.querySelector(':scope > .lgs-pc-power-pair, :scope .lgs-pc-power-pair');
+
+    // вытащить Сброс / чужие кнопки из пары
+    if (pair) {
+      [...pair.children].forEach((el) => {
+        if (el === off || el === on) return;
+        if (pair.parentNode) pair.parentNode.insertBefore(el, pair);
+      });
+    }
+
+    if (!off || !on) {
+      if (pair) {
+        while (pair.firstChild && pair.parentNode) {
+          pair.parentNode.insertBefore(pair.firstChild, pair);
+        }
+        pair.remove();
+      }
+      return;
+    }
+
+    if (!pair) {
+      pair = document.createElement('div');
+      pair.className = 'lgs-pc-power-pair';
+    }
+
+    const offGroup = off.closest('.btn-group');
+    const onGroup = on.closest('.btn-group');
+    const offRow = off.closest('.row');
+    const onRow = on.closest('.row');
+    const box = form.querySelector(':scope > div.mb-3, :scope > div.border, :scope > div') || form;
+    const anchor = (onGroup && onGroup.parentNode === box && onGroup)
+      || (offGroup && offGroup.parentNode === box && offGroup)
+      || on.parentElement;
+
+    // вынуть из bootstrap btn-group — иначе margin-left:-1px и кривые радиусы
+    [on, off].forEach((btn) => {
+      btn.classList.remove('col-12', 'btn-block', 'w-100', 'btn-group');
+      btn.style.marginLeft = '';
+    });
+
+    if (!(pair.contains(on) && pair.contains(off) && pair.parentNode)) {
+      const insertAt = (anchor && anchor.parentNode) ? anchor : box;
+      if (insertAt && insertAt.parentNode && anchor && anchor.parentNode) {
+        anchor.parentNode.insertBefore(pair, anchor);
+      } else if (box) {
+        box.appendChild(pair);
+      }
+      pair.appendChild(on);
+      pair.appendChild(off);
+    }
+
+    [offGroup, onGroup].forEach((group) => {
+      if (group && group !== pair && !group.querySelector('button, a, .btn')) group.remove();
+    });
+    [offRow, onRow].forEach((row) => {
+      if (row && row !== pair.parentElement && !row.querySelector('button, a, .btn, input, .remain, .timeLock, .fio, .lgs-pc-power-pair')) {
+        row.remove();
+      }
+    });
+  }
+
+  function enhancePcCardChrome() {
+    if (!isAllClubsPcPage()) return;
+    if (!document.documentElement.classList.contains('lgs-new-ui')) return;
+
+    // сетка ПК — раскладка в .lgs-pc-actions, пары разбираем
+    if (document.documentElement.classList.contains('lgs-new-ui-pc')) {
+      document.querySelectorAll('#layoutStatusPC form.pc .lgs-pc-power-pair').forEach((pair) => {
+        while (pair.firstChild && pair.parentNode) {
+          pair.parentNode.insertBefore(pair.firstChild, pair);
+        }
+        pair.remove();
+      });
+      return;
+    }
+
+    // Новый UI без сетки — flatten + пара Вкл/Выкл
+    document.querySelectorAll('#layoutStatusPC form.pc').forEach(pairPcPowerButtons);
+  }
+
+  function enhanceSelectActionsPanel() {
+    const panel = document.querySelector('.select-actions');
+    if (!panel) return;
+
+    const visible = panel.style.display && panel.style.display !== 'none';
+    panel.classList.toggle('lgs-select-open', !!visible);
+
+    if (panel.dataset.lgsSelectReady === '1') return;
+
+    const filters = document.createElement('div');
+    filters.className = 'lgs-select-filters';
+    const commands = document.createElement('div');
+    commands.className = 'lgs-select-commands';
+
+    const filterIds = new Set([
+      'cancelSelect', 'selectAllPC', 'selectAllFreePC', 'selectAllInTech', 'selectAllInUnlock'
+    ]);
+
+    [...panel.children].forEach((child) => {
+      if (child.tagName === 'DIV' && (child.getAttribute('style') || '').includes('clear')) {
+        child.remove();
+        return;
+      }
+      if (child.classList.contains('mt-2') || child.classList.contains('mb-2')) {
+        [...child.children].forEach((btn) => commands.appendChild(btn));
+        child.remove();
+        return;
+      }
+      if (child.matches('a.btn, button.btn, .btn')) {
+        if (child.classList.contains('select-action')) {
+          commands.appendChild(child);
+        } else if (filterIds.has(child.id) || !child.classList.contains('select-action')) {
+          filters.appendChild(child);
+        }
+        return;
+      }
+    });
+
+    panel.querySelectorAll(':scope > .select-action, :scope > button.select-action, :scope > a.select-action').forEach((btn) => {
+      commands.appendChild(btn);
+    });
+
+    if (filters.childElementCount) panel.appendChild(filters);
+    if (commands.childElementCount) panel.appendChild(commands);
+    panel.dataset.lgsSelectReady = '1';
+  }
+
+  function enhanceAllClubsToolbar() {
+    if (!isAllClubsPcPage()) return;
+    if (!document.documentElement.classList.contains('lgs-new-ui')) return;
+
+    enhancePcCardChrome();
+    enhanceSelectActionsPanel();
+
+    const clubs = document.querySelector('.js-all-clubs-pc-clubs');
+    if (!clubs) return;
+
+    // клубы → внутренний GlassTabsBar (не тот же элемент что bootstrap col)
+    if (!clubs.querySelector(':scope > .lgs-clubs-tabs')) {
+      const track = document.createElement('div');
+      track.className = 'lgs-clubs-tabs';
+      [...clubs.children].forEach((child) => {
+        if (child.matches('a.btn, button.btn, a.btn-outline-success, .btn')) {
+          track.appendChild(child);
+        }
+      });
+      if (track.childElementCount) clubs.insertBefore(track, clubs.firstChild);
+    }
+
+    const row = clubs.parentElement;
+    const actionsCol = row && [...row.children].find((c) => c !== clubs);
+    if (actionsCol && !actionsCol.querySelector(':scope > .lgs-clubs-actions')) {
+      const bar = document.createElement('div');
+      bar.className = 'lgs-clubs-actions';
+      [...actionsCol.children].forEach((child) => {
+        if (child.classList.contains('select-actions')) return;
+        if (child.id === 'massive-pc-selection-panel-allclubs') return;
+        if (child.classList.contains('lgs-clubs-actions')) return;
+        bar.appendChild(child);
+      });
+      if (bar.childElementCount) actionsCol.insertBefore(bar, actionsCol.firstChild);
+    }
+  }
+
+  function prepareNewUiPcMap() {
+    if (!window.location.pathname.includes('/all_clubs_pc/')) return;
+    enhanceAllClubsToolbar();
+    if (!document.documentElement.classList.contains('lgs-new-ui-pc')) return;
+
+    const layout = document.getElementById('layoutStatusPC');
+    if (layout) {
+      layout.classList.add('lgs-pc-map');
+    }
+
+    // Новый UI заменяет сломанный style_pc absolute/float-хак
+    removePCStyles();
+    document.querySelectorAll('form.pc.lan-search-pc-card').forEach((form) => {
+      form.classList.remove('lan-search-pc-card');
+    });
+
+    document.querySelectorAll('#layoutStatusPC > .float-left').forEach((wrap) => {
+      wrap.style.maxWidth = '';
+      wrap.style.width = '';
+    });
+
+    addManageButtonsToPCs();
+
+    document.querySelectorAll('#layoutStatusPC form.pc').forEach((form) => {
+      if (form.dataset.lgsIcoToolbar === '1' && form.querySelector('.lgs-pc-actions')) {
+        syncNewUiPcInfoRows(form);
+      } else {
+        iconifyPcCardToolbar(form);
+      }
+    });
+  }
+
+  function applyNewUiClass(settings) {
+    const flags = settings && typeof settings === 'object'
+      ? settings
+      : { newUi: !!settings, newUiAllClubsPc: !!settings };
+
+    document.documentElement.classList.toggle('lgs-new-ui', !!flags.newUi);
+
+    const pcGridOn = isAllClubsPcPage() && !!flags.newUiAllClubsPc;
+    document.documentElement.classList.toggle('lgs-new-ui-pc', pcGridOn);
+
+    if (flags.newUi && isAllClubsPcPage()) {
+      enhanceAllClubsToolbar();
+    }
+
+    if (pcGridOn) {
+      prepareNewUiPcMap();
+      return;
+    }
+
+    const layout = document.getElementById('layoutStatusPC');
+    if (layout) layout.classList.remove('lgs-pc-map');
+    // сетка выкл — вернуть старые стили ПК, если они включены
+    if (isAllClubsPcPage()) {
+      getPCStylesSetting(function(pcEnabled) {
+        if (pcEnabled) {
+          injectPCStyles();
+          applyPCStyles();
+        }
+      });
+    }
+  }
+
+  function initNewUi() {
+    // сразу из localStorage — без ожидания chrome.storage (иначе «доезжает»)
+    applyNewUiClass(readLocalNewUiFlags());
+
+    getNewUiSetting(applyNewUiClass);
+
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
+      chrome.storage.onChanged.addListener(function(changes, namespace) {
+        if (namespace !== 'sync') return;
+        if (!changes.newUi && !changes.newUiAllClubsPc) return;
+        getNewUiSetting(applyNewUiClass);
+      });
+    }
+
+    // тулбар клубов — как только появится в DOM
+    if (!window.__lgsClubsToolbarObserver && isAllClubsPcPage()) {
+      const tryEnhance = () => {
+        if (!document.documentElement.classList.contains('lgs-new-ui')) return;
+        if (document.querySelector('.js-all-clubs-pc-clubs')) enhanceAllClubsToolbar();
+      };
+      tryEnhance();
+      window.__lgsClubsToolbarObserver = new MutationObserver(tryEnhance);
+      window.__lgsClubsToolbarObserver.observe(document.documentElement, { childList: true, subtree: true });
+    }
+
+    // карточки ПК часто дорисовываются после загрузки — ловим сразу
+    if (!window.__lgsNewUiPcObserver) {
+      let t = 0;
+      const schedule = () => {
+        if (!document.documentElement.classList.contains('lgs-new-ui-pc')) return;
+        clearTimeout(t);
+        t = setTimeout(prepareNewUiPcMap, 60);
+      };
+      window.__lgsNewUiPcObserver = new MutationObserver(schedule);
+      const bind = () => {
+        const root = document.getElementById('layoutStatusPC');
+        if (root) {
+          window.__lgsNewUiPcObserver.observe(root, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+            attributes: true,
+            attributeFilter: ['class', 'style']
+          });
+          schedule();
+          return true;
+        }
+        return false;
+      };
+      if (!bind()) {
+        const boot = new MutationObserver(() => {
+          if (bind()) boot.disconnect();
+        });
+        boot.observe(document.documentElement, { childList: true, subtree: true });
+      }
+    }
+  }
+
+  window.lanSearchSyncNewUi = function() {
+    getNewUiSetting(applyNewUiClass);
   };
 
 
@@ -6967,37 +7093,37 @@ window.lanSearchProcessPCData = function processPCData(data) {
         initModalBypass();
         initPCSelection();
         initMassivePCSelection();
+        initNewUi();
         initPCStyles();
         initTableOptimization();
         initHideCheckboxes();
         initHideComments();
-        initDomainInfo();
-        initEnergySavingIgnore();
+        initHideRemoteDownload();
         initWebSocketPCData();
-        
 
         handleHideStylesOnUrlChange();
-        
 
         addManageButtonsToPCs();
+        setTimeout(addManageButtonsToPCs, 500);
+        setTimeout(addManageButtonsToPCs, 1500);
       });
     } else {
       initModalBypass();
       initPCSelection();
       initMassivePCSelection();
+      initNewUi();
       initPCStyles();
       initTableOptimization();
       initHideCheckboxes();
       initHideComments();
-      initDomainInfo();
-      initEnergySavingIgnore();
+      initHideRemoteDownload();
       initWebSocketPCData();
-      
 
       handleHideStylesOnUrlChange();
-      
 
       addManageButtonsToPCs();
+      setTimeout(addManageButtonsToPCs, 500);
+      setTimeout(addManageButtonsToPCs, 1500);
     }
   }
 
@@ -7496,910 +7622,20 @@ window.lanSearchWebSocket = {
   send: sendPCCommand,
   getSetting: window.lanSearchGetWebSocketSetting,
   clearCache: window.lanSearchClearWebSocketSettingCache
-}; 
-
-
-function getDomainInfoSetting(callback) {
-  const now = Date.now();
-  
-  if (domainInfoCache !== null && (now - domainInfoCacheTime) < DOMAIN_INFO_CACHE_DURATION) {
-    callback(domainInfoCache);
-    return;
-  }
-  
-  try {
-    chrome.storage.sync.get(['domainInfo'], function(result) {
-      if (chrome.runtime.lastError) {
-        
-        const localDomainInfo = localStorage.getItem('lanSearchDomainInfo');
-        const enabled = localDomainInfo === 'true';
-        
-        domainInfoCache = enabled;
-        domainInfoCacheTime = now;
-        
-        callback(enabled);
-      } else {
-        const enabled = result.domainInfo || false;
-        
-        domainInfoCache = enabled;
-        domainInfoCacheTime = now;
-        
-        try {
-          localStorage.setItem('lanSearchDomainInfo', enabled.toString());
-        } catch (e) {
-        }
-        
-        callback(enabled);
-      }
-    });
-  } catch (e) {
-    
-    const localDomainInfo = localStorage.getItem('lanSearchDomainInfo');
-    const enabled = localDomainInfo === 'true';
-    
-    domainInfoCache = enabled;
-    domainInfoCacheTime = now;
-    
-    callback(enabled);
-  }
-}
-
-function clearDomainInfoCache() {
-  domainInfoCache = null;
-  domainInfoCacheTime = 0;
-}
-
-
-async function searchDomainViaAPI(domain) {
-  try {
-    
-
-    const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').trim();
-    
-    const apiUrl = `https://k-connect.ru/api/domain-search/${encodeURIComponent(cleanDomain)}`;
-    
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      mode: 'cors',
-      credentials: 'omit'
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Lan-Search: API ошибка:', response.status, errorText);
-      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-    }
-    
-    const data = await response.json();
-    
-    if (data.success && data.data && data.data.full_row) {
-      
-      const row = data.data.full_row;
-      
-
-      row.forEach((item, index) => {
-      });
-      
-      return {
-        name: row[1] || '', // Клуб
-        id: row[0] || '', // ID
-        domain: data.data.domain || cleanDomain, // Домен
-        value: row[3] || '', // Execute name
-        alias: row[4] || '', // Anydesk
-        ip: row[5] || '', // IP
-        command: row[9] || '', // Команда (индекс 9, а не 6!)
-        info: row[12] || '', // Дополнительная информация
-
-        rowNumber: data.data.row_number || '',
-        columnNumber: data.data.column_number || '',
-        matchedCell: data.data.matched_cell || '',
-        searchedDomain: data.searched_domain || cleanDomain
-      };
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error('Lan-Search: Ошибка API запроса:', error);
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      console.error('Lan-Search: Возможная CORS ошибка или недоступность API');
-    }
-    return null;
-  }
-}
-
-
-async function processDomainInfoAPI(currentDomain) {
-  
-  const domainInfo = await searchDomainViaAPI(currentDomain);
-  if (!domainInfo) {
-    return;
-  }
-  
-  
-
-  domainInfoCache = domainInfo;
-  domainInfoCacheTime = Date.now();
-  
-
-  if (document.getElementById('domainInfoContainer')) {
-    return;
-  }
-  
-  
-
-  const guestSearchContainer = document.getElementById('guestSearchContainer');
-  
-  if (guestSearchContainer) {
-    guestSearchContainer.parentNode.insertBefore(createDomainInfoBlock(domainInfo), guestSearchContainer.nextSibling);
-  } else {
-    
-
-    const recentTabsContainer = document.getElementById('recentTabsContainer');
-    
-    if (recentTabsContainer) {
-      recentTabsContainer.parentNode.insertBefore(createDomainInfoBlock(domainInfo), recentTabsContainer.nextSibling);
-    } else {
-      const langameWrapper = document.getElementById('langameSubscriptionWrapper');
-      
-      if (langameWrapper) {
-        langameWrapper.parentNode.insertBefore(createDomainInfoBlock(domainInfo), langameWrapper.nextSibling);
-      } else if (!insertMainDashboardWidget(createDomainInfoBlock(domainInfo))) {
-        document.body.appendChild(createDomainInfoBlock(domainInfo));
-      }
-    }
-  }
-}
-
-
-
-function createDomainInfoBlock(domainInfo) {
-  const container = document.createElement('div');
-  container.id = 'domainInfoContainer';
-  
-
-  const isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark' || 
-                     document.body.classList.contains('dark-theme') ||
-                     window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
-  container.style.cssText = `
-    margin-top: 15px;
-    padding: 15px;
-    background: var(--domain-info-bg, #f8f9fa);
-    border: 1px solid var(--domain-info-border, #e9ecef);
-    border-radius: 8px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--domain-info-color, #333333);
-    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-    
-  `;
-  
-  const title = document.createElement('h4');
-  title.textContent = 'Информация по домену';
-  title.style.cssText = `margin: 0 0 10px 0; color: var(--domain-info-title-color, #495057); font-size: 13px; transition: color 0.3s ease;`;
-  
-
-  const updateCommandBtn = document.createElement('button');
-  updateCommandBtn.innerHTML = `
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-      <path d="M23 4v6h-6"></path>
-      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-    </svg>
-    Обновить команду
-  `;
-  updateCommandBtn.style.cssText = `
-    background: transparent;
-    color: #28a745;
-    border: 1px solid #28a745;
-    border-radius: 4px;
-    padding: 4px 12px;
-    font-size: 11px;
-    font-weight: 500;
-    cursor: pointer;
-    margin-left: 10px;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 140px;
-    height: 28px;
-  `;
-  updateCommandBtn.title = 'Обновить команду через API (если CMD не работает)';
-  
-
-  updateCommandBtn.addEventListener('click', async () => {
-    try {
-      updateCommandBtn.innerHTML = `
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px; animation: spin 1s linear infinite;">
-          <path d="M21 12a9 9 0 11-6.219-8.56"></path>
-        </svg>
-        Обновление...
-      `;
-      updateCommandBtn.style.background = 'transparent';
-      updateCommandBtn.style.color = '#6c757d';
-      updateCommandBtn.style.borderColor = '#6c757d';
-      updateCommandBtn.disabled = true;
-      
-      const response = await fetch('https://k-connect.ru/api/domain-search/update-links', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          domain: window.location.hostname,
-          timestamp: Date.now()
-        })
-      });
-      
-      if (response.ok) {
-        updateCommandBtn.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-            <polyline points="20,6 9,17 4,12"></polyline>
-          </svg>
-          Обновлено!
-        `;
-        updateCommandBtn.style.background = 'transparent';
-        updateCommandBtn.style.color = '#28a745';
-        updateCommandBtn.style.borderColor = '#28a745';
-        
-
-        const reloadMessage = document.createElement('div');
-        reloadMessage.textContent = 'Перезагрузите страницу для применения изменений';
-        reloadMessage.style.cssText = `
-          background: linear-gradient(135deg, #d4edda, #c3e6cb);
-          color: #155724;
-          border: 1px solid #c3e6cb;
-          border-radius: 4px;
-          padding: 8px 12px;
-          margin-top: 8px;
-          font-size: 10px;
-          font-weight: 500;
-          text-align: center;
-          animation: fadeIn 0.3s ease;
-        `;
-        
-
-        const titleContainer = updateCommandBtn.parentElement;
-        titleContainer.appendChild(reloadMessage);
-        
-        setTimeout(() => {
-          updateCommandBtn.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-              <path d="M23 4v6h-6"></path>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
-            Обновить команду
-          `;
-          updateCommandBtn.style.background = 'linear-gradient(135deg, #28a745, #20c997)';
-          updateCommandBtn.style.boxShadow = '0 2px 4px rgba(40, 167, 69, 0.3)';
-          updateCommandBtn.disabled = false;
-          reloadMessage.remove();
-        }, 3000);
-      } else {
-        throw new Error('Ошибка обновления команды');
-      }
-    } catch (error) {
-      console.error('Ошибка при обновлении команды:', error);
-      updateCommandBtn.innerHTML = `
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="15" y1="9" x2="9" y2="15"></line>
-          <line x1="9" y1="9" x2="15" y2="15"></line>
-        </svg>
-        Ошибка!
-      `;
-      updateCommandBtn.style.background = 'transparent';
-      updateCommandBtn.style.color = '#dc3545';
-      updateCommandBtn.style.borderColor = '#dc3545';
-      setTimeout(() => {
-        updateCommandBtn.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
-            <path d="M23 4v6h-6"></path>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-          </svg>
-          Обновить команду
-        `;
-        updateCommandBtn.style.background = 'transparent';
-        updateCommandBtn.style.color = '#28a745';
-        updateCommandBtn.style.borderColor = '#28a745';
-        updateCommandBtn.disabled = false;
-      }, 2000);
-    }
-  });
-  
-
-  const titleContainer = document.createElement('div');
-  titleContainer.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;';
-  titleContainer.appendChild(title);
-  titleContainer.appendChild(updateCommandBtn);
-  
-
-  function createInfoBlock(label, value, isMultiline = false) {
-    if (!value || value === 'Не указано' || value === '') return null;
-    
-    const block = document.createElement('div');
-    block.style.cssText = `
-      margin-bottom: 8px; 
-      padding: 6px; 
-      background: var(--domain-info-block-bg, white); 
-      border-radius: 3px; 
-      border: 1px solid var(--domain-info-block-border, #dee2e6);
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-    `;
-    
-    const header = document.createElement('div');
-    header.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;';
-    
-    const labelEl = document.createElement('strong');
-    labelEl.textContent = label + ':';
-    labelEl.style.cssText = `color: var(--domain-info-label-color, #495057); font-size: 11px; transition: color 0.3s ease;`;
-    
-    const copyBtn = document.createElement('button');
-    copyBtn.innerHTML = `
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-      </svg>
-    `;
-    copyBtn.style.cssText = `
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 3px;
-      padding: 4px 6px;
-      font-size: 0;
-      cursor: pointer;
-      margin-left: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 20px;
-      min-height: 20px;
-    `;
-    copyBtn.title = 'Копировать';
-    
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(value);
-        copyBtn.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20,6 9,17 4,12"></polyline>
-          </svg>
-        `;
-        copyBtn.style.background = '#28a745';
-        setTimeout(() => {
-          copyBtn.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          `;
-          copyBtn.style.background = '#007bff';
-        }, 1000);
-      } catch (err) {
-        console.error('Ошибка копирования:', err);
-
-        const textArea = document.createElement('textarea');
-        textArea.value = value;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        copyBtn.innerHTML = `
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20,6 9,17 4,12"></polyline>
-          </svg>
-        `;
-        copyBtn.style.background = '#28a745';
-        setTimeout(() => {
-          copyBtn.innerHTML = `
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-          `;
-          copyBtn.style.background = '#007bff';
-        }, 1000);
-      }
-    });
-    
-    header.appendChild(labelEl);
-    header.appendChild(copyBtn);
-    
-    const valueEl = document.createElement('div');
-    valueEl.textContent = value;
-    valueEl.style.cssText = `
-      color: var(--domain-info-value-color, #212529);
-      font-size: 10px;
-      word-break: break-all;
-      white-space: ${isMultiline ? 'pre-wrap' : 'nowrap'};
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-height: ${isMultiline ? '80px' : 'auto'};
-      overflow-y: ${isMultiline ? 'auto' : 'hidden'};
-      transition: color 0.3s ease;
-    `;
-    
-    block.appendChild(header);
-    block.appendChild(valueEl);
-    
-    return block;
-  }
-  
-
-  const blocks = [
-    createInfoBlock('Название клуба', domainInfo.name || 'Не указано'),
-    createInfoBlock('ID', domainInfo.id || 'Не указано'),
-    createInfoBlock('Домен', domainInfo.domain || 'Не указано'),
-    createInfoBlock('Anydesk', domainInfo.alias || 'Не указано'),
-    createInfoBlock('Команда', domainInfo.command || 'Не указано', true),
-  ].filter(block => block !== null);
-  
-  container.appendChild(titleContainer);
-  
-  if (blocks.length === 0) {
-    const noData = document.createElement('div');
-    noData.textContent = 'Информация не найдена';
-    noData.style.cssText = `color: ${isDarkTheme ? '#cccccc' : '#6c757d'}; font-style: italic; text-align: center; padding: 20px;`;
-    container.appendChild(noData);
-  } else {
-    blocks.forEach(block => container.appendChild(block));
-  }
-  
-  return container;
-}
-
-function initDomainInfo() {
-
-  const isMainPage = window.location.pathname === '/' || 
-                     window.location.pathname === '/dashboard/';
-  
-  if (!isMainPage) {
-    return;
-  }
-  
-
-  setTimeout(() => {
-    getDomainInfoSetting(function(domainInfoEnabled) {
-      if (!domainInfoEnabled) {
-        return;
-      }
-      
-
-      const currentDomain = window.location.hostname;
-      
-
-      const now = Date.now();
-      if (domainInfoCache && domainInfoCacheTime && (now - domainInfoCacheTime) < DOMAIN_INFO_CACHE_DURATION) {
-        processDomainInfoAPI(currentDomain);
-        return;
-      }
-      
-
-      processDomainInfoAPI(currentDomain);
-    });
-  }, 1000); // Задержка в 1 секунду для полной загрузки страницы
-}
-
-
-window.lanSearchSyncDomainInfo = function() {
-  clearDomainInfoCache();
-  getDomainInfoSetting(function(enabled) {
-    if (enabled) {
-
-      const isMainPage = window.location.pathname === '/' || 
-                         window.location.pathname === '/dashboard/';
-      
-      if (isMainPage) {
-        initDomainInfo();
-      } else {
-      }
-    } else {
-      const domainInfoContainer = document.getElementById('domainInfoContainer');
-      if (domainInfoContainer) {
-        domainInfoContainer.remove();
-      }
-    }
-  });
 };
-
-
-function getEnergySavingIgnoreSetting(callback) {
-  try {
-    chrome.storage.sync.get(['energySavingIgnore'], function(result) {
-      if (chrome.runtime.lastError) {
-        const localEnergySaving = localStorage.getItem('lanSearchEnergySavingIgnore');
-        const enabled = localEnergySaving === 'true';
-        callback(enabled);
-      } else {
-        const enabled = result.energySavingIgnore || false;
-        callback(enabled);
-      }
-    });
-  } catch (e) {
-    const localEnergySaving = localStorage.getItem('lanSearchEnergySavingIgnore');
-    const enabled = localEnergySaving === 'true';
-    callback(enabled);
-  }
-}
-
-function getUpdaters3000Setting(callback) {
-  try {
-    chrome.storage.sync.get(['updaters3000'], function(result) {
-      if (chrome.runtime.lastError) {
-        const localUpdaters3000 = localStorage.getItem('lanSearchUpdaters3000');
-        const enabled = localUpdaters3000 === 'true';
-        callback(enabled);
-      } else {
-        const enabled = result.updaters3000 || false;
-        callback(enabled);
-      }
-    });
-  } catch (e) {
-    const localUpdaters3000 = localStorage.getItem('lanSearchUpdaters3000');
-    const enabled = localUpdaters3000 === 'true';
-    callback(enabled);
-  }
-}
-
-function initEnergySavingIgnore() {
-  if (!window.location.pathname.includes('/all_clubs_pc/')) {
-    return;
-  }
-  
-  getEnergySavingIgnoreSetting(function(enabled) {
-    if (enabled) {
-      addEnergySavingIgnoreButtons();
-      
-
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-
-            const hasNewDropdowns = Array.from(mutation.addedNodes).some(node => {
-              return node.nodeType === 1 && (
-                node.classList?.contains('dropdown-menu') ||
-                node.querySelector?.('.dropdown-menu')
-              );
-            });
-            
-            if (hasNewDropdowns) {
-
-              setTimeout(() => {
-                addEnergySavingIgnoreButtons();
-              }, 100);
-            }
-          }
-        });
-      });
-      
-
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
-      
-
-      window._lanSearchEnergySavingObserver = observer;
-    } else {
-      removeEnergySavingIgnoreButtons();
-      
-
-      if (window._lanSearchEnergySavingObserver) {
-        window._lanSearchEnergySavingObserver.disconnect();
-        window._lanSearchEnergySavingObserver = null;
-      }
-    }
-  });
-}
-
-function addEnergySavingIgnoreButtons() {
-
-  if (!window.location.pathname.includes('/all_clubs_pc/')) {
-    return;
-  }
-
-  removeEnergySavingIgnoreButtons();
-  
-
-  const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-  
-  dropdownMenus.forEach(menu => {
-
-    const manageButton = menu.querySelector('button[onclick*="StartRemote"]');
-    if (manageButton) {
-
-      const onclickAttr = manageButton.getAttribute('onclick');
-      const uuidMatch = onclickAttr.match(/StartRemote\('([^']+)'\)/);
-      if (uuidMatch) {
-        const uuid = uuidMatch[1];
-        
-
-        if (!menu.querySelector('.lan-search-energy-saving-btn')) {
-
-          const energyButton = document.createElement('button');
-          energyButton.className = 'btn btn-warning btn-block lan-search-energy-saving-btn';
-          energyButton.innerHTML = '<i class="fa fa-power-off"></i>&nbsp;Игн. перевод в спящий';
-          energyButton.title = 'Отключить энергосбережение монитора и ПК';
-          
-
-          energyButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            handleEnergySavingIgnore(uuid);
-          });
-          
-
-          manageButton.parentNode.insertBefore(energyButton, manageButton.nextSibling);
-          
-
-          updateDropdownEventHandlers(menu);
-        }
-      }
-    }
-  });
-}
-
-function updateDropdownEventHandlers(menu) {
-
-  const toggleButton = menu.closest('.dropdown, .btn-group')?.querySelector('[data-toggle="dropdown"], .dropdown-toggle');
-  if (!toggleButton) return;
-  
-
-  toggleButton.addEventListener('click', function() {
-    menu.classList.add('show');
-  });
-}
-
-function removeEnergySavingIgnoreButtons() {
-  const existingButtons = document.querySelectorAll('.lan-search-energy-saving-btn');
-  existingButtons.forEach(button => button.remove());
-  
-
-  if (window._lanSearchEnergySavingObserver) {
-    window._lanSearchEnergySavingObserver.disconnect();
-    window._lanSearchEnergySavingObserver = null;
-  }
-}
-
-function handleEnergySavingIgnore(uuid) {
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const clubId = urlParams.get('club_id') || '1';
-  
-
-  const endpoints = [
-    '/monitor_ignore/crud.php',
-    '/pc_energy_saving_ignore/crud.php'
-  ];
-  
-  const requests = endpoints.map(endpoint => {
-    return fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json, text/javascript, */*; q=0.01',
-        'accept-language': 'ru,en-US;q=0.9,en;q=0.8,uk;q=0.7',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'priority': 'u=0, i',
-        'sec-ch-ua': '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'x-requested-with': 'XMLHttpRequest'
-      },
-      body: `command=addClient&club_id=${clubId}&client=${uuid}`,
-      mode: 'cors',
-      credentials: 'include'
-    });
-  });
-  
-
-  Promise.all(requests)
-    .then(responses => {
-      const allSuccessful = responses.every(response => response.ok);
-      if (allSuccessful) {
-        showNotification('Энергосбережение отключено для монитора и ПК', 'success', 3000);
-      } else {
-        showNotification('Ошибка при отключении энергосбережения', 'error', 3000);
-      }
-    })
-    .catch(error => {
-      console.error('Ошибка при отключении энергосбережения:', error);
-      showNotification('Ошибка при отключении энергосбережения', 'error', 3000);
-    });
-}
-
-
-window.lanSearchSyncEnergySavingIgnore = function() {
-  if (window.location.pathname.includes('/all_clubs_pc/')) {
-    initEnergySavingIgnore();
-  }
-};
-
-window.lanSearchSyncUpdaters3000 = function() {
-  // Функция синхронизации для переключателя "Обновляторы3000"
-  // Логика уже реализована в обработчике событий для кнопки "Управлять"
-};
-
-
-window.lanSearchGetDomainInfoSetting = getDomainInfoSetting;
-
-
-window.lanSearchTestDomainInfo = function() {
-  
-
-  const testInfo = {
-    name: 'Тестовое название',
-    id: 'Тестовый ID',
-    ip: '192.168.1.1',
-    info: 'Тестовая информация'
-  };
-  
-  const testBlock = createDomainInfoBlock(testInfo);
-  
-
-  const guestSearchContainer = document.getElementById('guestSearchContainer');
-  if (guestSearchContainer) {
-    guestSearchContainer.parentNode.insertBefore(testBlock, guestSearchContainer.nextSibling);
-  } else {
-    document.body.appendChild(testBlock);
-  }
-};
-
-
-window.lanSearchTestAPI = async function(domain) {
-  
-  const testDomain = domain || window.location.hostname;
-  const result = await searchDomainViaAPI(testDomain);
-  
-  if (result && result.command) {
-  } else {
-  }
-  
-  return result;
-};
-
-
-window.lanSearchTestCORS = async function() {
-  
-  try {
-    const healthUrl = 'https://k-connect.ru/api/domain-search/health';
-    
-    const response = await fetch(healthUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      mode: 'cors',
-      credentials: 'omit'
-    });
-    
-    
-    if (response.ok) {
-      const data = await response.json();
-      return { success: true, data: data };
-    } else {
-      const errorText = await response.text();
-      console.error('Lan-Search: Health check failed:', response.status, errorText);
-      return { success: false, error: `HTTP ${response.status}: ${errorText}` };
-    }
-  } catch (error) {
-    console.error('Lan-Search: CORS/API test error:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-
-window.lanSearchReloadData = async function() {
-  
-
-  clearDomainInfoCache();
-  
-
-  const existingBlock = document.getElementById('domainInfoContainer');
-  if (existingBlock) {
-    existingBlock.remove();
-  }
-  
-
-  setTimeout(() => {
-
-    const isMainPage = window.location.pathname === '/' || 
-                       window.location.pathname === '/dashboard/';
-    
-    if (isMainPage) {
-      initDomainInfo();
-    } else {
-    }
-  }, 1000);
-};
-
-
-window.lanSearchDebugAPI = async function(domain) {
-  
-  const testDomain = domain || window.location.hostname;
-  const cleanDomain = testDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').trim();
-  
-  try {
-    const apiUrl = `https://k-connect.ru/api/domain-search/${encodeURIComponent(cleanDomain)}`;
-    
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'X-Requested-With': 'XMLHttpRequest'
-      },
-      mode: 'cors',
-      credentials: 'omit'
-    });
-    
-    
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.success && data.data && data.data.full_row) {
-        data.data.full_row.forEach((item, index) => {
-        });
-      }
-    } else {
-      const errorText = await response.text();
-      console.error('Lan-Search: Debug API error:', response.status, errorText);
-    }
-  } catch (error) {
-    console.error('Lan-Search: Debug API error:', error);
-  }
-};
-
-
-console.log('Lan-Search: Принудительная инициализация для Firefox');
-setTimeout(() => {
-  console.log('Lan-Search: Запуск принудительной инициализации...');
-
-  const isMainPage = window.location.pathname === '/' || 
-                     window.location.pathname === '/dashboard/';
-  
-  if (isMainPage) {
-    initDomainInfo();
-  } else {
-    console.log('Lan-Search: Принудительная инициализация пропущена - не главная страница');
-  }
-}, 2000);
-
-
-setTimeout(() => {
-  
-
-  const isMainPage = window.location.pathname === '/' || 
-                     window.location.pathname === '/dashboard/';
-  
-  if (isMainPage && !document.getElementById('domainInfoContainer')) {
-    initDomainInfo();
-  } else if (!isMainPage) {
-  }
-}, 5000); 
 
 
 if (window.location.hostname.includes('f5center') && !document.getElementById('globalMenuSearchInput')) {
-  console.log('Lan-Search: Повторная инициализация поиска для f5center.com...');
-
-  setTimeout(() => {
-    if (typeof window.lanSearchInit === 'function') {
-      window.lanSearchInit();
-    } else {
-    }
-  }, 100);
+  const path = (window.location.pathname || '').toLowerCase();
+  const isAuth = path.includes('/auth') || path.endsWith('auth.php');
+  if (!isAuth) {
+    console.log('Lan-Search: Повторная инициализация поиска для f5center.com...');
+    setTimeout(() => {
+      if (typeof window.lanSearchInit === 'function') {
+        window.lanSearchInit();
+      }
+    }, 100);
+  }
 }
 
 

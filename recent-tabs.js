@@ -1,6 +1,14 @@
 // Управление последними использованными вкладками
 (function() {
-  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
+  {
+    const h = (window.location.hostname || '').toLowerCase();
+    if (
+      h === 'msgtp.langame.ru'
+      || h === 'msgpublic.langame.ru'
+      || h.endsWith('.msgtp.langame.ru')
+      || h.endsWith('.msgpublic.langame.ru')
+    ) return;
+  }
   class RecentTabsManager {
   constructor() {
     this.storageKey = 'lanSearchRecentTabs';
@@ -35,6 +43,14 @@
   isSuitableDomain(hostname) {
     if (!hostname) return false;
     const domain = hostname.toLowerCase();
+    if (
+      domain === 'msgtp.langame.ru'
+      || domain === 'msgpublic.langame.ru'
+      || domain.endsWith('.msgtp.langame.ru')
+      || domain.endsWith('.msgpublic.langame.ru')
+    ) {
+      return false;
+    }
     return domain.includes('langame') || domain.includes('cls') || domain.includes('f5center');
   }
 
@@ -341,7 +357,102 @@
     });
   }
 
-  // Получение информации о вкладке из DOM элемента
+  getUseHref(el) {
+    if (!el) return null;
+    const use = el.querySelector ? el.querySelector('use') : null;
+    if (!use) return null;
+    const href = use.getAttribute('href') || use.getAttribute('xlink:href') || '';
+    const id = href.replace(/^#/, '').trim();
+    return id || null;
+  }
+
+  symbolExists(id) {
+    return !!(id && document.getElementById(id));
+  }
+
+  // Новый фронт: SVG-спрайт #aside-icon-*, иначе legacy data-icon
+  extractSvgIconId(linkElement) {
+    if (!linkElement) return null;
+
+    const own =
+      this.getUseHref(linkElement.querySelector('.nav__link-icon')) ||
+      this.getUseHref(linkElement);
+    if (own) return own;
+
+    const navItem = linkElement.closest('li.nav__item');
+    if (navItem) {
+      const parentIcon =
+        this.getUseHref(navItem.querySelector(':scope > .nav__link .nav__link-icon')) ||
+        this.getUseHref(navItem.querySelector(':scope > .nav__link'));
+      if (parentIcon) return parentIcon;
+    }
+
+    let dataIcon = linkElement.getAttribute('data-icon');
+    if (!dataIcon) {
+      let parent = linkElement.parentElement;
+      while (parent) {
+        const categoryLink = parent.querySelector?.(':scope > a[data-icon], :scope > .nav__link[data-icon]');
+        if (categoryLink?.getAttribute('data-icon')) {
+          dataIcon = categoryLink.getAttribute('data-icon');
+          break;
+        }
+        if (parent.classList?.contains('nav__item')) {
+          const useId = this.getUseHref(parent.querySelector(':scope > .nav__link'));
+          if (useId) return useId;
+        }
+        parent = parent.parentElement;
+        if (parent && (parent.id === 'nav-accordion-parent' || parent.classList?.contains('nav__content'))) break;
+      }
+    }
+
+    if (dataIcon) {
+      const candidate = dataIcon.startsWith('aside-icon-') ? dataIcon : `aside-icon-${dataIcon}`;
+      if (this.symbolExists(candidate)) return candidate;
+    }
+
+    if (linkElement.id) {
+      const byId = `aside-icon-${linkElement.id}`;
+      if (this.symbolExists(byId)) return byId;
+    }
+
+    return null;
+  }
+
+  resolveIconSvgId(tab) {
+    if (!tab) return null;
+    if (tab.iconSvgId && this.symbolExists(tab.iconSvgId)) return tab.iconSvgId;
+
+    if (tab.icon) {
+      const fromLegacy = tab.icon.startsWith('aside-icon-') ? tab.icon : `aside-icon-${tab.icon}`;
+      if (this.symbolExists(fromLegacy)) return fromLegacy;
+    }
+
+    if (tab.id) {
+      const byId = `aside-icon-${tab.id}`;
+      if (this.symbolExists(byId)) return byId;
+    }
+
+    // Дотянуть иконку из текущего меню (для старых записей в storage)
+    try {
+      const href = tab.href;
+      let link = null;
+      if (tab.id) link = document.getElementById(tab.id);
+      if (!link && href) {
+        link = document.querySelector(`#nav-accordion-parent a[href="${CSS.escape(href)}"], .nav__content a[href="${CSS.escape(href)}"]`);
+      }
+      if (!link && href) {
+        const path = href.split('?')[0];
+        link = [...document.querySelectorAll('#nav-accordion-parent a[href], .nav__content a[href]')]
+          .find(a => (a.getAttribute('href') || '').split('?')[0] === path);
+      }
+      if (link) return this.extractSvgIconId(link);
+    } catch (e) {
+      // ignore
+    }
+
+    return tab.iconSvgId || null;
+  }
+
   extractTabInfo(linkElement) {
     const href = linkElement.getAttribute('href');
     if (!href || href.startsWith('#') || href.startsWith('javascript:')) {
@@ -350,61 +461,39 @@
 
     const title = linkElement.getAttribute('title') || linkElement.textContent.trim();
     const id = linkElement.getAttribute('id') || href;
-    
-    // Получаем data-icon атрибут для определения иконки
-    let dataIcon = linkElement.getAttribute('data-icon');
-    
-    // Если у ссылки нет data-icon, ищем у родительской категории
-    if (!dataIcon) {
-      let parent = linkElement.parentElement;
-      while (parent && parent.tagName === 'LI') {
-        const categoryLink = parent.querySelector('a[data-icon]');
-        if (categoryLink) {
-          dataIcon = categoryLink.getAttribute('data-icon');
-          if (dataIcon) break;
-        }
-        parent = parent.parentElement;
-      }
-    }
-
-    // Получаем стили иконки из CSS
-    let iconStyles = this.getIconStyles(dataIcon);
+    const iconSvgId = this.extractSvgIconId(linkElement);
+    const dataIcon = linkElement.getAttribute('data-icon') || (iconSvgId ? iconSvgId.replace(/^aside-icon-/, '') : null);
+    const iconStyles = this.getIconStyles(dataIcon);
 
     return {
       id: id,
       title: title,
       href: href,
       icon: dataIcon,
+      iconSvgId: iconSvgId,
       iconStyles: iconStyles,
       timestamp: Date.now(),
       isFavorite: false
     };
   }
 
-  // Получение CSS стилей для иконки на основе data-icon
   getIconStyles(dataIcon) {
     if (!dataIcon) return null;
 
-    // Получаем все стили из document
     const styles = Array.from(document.styleSheets);
     let iconStyles = null;
 
-    // Ищем CSS правила для данного data-icon
     for (const sheet of styles) {
       try {
         const rules = Array.from(sheet.cssRules || sheet.rules || []);
         for (const rule of rules) {
           if (rule.selectorText && rule.selectorText.includes(`[data-icon="${dataIcon}"]`)) {
-            // Находим правило с :before
-            if (rule.selectorText.includes(':before')) {
+            if (rule.selectorText.includes(':before') && rule.style.backgroundImage) {
               iconStyles = {
                 backgroundImage: rule.style.backgroundImage,
-                backgroundSize: rule.style.backgroundSize,
-                backgroundPosition: rule.style.backgroundPosition,
-                backgroundRepeat: rule.style.backgroundRepeat,
-                width: rule.style.width,
-                height: rule.style.height,
-                display: rule.style.display || 'inline-block'
+                backgroundSize: '18px 18px',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
               };
               break;
             }
@@ -412,7 +501,6 @@
         }
         if (iconStyles) break;
       } catch (e) {
-        // Пропускаем CORS ошибки
         continue;
       }
     }
@@ -540,8 +628,6 @@
       'products_settings': '⚙️',
       'email': '📧',
       'telegram': '📱',
-      'monitor_ignore': '🖥️',
-      'pc_energy_saving_ignore': '💡',
       'club_schema': '🗺️',
       'club_schema_admin': '🗺️',
       'guests_phone_codes': '📞',
@@ -678,72 +764,52 @@
   createTabsContainer(recentTabs, favoriteTabs) {
     const container = document.createElement('div');
     container.id = 'recentTabsContainer';
-    container.style.cssText = `
-      margin: 20px;
-      padding: 0 10px;
-    `;
+    container.className = 'lgs-tabs-panel';
 
     if (favoriteTabs.length > 0) {
-      const favoritesSection = document.createElement('div');
-      favoritesSection.style.cssText = `
-        margin-bottom: 30px;
-      `;
+      const favoritesSection = document.createElement('section');
+      favoritesSection.className = 'lgs-tabs-section';
 
-      const favoritesTitle = document.createElement('h3');
-      favoritesTitle.textContent = 'Избранные вкладки ';
-      favoritesTitle.style.cssText = `
-        margin: 10px 0;
-        color: var(--text-color, #333);
-        font-size: 18px;
-        font-weight: 600;
+      const favoritesHeader = document.createElement('div');
+      favoritesHeader.className = 'lgs-tabs-header';
+      favoritesHeader.innerHTML = `
+        <div class="lgs-tabs-title-wrap">
+          <h3 class="lgs-tabs-title">Избранные вкладки</h3>
+        </div>
       `;
 
       const favoritesGrid = document.createElement('div');
-      favoritesGrid.className = 'favorites-grid';
-      favoritesGrid.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
-      `;
+      favoritesGrid.className = 'favorites-grid lgs-tabs-grid';
 
       favoriteTabs.forEach(tab => {
-        const card = this.createTabCard(tab, true);
-        favoritesGrid.appendChild(card);
+        favoritesGrid.appendChild(this.createTabCard(tab, true));
       });
 
-      favoritesSection.appendChild(favoritesTitle);
+      favoritesSection.appendChild(favoritesHeader);
       favoritesSection.appendChild(favoritesGrid);
       container.appendChild(favoritesSection);
     }
 
-    // Секция недавних вкладок
     if (recentTabs.length > 0) {
-      const recentSection = document.createElement('div');
+      const recentSection = document.createElement('section');
+      recentSection.className = 'lgs-tabs-section';
 
-      const recentTitle = document.createElement('h3');
-      recentTitle.textContent = 'Последние используемые вкладки';
-      recentTitle.style.cssText = `
-        margin: 10px 0;
-        color: var(--text-color, #333);
-        font-size: 18px;
-        font-weight: 600;
+      const recentHeader = document.createElement('div');
+      recentHeader.className = 'lgs-tabs-header';
+      recentHeader.innerHTML = `
+        <div class="lgs-tabs-title-wrap">
+          <h3 class="lgs-tabs-title">Последние вкладки</h3>
+        </div>
       `;
 
       const recentGrid = document.createElement('div');
-      recentGrid.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 15px;
-        margin-top: 15px;
-      `;
+      recentGrid.className = 'lgs-tabs-grid';
 
       recentTabs.forEach(tab => {
-        const card = this.createTabCard(tab, false);
-        recentGrid.appendChild(card);
+        recentGrid.appendChild(this.createTabCard(tab, false));
       });
 
-      recentSection.appendChild(recentTitle);
+      recentSection.appendChild(recentHeader);
       recentSection.appendChild(recentGrid);
       container.appendChild(recentSection);
     }
@@ -751,208 +817,91 @@
     return container;
   }
 
-  // Создание карточки вкладки
   createTabCard(tab, isFavorite = false) {
     const card = document.createElement('div');
-    
-    // Добавляем класс для избранных карточек
+    card.className = 'lgs-tab-card';
     if (isFavorite) {
       card.classList.add('favorite-card');
       card.setAttribute('data-favorite', 'true');
     }
-    
-    // Применяем цвет если он установлен для избранной вкладки
-    let cardStyle = `
-      background: var(--bg-secondary, rgba(151, 151, 151, 0.5));
-      backdrop-filter: blur(6px);
-      border: 1px solid var(--border-color, rgba(36, 36, 36, 0.57));
-      border-radius: 10px;
-      padding: 15px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      position: relative;
-    `;
-    
+
     if (isFavorite && tab.color) {
       const colorConfig = this.availableColors.find(c => c.value === tab.color);
       if (colorConfig) {
-        cardStyle = `
-          background: ${colorConfig.bg};
-          backdrop-filter: blur(6px);
-          border: 1px solid ${colorConfig.border};
-          border-radius: 10px;
-          padding: 15px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          position: relative;
-        `;
+        card.classList.add('has-color');
+        card.style.setProperty('--lgs-tab-accent', colorConfig.value);
+        card.style.setProperty('--lgs-tab-tint', colorConfig.bg);
+        card.style.setProperty('--lgs-tab-border', colorConfig.border);
       }
     }
-    
-    card.style.cssText = cardStyle;
 
-    // Эффекты при наведении
-    card.addEventListener('mouseenter', () => {
-      if (isFavorite && tab.color) {
-        const colorConfig = this.availableColors.find(c => c.value === tab.color);
-        if (colorConfig) {
-          card.style.background = colorConfig.bg.replace('0.1', '0.2');
-        } else {
-          card.style.background = 'rgba(255,255,255,0.1)';
-        }
-      } else {
-        card.style.background = 'rgba(255,255,255,0.1)';
-      }
-      card.style.transform = 'translateY(-2px)';
-    });
-
-    card.addEventListener('mouseleave', () => {
-      if (isFavorite && tab.color) {
-        const colorConfig = this.availableColors.find(c => c.value === tab.color);
-        if (colorConfig) {
-          card.style.background = colorConfig.bg;
-        } else {
-          card.style.background = 'rgba(151, 151, 151, 0.5)';
-        }
-      } else {
-        card.style.background = 'rgba(151, 151, 151, 0.5)';
-      }
-      card.style.transform = 'translateY(0)';
-    });
-
-    // Переход по клику
     card.addEventListener('click', () => {
       window.location.href = tab.href;
     });
 
-    // Иконка
-    if (tab.iconStyles) {
-      const icon = document.createElement('span');
-      icon.style.cssText = `
-        min-width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-image: ${tab.iconStyles.backgroundImage || 'none'};
-        background-size: ${tab.iconStyles.backgroundSize || 'contain'};
-        background-position: ${tab.iconStyles.backgroundPosition || 'center'};
-        background-repeat: ${tab.iconStyles.backgroundRepeat || 'no-repeat'};
-        width: ${tab.iconStyles.width || '24px'};
-        height: ${tab.iconStyles.height || '24px'};
-      `;
-      card.appendChild(icon);
-    } else if (tab.icon) {
-      // Fallback - создаем эмодзи на основе data-icon
-      const icon = document.createElement('span');
-      icon.textContent = this.getFallbackIcon(tab.icon);
-      icon.style.cssText = `
-        font-size: 20px;
-        min-width: 24px;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      `;
-      card.appendChild(icon);
-    }
+    const icon = document.createElement('span');
+    icon.className = 'lgs-tab-icon';
+    icon.setAttribute('aria-hidden', 'true');
 
-    // Информация о вкладке
+    const svgId = this.resolveIconSvgId(tab);
+    if (svgId && this.symbolExists(svgId)) {
+      const symbol = document.getElementById(svgId);
+      const viewBox = symbol?.getAttribute('viewBox') || '0 0 24 24';
+      icon.innerHTML = `<svg class="lgs-tab-svg" viewBox="${viewBox}" focusable="false" aria-hidden="true"><use href="#${svgId}" xlink:href="#${svgId}"></use></svg>`;
+    } else if (tab.iconStyles?.backgroundImage && tab.iconStyles.backgroundImage !== 'none') {
+      icon.classList.add('has-bg');
+      icon.style.backgroundImage = tab.iconStyles.backgroundImage;
+    } else if (tab.icon) {
+      icon.classList.add('is-fallback');
+      icon.textContent = this.getFallbackIcon(tab.icon);
+    } else {
+      icon.classList.add('is-placeholder');
+      icon.innerHTML = `
+        <svg class="lgs-tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+          <path d="M3 7h18M3 12h18M3 17h12"></path>
+        </svg>
+      `;
+    }
+    card.appendChild(icon);
+
     const info = document.createElement('div');
-    info.style.cssText = `
-      flex: 1;
-      min-width: 0;
-    `;
+    info.className = 'lgs-tab-info';
 
     const title = document.createElement('div');
+    title.className = 'lgs-tab-name';
     title.textContent = tab.title;
-    title.style.cssText = `
-      font-weight: 600;
-      color: var(--text-color, #333);
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    `;
 
     const path = document.createElement('div');
+    path.className = 'lgs-tab-path';
     path.textContent = tab.href;
-    path.style.cssText = `
-      font-size: 12px;
-      color: var(--text-secondary, #666);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    `;
 
     info.appendChild(title);
     info.appendChild(path);
     card.appendChild(info);
 
-    // Кнопки управления
     const buttonsContainer = document.createElement('div');
-    buttonsContainer.style.cssText = `
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      display: none;
-      gap: 4px;
-    `;
+    buttonsContainer.className = 'lgs-tab-actions';
 
-    // Кнопка избранного
     const favoriteBtn = document.createElement('button');
-    favoriteBtn.textContent = isFavorite ? '⭐' : '☆';
-    favoriteBtn.style.cssText = `
-      width: 24px;
-      height: 24px;
-      border: none;
-      background: rgba(255, 193, 7, 0.1);
-      color: #ffc107;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    `;
-
-    favoriteBtn.addEventListener('mouseenter', () => {
-      favoriteBtn.style.background = 'rgba(255, 193, 7, 0.2)';
-    });
-
-    favoriteBtn.addEventListener('mouseleave', () => {
-      favoriteBtn.style.background = 'rgba(255, 193, 7, 0.1)';
-    });
+    favoriteBtn.type = 'button';
+    favoriteBtn.className = 'lgs-tab-action is-favorite' + (isFavorite ? ' is-active' : '');
+    favoriteBtn.title = isFavorite ? 'Убрать из избранного' : 'В избранное';
+    favoriteBtn.setAttribute('aria-label', favoriteBtn.title);
+    favoriteBtn.innerHTML = isFavorite
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l-6.2 3.7 1.6-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.4 4.7 1.6 7.1z"/></svg>'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 17.3l-6.2 3.7 1.6-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.4 4.7 1.6 7.1z"/></svg>';
 
     favoriteBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      
+
       if (isFavorite) {
-        // Удаляем из избранного
         this.removeFromFavorites(tab.id).then(success => {
-          if (success) {
-            favoriteBtn.textContent = '☆';
-            isFavorite = false;
-            // Обновляем отображение
-            this.refreshDisplay();
-          }
+          if (success) this.refreshDisplay();
         });
       } else {
-        // Добавляем в избранное
         this.addToFavorites(tab).then(result => {
           if (result.success) {
-            favoriteBtn.textContent = '⭐';
-            isFavorite = true;
-            // Показываем уведомление
             this.showNotification(result.message, 'success');
-            // Обновляем отображение
             this.refreshDisplay();
           } else {
             this.showNotification(result.message, 'error');
@@ -961,74 +910,31 @@
       }
     });
 
-    // Кнопка выбора цвета (только для избранных вкладок)
     if (isFavorite) {
       const colorBtn = document.createElement('button');
-      colorBtn.textContent = '🎨';
-      colorBtn.style.cssText = `
-        width: 24px;
-        height: 24px;
-        border: none;
-        background: rgba(108, 117, 125, 0.1);
-        color: #6c757d;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-      `;
-
-      colorBtn.addEventListener('mouseenter', () => {
-        colorBtn.style.background = 'rgba(108, 117, 125, 0.2)';
-      });
-
-      colorBtn.addEventListener('mouseleave', () => {
-        colorBtn.style.background = 'rgba(108, 117, 125, 0.1)';
-      });
-
+      colorBtn.type = 'button';
+      colorBtn.className = 'lgs-tab-action is-color';
+      colorBtn.title = 'Цвет';
+      colorBtn.setAttribute('aria-label', 'Выбрать цвет');
+      colorBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>';
       colorBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.showColorPicker(tab, card);
       });
-
       buttonsContainer.appendChild(colorBtn);
     }
 
-    // Кнопка удаления (только для недавних вкладок)
     if (!isFavorite) {
       const removeBtn = document.createElement('button');
-      removeBtn.textContent = '×';
-      removeBtn.style.cssText = `
-        width: 24px;
-        height: 24px;
-        border: none;
-        background: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-      `;
-
-      removeBtn.addEventListener('mouseenter', () => {
-        removeBtn.style.background = 'rgba(220, 53, 69, 0.2)';
-      });
-
-      removeBtn.addEventListener('mouseleave', () => {
-        removeBtn.style.background = 'rgba(220, 53, 69, 0.1)';
-      });
-
+      removeBtn.type = 'button';
+      removeBtn.className = 'lgs-tab-action is-remove';
+      removeBtn.title = 'Удалить';
+      removeBtn.setAttribute('aria-label', 'Удалить из недавних');
+      removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
       removeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (this.removeTab(tab.id)) {
           card.remove();
-          // Обновляем отображение, если карточек не осталось
           Promise.all([this.getRecentTabs(), this.getFavoriteTabs()]).then(([recentTabs, favoriteTabs]) => {
             const container = document.getElementById('recentTabsContainer');
             if (container && recentTabs.length === 0 && favoriteTabs.length === 0) {
@@ -1037,21 +943,11 @@
           });
         }
       });
-
       buttonsContainer.appendChild(removeBtn);
     }
 
     buttonsContainer.appendChild(favoriteBtn);
     card.appendChild(buttonsContainer);
-
-    // Показываем кнопки при наведении
-    card.addEventListener('mouseenter', () => {
-      buttonsContainer.style.display = 'flex';
-    });
-
-    card.addEventListener('mouseleave', () => {
-      buttonsContainer.style.display = 'none';
-    });
 
     return card;
   }
@@ -1072,69 +968,26 @@
     }
   }
 
-  // Функция для показа палитры цветов
   showColorPicker(tab, card) {
-    // Удаляем существующие палитры
-    const existingPickers = document.querySelectorAll('.lan-search-color-picker');
-    existingPickers.forEach(picker => picker.remove());
+    document.querySelectorAll('.lan-search-color-picker, .lgs-tabs-picker-overlay').forEach(el => el.remove());
+
+    const overlay = document.createElement('div');
+    overlay.className = 'lgs-tabs-picker-overlay';
 
     const picker = document.createElement('div');
-    picker.className = 'lan-search-color-picker';
-    picker.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px;
-      padding: 20px;
-      z-index: 10001;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      min-width: 300px;
+    picker.className = 'lan-search-color-picker lgs-tabs-picker';
+    picker.innerHTML = `
+      <h3 class="lgs-tabs-picker-title">Цвет избранной вкладки</h3>
+      <div class="lgs-tabs-picker-grid"></div>
+      <button type="button" class="lgs-tabs-picker-close">Закрыть</button>
     `;
 
-    const title = document.createElement('h3');
-    title.textContent = 'Выберите цвет для избранной вкладки';
-    title.style.cssText = `
-      margin: 0 0 15px 0;
-      font-size: 16px;
-      color: #333;
-      text-align: center;
-    `;
-    picker.appendChild(title);
+    const colorsGrid = picker.querySelector('.lgs-tabs-picker-grid');
 
-    const colorsGrid = document.createElement('div');
-    colorsGrid.style.cssText = `
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 15px;
-    `;
-
-    // Добавляем опцию "Без цвета"
     const noColorBtn = document.createElement('button');
+    noColorBtn.type = 'button';
+    noColorBtn.className = 'lgs-tabs-picker-none';
     noColorBtn.textContent = 'Без цвета';
-    noColorBtn.style.cssText = `
-      padding: 10px;
-      border: 2px solid #e0e0e0;
-      background: #f8f9fa;
-      color: #666;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s;
-    `;
-
-    noColorBtn.addEventListener('mouseenter', () => {
-      noColorBtn.style.background = '#e9ecef';
-    });
-
-    noColorBtn.addEventListener('mouseleave', () => {
-      noColorBtn.style.background = '#f8f9fa';
-    });
-
     noColorBtn.addEventListener('click', () => {
       this.removeFavoriteColor(tab.id).then(result => {
         if (result.success) {
@@ -1147,31 +1000,15 @@
         overlay.remove();
       });
     });
-
     colorsGrid.appendChild(noColorBtn);
 
-    // Добавляем цветовые опции
     this.availableColors.forEach(color => {
       const colorBtn = document.createElement('button');
-      colorBtn.style.cssText = `
-        width: 50px;
-        height: 50px;
-        border: 2px solid ${color.value};
-        background: ${color.bg};
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-        position: relative;
-      `;
-
-      colorBtn.addEventListener('mouseenter', () => {
-        colorBtn.style.transform = 'scale(1.1)';
-      });
-
-      colorBtn.addEventListener('mouseleave', () => {
-        colorBtn.style.transform = 'scale(1)';
-      });
-
+      colorBtn.type = 'button';
+      colorBtn.className = 'lgs-tabs-picker-swatch';
+      colorBtn.title = color.name;
+      colorBtn.style.setProperty('--swatch', color.value);
+      colorBtn.style.setProperty('--swatch-bg', color.bg);
       colorBtn.addEventListener('click', () => {
         this.setFavoriteColor(tab.id, color.value).then(result => {
           if (result.success) {
@@ -1184,81 +1021,13 @@
           overlay.remove();
         });
       });
-
-      // Добавляем название цвета при наведении
-      const tooltip = document.createElement('div');
-      tooltip.textContent = color.name;
-      tooltip.style.cssText = `
-        position: absolute;
-        bottom: -25px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.8);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        white-space: nowrap;
-        opacity: 0;
-        transition: opacity 0.2s;
-        pointer-events: none;
-      `;
-
-      colorBtn.addEventListener('mouseenter', () => {
-        tooltip.style.opacity = '1';
-      });
-
-      colorBtn.addEventListener('mouseleave', () => {
-        tooltip.style.opacity = '0';
-      });
-
-      colorBtn.appendChild(tooltip);
       colorsGrid.appendChild(colorBtn);
     });
 
-    picker.appendChild(colorsGrid);
-
-    // Кнопка закрытия
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Закрыть';
-    closeBtn.style.cssText = `
-      width: 100%;
-      padding: 10px;
-      border: none;
-      background: #6c757d;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background 0.2s;
-    `;
-
-    closeBtn.addEventListener('mouseenter', () => {
-      closeBtn.style.background = '#5a6268';
-    });
-
-    closeBtn.addEventListener('mouseleave', () => {
-      closeBtn.style.background = '#6c757d';
-    });
-
-    closeBtn.addEventListener('click', () => {
+    picker.querySelector('.lgs-tabs-picker-close').addEventListener('click', () => {
       picker.remove();
       overlay.remove();
     });
-
-    picker.appendChild(closeBtn);
-
-    // Закрытие при клике вне палитры
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 10000;
-    `;
 
     overlay.addEventListener('click', () => {
       picker.remove();
@@ -1443,7 +1212,11 @@ function applyThemeToNewElements() {
               element.classList.contains('section') ||
               element.classList.contains('px-1') ||
               element.classList.contains('p-lg-3')) {
-            element.style.backgroundColor = 'var(--bg-color)';
+            // container-fluid в шапке — тот же цвет, иначе полоски
+            const inHeader = element.closest('#js-header, .header, .header-wrapper, .layout__header');
+            element.style.backgroundColor = inHeader
+              ? 'var(--bg-secondary)'
+              : 'var(--bg-color)';
           }
         
         if (element.classList.contains('panel') ||
@@ -1457,7 +1230,7 @@ function applyThemeToNewElements() {
             element.classList.contains('header') ||
             element.classList.contains('header-wrapper')) {
           element.style.backgroundColor = 'var(--bg-secondary)';
-          element.style.borderColor = 'var(--border-color)';
+          element.style.borderColor = 'transparent';
         }
         
         if (element.classList.contains('card')) {

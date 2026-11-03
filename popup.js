@@ -1,4 +1,24 @@
 document.addEventListener('DOMContentLoaded', function() {
+  function isLanSearchExcludedUrl(url) {
+    try {
+      const h = new URL(url || '').hostname.toLowerCase();
+      return h === 'msgtp.langame.ru'
+        || h === 'msgpublic.langame.ru'
+        || h.endsWith('.msgtp.langame.ru')
+        || h.endsWith('.msgpublic.langame.ru');
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function withActiveTab(fn) {
+    if (typeof chrome === 'undefined' || !chrome.tabs) return;
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (!tabs[0] || !tabs[0].id || isLanSearchExcludedUrl(tabs[0].url)) return;
+      fn(tabs[0]);
+    });
+  }
+
   // Элементы интерфейса
   const authSection = document.getElementById('authSection');
   const loginBtn = document.getElementById('loginBtn');
@@ -34,14 +54,14 @@ document.addEventListener('DOMContentLoaded', function() {
   const updateStatus = document.getElementById('updateStatus');
   const themeToggle = document.getElementById('themeToggle');
   const modalBypassToggle = document.getElementById('modalBypassToggle');
+  const newUiToggle = document.getElementById('newUiToggle');
+  const newUiAllClubsPcToggle = document.getElementById('newUiAllClubsPcToggle');
   const pcStylesToggle = document.getElementById('pcStylesToggle');
   const tableOptimizationToggle = document.getElementById('tableOptimizationToggle');
   const hideCheckboxesToggle = document.getElementById('hideCheckboxesToggle');
   const hideCommentsToggle = document.getElementById('hideCommentsToggle');
-  const domainInfoToggle = document.getElementById('domainInfoToggle');
+  const hideRemoteDownloadToggle = document.getElementById('hideRemoteDownloadToggle');
   const customWebSocketToggle = document.getElementById('customWebSocketToggle');
-  const energySavingIgnoreToggle = document.getElementById('energySavingIgnoreToggle');
-  const updaters3000Toggle = document.getElementById('updaters3000Toggle');
 
   async function syncAuthFromStorage() {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
@@ -174,19 +194,28 @@ document.addEventListener('DOMContentLoaded', function() {
     showAuthForm();
   });
 
+  function setSwitchState(el, enabled) {
+    if (!el) return;
+    el.classList.toggle('enabled', !!enabled);
+    el.setAttribute('aria-checked', enabled ? 'true' : 'false');
+    el.textContent = enabled ? 'Включен' : 'Выключен';
+  }
+
   // Переключение вкладок
   tabs.forEach(tab => {
     tab.addEventListener('click', function() {
       const targetTab = this.dataset.tab;
       
-      // Обновляем активные классы
-      tabs.forEach(t => t.classList.remove('active'));
+      tabs.forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
       tabContents.forEach(tc => tc.classList.remove('active'));
       
       this.classList.add('active');
+      this.setAttribute('aria-selected', 'true');
       document.getElementById(`${targetTab}Tab`).classList.add('active');
       
-      // Загружаем данные при переключении на вкладку
       if (targetTab === 'favorites') {
         loadFavoriteFiles();
       } else if (targetTab === 'search') {
@@ -409,14 +438,13 @@ async function initScripts() {
   // Инициализация всех настроек
   function initSettings() {
     initModalBypass();
+    initNewUi();
     initPCStyles();
     initTableOptimization();
     initHideCheckboxes();
     initHideComments();
-    initDomainInfo();
+    initHideRemoteDownload();
     initCustomWebSocket();
-    initEnergySavingIgnore();
-    initUpdaters3000();
   }
 
  
@@ -449,8 +477,7 @@ async function initScripts() {
   }
 
   function setModalBypassState(enabled) {
-    modalBypassToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    modalBypassToggle.classList.toggle('enabled', enabled);
+    setSwitchState(modalBypassToggle, enabled);
   }
 
   function toggleModalBypass() {
@@ -461,7 +488,7 @@ async function initScripts() {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
       chrome.storage.sync.set({ modalBypass: modalBypassEnabled }, function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-          if (tabs[0]) {
+          if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
             chrome.scripting.executeScript({
               target: { tabId: tabs[0].id },
               func: () => {
@@ -477,6 +504,103 @@ async function initScripts() {
   }
 
   modalBypassToggle.addEventListener('click', toggleModalBypass);
+
+  // Новый UI — отдельно общий и /all_clubs_pc/
+  let newUiEnabled = false;
+  let newUiAllClubsPcEnabled = false;
+
+  function syncNewUiToActiveTab() {
+    if (typeof chrome === 'undefined' || !chrome.tabs || !chrome.scripting) return;
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (!tabs[0] || isLanSearchExcludedUrl(tabs[0].url)) return;
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        func: () => {
+          if (window.lanSearchSyncNewUi) window.lanSearchSyncNewUi();
+        }
+      }).catch(() => {});
+    });
+  }
+
+  function persistNewUiFlags() {
+    try {
+      localStorage.setItem('lanSearchNewUi', newUiEnabled.toString());
+      localStorage.setItem('lanSearchNewUiAllClubsPc', newUiAllClubsPcEnabled.toString());
+    } catch (_) {}
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+      chrome.storage.sync.set({
+        newUi: newUiEnabled,
+        newUiAllClubsPc: newUiAllClubsPcEnabled
+      }, syncNewUiToActiveTab);
+    } else {
+      syncNewUiToActiveTab();
+    }
+  }
+
+  function initNewUi() {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
+        chrome.storage.sync.get(['newUi', 'newUiAllClubsPc'], function(result) {
+          newUiEnabled = result && result.newUi === undefined ? true : !!(result && result.newUi);
+          newUiAllClubsPcEnabled = result && result.newUiAllClubsPc === undefined
+            ? newUiEnabled
+            : !!(result && result.newUiAllClubsPc);
+          setNewUiState(newUiEnabled);
+          setNewUiAllClubsPcState(newUiAllClubsPcEnabled);
+          try {
+            localStorage.setItem('lanSearchNewUi', newUiEnabled.toString());
+            localStorage.setItem('lanSearchNewUiAllClubsPc', newUiAllClubsPcEnabled.toString());
+          } catch (_) {}
+          if (result && (result.newUi === undefined || result.newUiAllClubsPc === undefined)) {
+            chrome.storage.sync.set({
+              newUi: newUiEnabled,
+              newUiAllClubsPc: newUiAllClubsPcEnabled
+            });
+          }
+        });
+        return;
+      }
+
+      const localNewUi = localStorage.getItem('lanSearchNewUi');
+      const localPc = localStorage.getItem('lanSearchNewUiAllClubsPc');
+      newUiEnabled = localNewUi === null ? true : localNewUi === 'true';
+      newUiAllClubsPcEnabled = localPc === null ? newUiEnabled : localPc === 'true';
+      setNewUiState(newUiEnabled);
+      setNewUiAllClubsPcState(newUiAllClubsPcEnabled);
+    } catch (e) {
+      newUiEnabled = true;
+      newUiAllClubsPcEnabled = true;
+      setNewUiState(true);
+      setNewUiAllClubsPcState(true);
+    }
+  }
+
+  function setNewUiState(enabled) {
+    setSwitchState(newUiToggle, enabled);
+  }
+
+  function setNewUiAllClubsPcState(enabled) {
+    setSwitchState(newUiAllClubsPcToggle, enabled);
+  }
+
+  function toggleNewUi() {
+    newUiEnabled = !newUiEnabled;
+    setNewUiState(newUiEnabled);
+    persistNewUiFlags();
+  }
+
+  function toggleNewUiAllClubsPc() {
+    newUiAllClubsPcEnabled = !newUiAllClubsPcEnabled;
+    setNewUiAllClubsPcState(newUiAllClubsPcEnabled);
+    persistNewUiFlags();
+  }
+
+  if (newUiToggle) {
+    newUiToggle.addEventListener('click', toggleNewUi);
+  }
+  if (newUiAllClubsPcToggle) {
+    newUiAllClubsPcToggle.addEventListener('click', toggleNewUiAllClubsPc);
+  }
 
   // Стили карт ПК
   let pcStylesEnabled = false;
@@ -507,8 +631,7 @@ async function initScripts() {
   }
 
   function setPCStylesState(enabled) {
-    pcStylesToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    pcStylesToggle.classList.toggle('enabled', enabled);
+    setSwitchState(pcStylesToggle, enabled);
   }
 
   function togglePCStyles() {
@@ -519,7 +642,7 @@ async function initScripts() {
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
       chrome.storage.sync.set({ pcStyles: pcStylesEnabled }, function() {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-          if (tabs[0]) {
+          if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
             chrome.scripting.executeScript({
               target: { tabId: tabs[0].id },
               func: () => {
@@ -559,8 +682,7 @@ async function initScripts() {
   }
 
   function setTableOptimizationState(enabled) {
-    tableOptimizationToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    tableOptimizationToggle.classList.toggle('enabled', enabled);
+    setSwitchState(tableOptimizationToggle, enabled);
   }
 
   function toggleTableOptimization() {
@@ -570,7 +692,7 @@ async function initScripts() {
     
     chrome.storage.sync.set({ tableOptimization: tableOptimizationEnabled }, function() {
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
+        if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: () => {
@@ -587,7 +709,7 @@ async function initScripts() {
   tableOptimizationToggle.addEventListener('click', toggleTableOptimization);
 
   // Скрытие чекбоксов
-  let hideCheckboxesEnabled = false;
+  let hideCheckboxesEnabled = true;
   
   function initHideCheckboxes() {
     try {
@@ -599,18 +721,22 @@ async function initScripts() {
       }
       
       chrome.storage.sync.get(['hideCheckboxes'], function(result) {
-        hideCheckboxesEnabled = result.hideCheckboxes || false;
+        const missing = !result || result.hideCheckboxes === undefined;
+        hideCheckboxesEnabled = missing ? true : !!result.hideCheckboxes;
         setHideCheckboxesState(hideCheckboxesEnabled);
+        if (missing) {
+          try { chrome.storage.sync.set({ hideCheckboxes: true }); } catch (_) {}
+          try { localStorage.setItem('lanSearchHideCheckboxes', 'true'); } catch (_) {}
+        }
       });
     } catch (error) {
-      hideCheckboxesEnabled = false;
-      setHideCheckboxesState(false);
+      hideCheckboxesEnabled = true;
+      setHideCheckboxesState(true);
     }
   }
 
   function setHideCheckboxesState(enabled) {
-    hideCheckboxesToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    hideCheckboxesToggle.classList.toggle('enabled', enabled);
+    setSwitchState(hideCheckboxesToggle, enabled);
   }
 
   function toggleHideCheckboxes() {
@@ -620,7 +746,7 @@ async function initScripts() {
     
     chrome.storage.sync.set({ hideCheckboxes: hideCheckboxesEnabled }, function() {
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
+        if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: () => {
@@ -637,7 +763,7 @@ async function initScripts() {
   hideCheckboxesToggle.addEventListener('click', toggleHideCheckboxes);
 
   // Скрытие комментариев
-  let hideCommentsEnabled = false;
+  let hideCommentsEnabled = true;
   
   function initHideComments() {
     try {
@@ -649,18 +775,22 @@ async function initScripts() {
       }
       
       chrome.storage.sync.get(['hideComments'], function(result) {
-        hideCommentsEnabled = result.hideComments || false;
+        const missing = !result || result.hideComments === undefined;
+        hideCommentsEnabled = missing ? true : !!result.hideComments;
         setHideCommentsState(hideCommentsEnabled);
+        if (missing) {
+          try { chrome.storage.sync.set({ hideComments: true }); } catch (_) {}
+          try { localStorage.setItem('lanSearchHideComments', 'true'); } catch (_) {}
+        }
       });
     } catch (error) {
-      hideCommentsEnabled = false;
-      setHideCommentsState(false);
+      hideCommentsEnabled = true;
+      setHideCommentsState(true);
     }
   }
 
   function setHideCommentsState(enabled) {
-    hideCommentsToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    hideCommentsToggle.classList.toggle('enabled', enabled);
+    setSwitchState(hideCommentsToggle, enabled);
   }
 
   function toggleHideComments() {
@@ -670,7 +800,7 @@ async function initScripts() {
     
     chrome.storage.sync.set({ hideComments: hideCommentsEnabled }, function() {
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
+        if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: () => {
@@ -686,46 +816,52 @@ async function initScripts() {
 
   hideCommentsToggle.addEventListener('click', toggleHideComments);
 
-  // Информация по домену
-  let domainInfoEnabled = false;
-  
-  function initDomainInfo() {
+  // Скрыть «ПО для управления»
+  let hideRemoteDownloadEnabled = true;
+
+  function initHideRemoteDownload() {
+    if (!hideRemoteDownloadToggle) return;
     try {
-      const localDomainInfo = localStorage.getItem('lanSearchDomainInfo');
-      if (localDomainInfo !== null) {
-        domainInfoEnabled = localDomainInfo === 'true';
-        setDomainInfoState(domainInfoEnabled);
+      const local = localStorage.getItem('lanSearchHideRemoteDownload');
+      if (local !== null) {
+        hideRemoteDownloadEnabled = local === 'true';
+        setHideRemoteDownloadState(hideRemoteDownloadEnabled);
         return;
       }
-      
-      chrome.storage.sync.get(['domainInfo'], function(result) {
-        domainInfoEnabled = result.domainInfo || false;
-        setDomainInfoState(domainInfoEnabled);
+      chrome.storage.sync.get(['hideRemoteDownload'], function(result) {
+        const missing = !result || result.hideRemoteDownload === undefined;
+        hideRemoteDownloadEnabled = missing ? true : !!result.hideRemoteDownload;
+        setHideRemoteDownloadState(hideRemoteDownloadEnabled);
+        if (missing) {
+          try { chrome.storage.sync.set({ hideRemoteDownload: true }); } catch (_) {}
+          try { localStorage.setItem('lanSearchHideRemoteDownload', 'true'); } catch (_) {}
+        }
       });
     } catch (error) {
-      domainInfoEnabled = false;
-      setDomainInfoState(false);
+      hideRemoteDownloadEnabled = true;
+      setHideRemoteDownloadState(true);
     }
   }
 
-  function setDomainInfoState(enabled) {
-    domainInfoToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    domainInfoToggle.classList.toggle('enabled', enabled);
+  function setHideRemoteDownloadState(enabled) {
+    if (!hideRemoteDownloadToggle) return;
+    hideRemoteDownloadToggle.textContent = enabled ? 'Включен' : 'Выключен';
+    hideRemoteDownloadToggle.classList.toggle('enabled', enabled);
+    hideRemoteDownloadToggle.setAttribute('aria-checked', enabled ? 'true' : 'false');
   }
 
-  function toggleDomainInfo() {
-    domainInfoEnabled = !domainInfoEnabled;
-    setDomainInfoState(domainInfoEnabled);
-    localStorage.setItem('lanSearchDomainInfo', domainInfoEnabled.toString());
-    
-    chrome.storage.sync.set({ domainInfo: domainInfoEnabled }, function() {
+  function toggleHideRemoteDownload() {
+    hideRemoteDownloadEnabled = !hideRemoteDownloadEnabled;
+    setHideRemoteDownloadState(hideRemoteDownloadEnabled);
+    localStorage.setItem('lanSearchHideRemoteDownload', hideRemoteDownloadEnabled.toString());
+    chrome.storage.sync.set({ hideRemoteDownload: hideRemoteDownloadEnabled }, function() {
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
+        if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: () => {
-              if (window.lanSearchSyncDomainInfo) {
-                window.lanSearchSyncDomainInfo();
+              if (window.lanSearchSyncHideRemoteDownload) {
+                window.lanSearchSyncHideRemoteDownload();
               }
             }
           }).catch(() => {});
@@ -734,7 +870,9 @@ async function initScripts() {
     });
   }
 
-  domainInfoToggle.addEventListener('click', toggleDomainInfo);
+  if (hideRemoteDownloadToggle) {
+    hideRemoteDownloadToggle.addEventListener('click', toggleHideRemoteDownload);
+  }
 
   // WebSocket
   let customWebSocketEnabled = false;
@@ -759,8 +897,7 @@ async function initScripts() {
   }
 
   function setCustomWebSocketState(enabled) {
-    customWebSocketToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    customWebSocketToggle.classList.toggle('enabled', enabled);
+    setSwitchState(customWebSocketToggle, enabled);
   }
 
   function toggleCustomWebSocket() {
@@ -770,7 +907,7 @@ async function initScripts() {
     
     chrome.storage.sync.set({ customWebSocket: customWebSocketEnabled }, function() {
       chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
+        if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
           chrome.scripting.executeScript({
             target: { tabId: tabs[0].id },
             func: () => {
@@ -796,106 +933,6 @@ async function initScripts() {
   }
 
   customWebSocketToggle.addEventListener('click', toggleCustomWebSocket);
-
-  // Игнорирование энергосбережения
-  let energySavingIgnoreEnabled = false;
-  
-  function initEnergySavingIgnore() {
-    try {
-      const localEnergySaving = localStorage.getItem('lanSearchEnergySavingIgnore');
-      if (localEnergySaving !== null) {
-        energySavingIgnoreEnabled = localEnergySaving === 'true';
-        setEnergySavingIgnoreState(energySavingIgnoreEnabled);
-        return;
-      }
-      
-      chrome.storage.sync.get(['energySavingIgnore'], function(result) {
-        energySavingIgnoreEnabled = result.energySavingIgnore || false;
-        setEnergySavingIgnoreState(energySavingIgnoreEnabled);
-      });
-    } catch (error) {
-      energySavingIgnoreEnabled = false;
-      setEnergySavingIgnoreState(false);
-    }
-  }
-
-  function setEnergySavingIgnoreState(enabled) {
-    energySavingIgnoreToggle.textContent = enabled ? 'Включен' : 'Выключен';
-    energySavingIgnoreToggle.classList.toggle('enabled', enabled);
-  }
-
-  function toggleEnergySavingIgnore() {
-    energySavingIgnoreEnabled = !energySavingIgnoreEnabled;
-    setEnergySavingIgnoreState(energySavingIgnoreEnabled);
-    localStorage.setItem('lanSearchEnergySavingIgnore', energySavingIgnoreEnabled.toString());
-    
-    chrome.storage.sync.set({ energySavingIgnore: energySavingIgnoreEnabled }, function() {
-      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
-          chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            func: () => {
-              if (window.lanSearchSyncEnergySavingIgnore) {
-                window.lanSearchSyncEnergySavingIgnore();
-              }
-            }
-          }).catch(() => {});
-        }
-      });
-    });
-  }
-
-  energySavingIgnoreToggle.addEventListener('click', toggleEnergySavingIgnore);
-
-  // Обновляторы3000
-  let updaters3000Enabled = false;
-  
-  function initUpdaters3000() {
-    try {
-      const localUpdaters3000 = localStorage.getItem('lanSearchUpdaters3000');
-      if (localUpdaters3000 !== null) {
-        updaters3000Enabled = localUpdaters3000 === 'true';
-        setUpdaters3000State(updaters3000Enabled);
-        return;
-      }
-      
-      chrome.storage.sync.get(['updaters3000'], function(result) {
-        updaters3000Enabled = result.updaters3000 || false;
-        setUpdaters3000State(updaters3000Enabled);
-      });
-    } catch (error) {
-      updaters3000Enabled = false;
-      setUpdaters3000State(false);
-    }
-  }
-
-  function setUpdaters3000State(enabled) {
-    updaters3000Toggle.textContent = enabled ? 'Включен' : 'Выключен';
-    updaters3000Toggle.classList.toggle('enabled', enabled);
-  }
-
-  function toggleUpdaters3000() {
-    updaters3000Enabled = !updaters3000Enabled;
-    setUpdaters3000State(updaters3000Enabled);
-    localStorage.setItem('lanSearchUpdaters3000', updaters3000Enabled.toString());
-    
-    chrome.storage.sync.set({ updaters3000: updaters3000Enabled }, function() {
-      chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-        if (tabs[0]) {
-          chrome.scripting.executeScript({
-            target: { tabId: tabs[0].id },
-            func: () => {
-              if (window.lanSearchSyncUpdaters3000) {
-                window.lanSearchSyncUpdaters3000();
-              }
-            }
-          }).catch(() => {});
-        }
-      });
-    });
-  }
-
-  updaters3000Toggle.addEventListener('click', toggleUpdaters3000);
 
   // Проверка обновлений
   async function checkForUpdates() {
@@ -1003,9 +1040,12 @@ async function initScripts() {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
         chrome.storage.sync.get(['theme'], function(result) {
           try {
-            currentTheme = result.theme || 'dark';
+            const missing = !result || result.theme === undefined;
+            currentTheme = missing ? 'dark' : result.theme;
             setThemeButton(currentTheme);
-            
+            if (missing) {
+              try { chrome.storage.sync.set({ theme: 'dark' }); } catch (_) {}
+            }
             try {
               localStorage.setItem('lanSearchTheme', currentTheme);
             } catch (e) {}
@@ -1048,13 +1088,13 @@ async function initScripts() {
           // Применяем тему на всех открытых вкладках
           chrome.tabs.query({}, function(tabs) {
             tabs.forEach(tab => {
+              if (!tab.id || isLanSearchExcludedUrl(tab.url)) return;
               chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 func: (theme) => {
                   if (document.documentElement) {
                     document.documentElement.setAttribute('data-theme', theme);
                   }
-                  // Также обновляем через localStorage на странице
                   try {
                     localStorage.setItem('lanSearchTheme', theme);
                   } catch (e) {}

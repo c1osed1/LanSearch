@@ -1,0 +1,1925 @@
+/* LanSearch — Новый UI (LANGAME TP)
+ * html.lgs-new-ui
+ * Панель ПК: CSS grid вместо float + style_pc absolute-хака
+ */
+
+html.lgs-new-ui {
+  --primary: #c83232;
+  --on-primary: #ffffff;
+  --secondary: #828282;
+  --on-surface: #111111;
+  --on-surface-variant: #49454e;
+  --surface: #ffffff;
+  --surface-solid: #ffffff;
+  --surface-container-highest: #f4f4f5;
+  --surface-container-lowest: #f9fafb;
+  --outline-variant: rgba(223, 223, 223, 0.45);
+  --work-fill: rgba(52, 52, 52, 0.08);
+  --work-fill-hover: rgba(52, 52, 52, 0.14);
+  --work-fill-on-surface: #efefef;
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --font: 'SF Pro Display', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+
+  --button-bg: var(--primary);
+  --button-hover: color-mix(in srgb, var(--primary) 86%, #000);
+  --bg-color: var(--surface);
+  --text-color: var(--on-surface);
+  --text-secondary: var(--secondary);
+  --border-color: var(--outline-variant);
+  --bg-secondary: var(--surface-container-highest);
+  --bg-tertiary: var(--work-fill);
+}
+
+html.lgs-new-ui[data-theme='dark'] {
+  --secondary: #8a8a8a;
+  --on-surface: #f5f5f5;
+  --on-surface-variant: #cac4d0;
+  --surface: #171717;
+  --surface-solid: #171717;
+  --surface-container-highest: #212121;
+  --surface-container-lowest: #141414;
+  --work-fill: rgba(255, 255, 255, 0.06);
+  --work-fill-hover: rgba(255, 255, 255, 0.1);
+  --work-fill-on-surface: #212121;
+  --bg-color: #171717;
+  --text-color: #ffffff;
+  --text-secondary: #8a8a8a;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --bg-secondary: #212121;
+}
+
+html.lgs-new-ui[data-theme='dark'] body,
+html.lgs-new-ui[data-theme='dark'] html,
+html.lgs-new-ui[data-theme='dark'] .content-wrapper,
+html.lgs-new-ui[data-theme='dark'] .main-content,
+html.lgs-new-ui[data-theme='dark'] .layout,
+html.lgs-new-ui[data-theme='dark'] .layout__content,
+html.lgs-new-ui[data-theme='dark'] .layout__body,
+html.lgs-new-ui[data-theme='dark'] .layout__main,
+html.lgs-new-ui[data-theme='dark'] .layout__wrapper,
+html.lgs-new-ui[data-theme='dark'] .page-content,
+html.lgs-new-ui[data-theme='dark'] .wrapper,
+html.lgs-new-ui[data-theme='dark'] .page-wrapper {
+  background-color: #171717 !important;
+  background: #171717 !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] .layout__content {
+  /* сайт: background-color: #eaeaea — перекрываем */
+  background-image: none !important;
+}
+
+/* убрать лишний верхний воздух страницы */
+html.lgs-new-ui .layout__content {
+  padding-top: 0 !important;
+}
+
+html.lgs-new-ui .lgs-tabs-subtitle,
+html.lgs-new-ui .lgs-guest-subtitle {
+  display: none !important;
+}
+
+/* шапка всегда тёмная при New UI — не красим в белый surface светлой темы */
+html.lgs-new-ui #js-header,
+html.lgs-new-ui #js-header.header,
+html.lgs-new-ui .layout__header,
+html.lgs-new-ui #js-header .container-fluid,
+html.lgs-new-ui .layout__header .container-fluid,
+html.lgs-new-ui .header .container-fluid,
+html.lgs-new-ui #js-header .row,
+html.lgs-new-ui .layout__header .row {
+  background: #212121 !important;
+  background-color: #212121 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #recentTabsContainer.lgs-tabs-panel,
+html.lgs-new-ui[data-theme='dark'] #recentTabsContainer {
+  --lgs-tabs-title: var(--on-surface);
+  --lgs-tabs-muted: var(--secondary);
+  --lgs-tabs-card-bg: var(--work-fill);
+  --lgs-tabs-card-border: transparent;
+  --lgs-tabs-card-hover: var(--work-fill-hover);
+  --lgs-tabs-icon-bg: var(--work-fill);
+  color: var(--on-surface);
+}
+
+html.lgs-new-ui[data-theme='dark'] #recentTabsContainer .lgs-tabs-title,
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer .lgs-guest-title {
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #recentTabsContainer .lgs-tabs-subtitle,
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer .lgs-guest-subtitle {
+  color: var(--secondary) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #recentTabsContainer .lgs-tab-card {
+  background: var(--work-fill) !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer.lgs-guest-panel {
+  background: transparent !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer .form-control,
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer .input-group-text,
+html.lgs-new-ui[data-theme='dark'] .layout__content .form-control {
+  background: var(--work-fill) !important;
+  color: var(--on-surface) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer .form-control::placeholder,
+html.lgs-new-ui[data-theme='dark'] .layout__content .form-control::placeholder,
+html.lgs-new-ui[data-theme='dark'] .search-widget-container .search-input::placeholder {
+  color: var(--secondary) !important;
+  opacity: 1 !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer .input-group-text {
+  color: var(--secondary) !important;
+}
+
+/* =========================================================
+   ПК / all_clubs_pc — ровная сетка
+   ========================================================= */
+
+html.lgs-new-ui-pc #layoutStatusPC {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 10px;
+  align-items: stretch;
+  width: 100%;
+  float: none !important;
+  overflow: visible !important;
+}
+
+/* убираем float-обёртки сайта */
+html.lgs-new-ui-pc #layoutStatusPC > .float-left,
+html.lgs-new-ui-pc #layoutStatusPC > [class*='float'] {
+  float: none !important;
+  margin: 0 !important;
+  max-width: 160px !important;
+  width: 100% !important;
+  min-width: 0;
+  height: auto !important;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-self: stretch;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc {
+  width: 100% !important;
+  max-width: 160px !important;
+  margin: 0 !important;
+  height: 100% !important;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font);
+  font-size: 10px;
+}
+
+/* внутренняя карточка — компактная; overflow visible — иначе меню обрезается */
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div.mb-3,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div.border,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > .lan-search-pc-container,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div:first-child {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 6px !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: var(--work-fill) !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  gap: 5px;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div:first-child > .row,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div.mb-3 > .row {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  flex: 0 0 auto !important;
+}
+
+/* прячем шум: game_acc, пустые br, дубли «Управлять» из дропдауна на карточке */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .game_acc {
+  display: none !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc br {
+  display: none !important;
+}
+
+/* скрытие по галочкам расширения — всегда из new-ui.css (не зависит от style_pc) */
+body.lan-search-hide-checkboxes #layoutStatusPC form.pc .custom-control.custom-checkbox,
+body.lan-search-hide-checkboxes form.pc .custom-control.custom-checkbox,
+body[data-page='all_clubs_pc'].lan-search-hide-checkboxes form.pc .custom-control.custom-checkbox {
+  display: none !important;
+}
+
+body.lan-search-hide-comments #layoutStatusPC form.pc .input-group:has(.comment_input),
+body.lan-search-hide-comments #layoutStatusPC form.pc .input-group:has(input[id^='comment_']),
+body.lan-search-hide-comments #layoutStatusPC form.pc .comment_input,
+body.lan-search-hide-comments #layoutStatusPC form.pc input[id^='comment_'],
+body.lan-search-hide-comments #layoutStatusPC form.pc .row:has(.comment_input),
+body.lan-search-hide-comments #layoutStatusPC form.pc .row:has(input[id^='comment_']),
+body.lan-search-hide-comments form.pc .input-group:has(.comment_input),
+body[data-page='all_clubs_pc'].lan-search-hide-comments form.pc .row .col-12 .input-group:has(.comment_input) {
+  display: none !important;
+}
+
+/* ПО для управления */
+body.lan-search-hide-remote-download button[data-target='#remoteControlDownloadModal'],
+body.lan-search-hide-remote-download [data-target='#remoteControlDownloadModal'] {
+  display: none !important;
+}
+
+body.lan-search-hide-remote-download .row:has(> [class*='col-'] > button[data-target='#remoteControlDownloadModal']) > [class*='col-']:has(> button[data-target='#remoteControlDownloadModal']) {
+  display: none !important;
+}
+
+/* исходный статус сайта скрыт — рисуем одну ровную строку «Разблок · 4 ч.» */
+html.lgs-new-ui-pc #layoutStatusPC form.pc [data-type='status'].lgs-pc-status-src {
+  display: none !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line {
+  display: block !important;
+  width: 100%;
+  min-height: 16px;
+  height: 16px;
+  padding: 0 2px !important;
+  margin: 0 !important;
+  border-radius: 5px !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  line-height: 16px !important;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--on-surface) !important;
+  background: transparent !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line.bg-success {
+  background: color-mix(in srgb, #4caf50 18%, transparent) !important;
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line.bg-warning {
+  background: color-mix(in srgb, #ffc107 22%, transparent) !important;
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line.bg-danger {
+  background: color-mix(in srgb, #f44336 16%, transparent) !important;
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line.bg-info,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line.bg-primary {
+  background: color-mix(in srgb, #2196f3 22%, transparent) !important;
+  color: #90caf9 !important;
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-status-line.bg-secondary {
+  background: color-mix(in srgb, #9e9e9e 16%, transparent) !important;
+}
+
+/* pc_info / fio — данные в статус-строке, ряды не резервируют высоту */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc_info,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .row.pc_info,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .row:has(.fio) {
+  display: none !important;
+  min-height: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* статусные тинты по bootstrap/status на заголовке/статусе */
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.bg-success),
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.status-free) {
+  --tile-tint: rgba(76, 175, 80, 0.18);
+  --tile-border: rgba(46, 125, 50, 0.4);
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.bg-warning) {
+  --tile-tint: rgba(255, 193, 7, 0.2);
+  --tile-border: rgba(230, 170, 0, 0.42);
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.bg-danger),
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.status-busy) {
+  --tile-tint: rgba(255, 193, 7, 0.16);
+  --tile-border: rgba(230, 170, 0, 0.38);
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.bg-info),
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.bg-primary),
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.status-tech) {
+  --tile-tint: rgba(33, 150, 243, 0.22);
+  --tile-border: rgba(25, 118, 210, 0.45);
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.bg-secondary),
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.status-connection) {
+  --tile-tint: rgba(158, 158, 158, 0.18);
+  --tile-border: rgba(110, 110, 110, 0.38);
+}
+html.lgs-new-ui-pc #layoutStatusPC form.pc.pc-manual-unlock {
+  --tile-tint: rgba(156, 39, 176, 0.2);
+  --tile-border: rgba(123, 31, 162, 0.42);
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div.mb-3,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div.border,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > .lan-search-pc-container,
+html.lgs-new-ui-pc #layoutStatusPC form.pc > div:first-child {
+  background: var(--tile-tint, var(--work-fill)) !important;
+  border-color: var(--tile-border, color-mix(in srgb, var(--on-surface) 10%, transparent)) !important;
+}
+
+/* имя ПК */
+html.lgs-new-ui-pc #layoutStatusPC .pc_name,
+html.lgs-new-ui-pc #layoutStatusPC .lan-search-pc-number {
+  background: color-mix(in srgb, var(--on-surface) 8%, transparent) !important;
+  color: var(--on-surface) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 3px 4px !important;
+  text-align: center;
+  width: 100% !important;
+  line-height: 1.2 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* статус — компактная строка с временем */
+html.lgs-new-ui-pc #layoutStatusPC .lan-search-pc-status {
+  background: transparent !important;
+  color: var(--on-surface-variant) !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  text-align: center;
+  padding: 0 2px !important;
+  line-height: 1.2 !important;
+}
+
+/* действия: ряд иконок + сетка текстовых */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 2px 0 0 !important;
+  margin: 0 !important;
+  width: 100%;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions-power,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions-ops {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn {
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  min-width: 28px !important;
+  max-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  line-height: 1 !important;
+  font-size: 0 !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  text-decoration: none !important;
+  background: color-mix(in srgb, var(--on-surface) 6%, transparent) !important;
+  border: none !important;
+  color: var(--on-surface) !important;
+}
+
+/* прячем дубль landesk «Управлять» вне тулбара */
+html.lgs-new-ui-pc #layoutStatusPC form.pc a.connect_pc:not(.lgs-pc-ico-btn),
+html.lgs-new-ui-pc #layoutStatusPC form.pc .connect_pc.btn:not(.lgs-pc-ico-btn) {
+  display: none !important;
+}
+
+/* тех старт — синий */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn[data-lgs-kind='tech-start'] {
+  color: #1d4ed8 !important;
+  border: none !important;
+  background: color-mix(in srgb, #1d4ed8 14%, transparent) !important;
+}
+
+/* тех стоп — оранжевый */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn[data-lgs-kind='tech-stop'] {
+  color: #c2410c !important;
+  border: none !important;
+  background: color-mix(in srgb, #c2410c 14%, transparent) !important;
+}
+
+/* разблок — зелёный */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn[data-lgs-kind='unlock'] {
+  color: #15803d !important;
+  border: none !important;
+  background: color-mix(in srgb, #15803d 14%, transparent) !important;
+}
+
+/* блок — красный */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn[data-lgs-kind='lock'] {
+  color: #b42318 !important;
+  border: none !important;
+  background: color-mix(in srgb, #b42318 14%, transparent) !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn .lgs-ico {
+  width: 14px;
+  height: 14px;
+  display: block;
+  flex-shrink: 0;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.btn-primary,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lan-search-manage-btn.lgs-pc-ico-btn {
+  background: var(--primary) !important;
+  border: none !important;
+  color: var(--on-primary) !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.btn-outline-danger,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.btn-outline-success,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.action.god {
+  background: color-mix(in srgb, var(--on-surface) 6%, transparent) !important;
+  border: none !important;
+  color: var(--on-surface) !important;
+}
+
+/* скрытые сайтом кнопки не оставляют дырки */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions-power > [style*='display: none'],
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions-ops > [style*='display: none'],
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions-power > .d-none,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-actions-ops > .d-none {
+  display: none !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn:disabled {
+  opacity: 0.38 !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .col-12,
+html.lgs-new-ui-pc #layoutStatusPC form.pc [class*='col-'] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-row-empty {
+  display: none !important;
+}
+
+/*
+ * Новый UI без сетки ПК — flatten текстовых кнопок карточки
+ * (radius 0, без margin; не трогает .lgs-pc-ico-btn сетки)
+ */
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn.action.god,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .action.god,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn.action.text-truncate,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc a.btn.action.god,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-outline-danger.action,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-outline-success.action,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .teh_time_ullock,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn.teh_time_ullock,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .lan-search-manage-btn,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn.lan-search-manage-btn {
+  border-radius: 0 !important;
+  border: 1px solid transparent !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn.action.god.mb-1,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .action.god.mb-1 {
+  margin: 0 !important;
+}
+
+/* карточка не даёт кнопкам вылезать влево из-за float/col */
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc {
+  overflow: hidden !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc > div,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc > div.mb-3,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc > div.border {
+  overflow: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Вкл/Выкл — один ряд на всю ширину карточки (не width:auto — иначе уезжают) */
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .lgs-pc-power-pair {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  gap: 4px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  float: none !important;
+  box-sizing: border-box !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .lgs-pc-power-pair > .btn,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .lgs-pc-power-pair > .shutdown,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .lgs-pc-power-pair > .poweron {
+  flex: 1 1 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  float: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 0 !important;
+  border: 1px solid transparent !important;
+  margin: 0 !important;
+  margin-left: 0 !important;
+  box-shadow: none !important;
+  padding: 4px 8px !important;
+  box-sizing: border-box !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-group.col-12:has(> .poweron),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-group.col-12:has(> .shutdown),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-group:has(> .poweron),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-group:has(> .shutdown),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn-group.col-12:has(> .session_stop) {
+  display: flex !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 100% !important;
+  float: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .row:has(.poweron),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .row:has(.shutdown),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .row:has(.session_stop),
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .row:has(.lgs-pc-power-pair) {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .shutdown,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .poweron,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc [data-type='Shutdown'],
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc [data-type='Poweron'] {
+  border-radius: 0 !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  margin-left: 0 !important;
+  float: none !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .session_stop,
+html.lgs-new-ui:not(.lgs-new-ui-pc) #layoutStatusPC form.pc .btn.session_stop {
+  border-radius: 0 !important;
+  border: 1px solid transparent !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  padding: 2px 6px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  float: none !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+/* telemetry flatten при Новом UI без сетки */
+html.lgs-new-ui:not(.lgs-new-ui-pc) .pc-telemetry,
+html.lgs-new-ui:not(.lgs-new-ui-pc) button.pc-telemetry,
+html.lgs-new-ui[data-theme='dark']:not(.lgs-new-ui-pc) .pc-telemetry,
+html.lgs-new-ui[data-theme='dark']:not(.lgs-new-ui-pc) button.pc-telemetry {
+  background: color-mix(in srgb, var(--on-surface) 08%, transparent) !important;
+  background-color: color-mix(in srgb, var(--on-surface) 08%, transparent) !important;
+  color: var(--on-surface) !important;
+  border: 1px solid transparent !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/*
+ * Новый UI · сетка ПК — скруглённые иконки (не flatten выше)
+ */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-power-pair {
+  display: contents !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.poweron,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.shutdown,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.session_stop,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.btn-success,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.btn-danger,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.btn-sm,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-ico-btn.col-12 {
+  flex: 0 0 28px !important;
+  width: 28px !important;
+  min-width: 28px !important;
+  max-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  border: none !important;
+  font-size: 0 !important;
+  float: none !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry__readings,
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry__indicator,
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry [data-telemetry-value],
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry [data-telemetry-software],
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry [data-telemetry-version] {
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry__icon {
+  background-color: var(--secondary) !important;
+  color: var(--secondary) !important;
+  opacity: 0.9;
+}
+
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry__indicator img {
+  filter: invert(1) grayscale(1) brightness(1.35);
+  opacity: 0.85;
+}
+
+html.lgs-new-ui[data-theme='dark'] .pc-telemetry__indicator + .pc-telemetry__indicator {
+  border-left-color: color-mix(in srgb, var(--on-surface) 14%, transparent) !important;
+}
+
+/* нагрузка / версия ПО — компакт внизу карточки (сетка New UI) */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .lgs-pc-telemetry {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100% !important;
+  min-height: 22px !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  padding: 3px 4px !important;
+  border: 1px solid transparent !important;
+  border-radius: 0 !important;
+  background: color-mix(in srgb, var(--on-surface) 08%, transparent) !important;
+  color: var(--on-surface) !important;
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  line-height: 1.15 !important;
+  cursor: pointer;
+  order: 99;
+  position: relative !important;
+  z-index: 2 !important;
+  pointer-events: auto !important;
+  box-shadow: none !important;
+}
+
+/* сайт тоглит .hidden на readings/software — нельзя бить display:!important */
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry [hidden] {
+  display: none !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry__readings:not([hidden]),
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry [data-telemetry-readings]:not([hidden]) {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  width: 100%;
+  gap: 0;
+  color: inherit !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry__indicator {
+  display: inline-flex;
+  flex: 1 1 0;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  font-size: 9px !important;
+  white-space: nowrap;
+  overflow: hidden;
+  color: inherit !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry__indicator + .pc-telemetry__indicator {
+  border-left: 1px solid color-mix(in srgb, var(--on-surface) 14%, transparent) !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry__indicator img,
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry__icon {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+html.lgs-new-ui-pc[data-theme='dark'] #layoutStatusPC form.pc .pc-telemetry__icon {
+  background-color: var(--secondary) !important;
+}
+
+html.lgs-new-ui-pc[data-theme='dark'] #layoutStatusPC form.pc .pc-telemetry__indicator img {
+  filter: invert(1) grayscale(1) brightness(1.35);
+  opacity: 0.85;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .pc-telemetry [data-telemetry-software]:not([hidden]) {
+  display: inline !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: inherit !important;
+}
+
+/* контекстное меню — не обрезать */
+html.lgs-new-ui-pc #layoutStatusPC > .float-left,
+html.lgs-new-ui-pc #layoutStatusPC form.pc {
+  overflow: visible !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC > .float-left,
+html.lgs-new-ui-pc #layoutStatusPC > [class*='float'],
+html.lgs-new-ui-pc #layoutStatusPC form.pc {
+  position: relative !important;
+  z-index: 1;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC .dropdow,
+html.lgs-new-ui-pc #layoutStatusPC .pc-dropdow,
+html.lgs-new-ui-pc #layoutStatusPC .dropdow.pc-dropdow.col-3.p-0,
+html.lgs-new-ui-pc #layoutStatusPC .lan-search-dropdown {
+  position: relative !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: 5 !important;
+  overflow: visible !important;
+}
+
+/* открытое меню поднимает всю карточку над соседними btn-pc */
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.dropdown-menu.show),
+html.lgs-new-ui-pc #layoutStatusPC form.pc:has(.lan-search-dropdown.menu-open),
+html.lgs-new-ui-pc #layoutStatusPC > .float-left:has(.dropdown-menu.show),
+html.lgs-new-ui-pc #layoutStatusPC > [class*='float']:has(.dropdown-menu.show) {
+  z-index: 1000 !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC .dropdow:has(.dropdown-menu.show),
+html.lgs-new-ui-pc #layoutStatusPC .pc-dropdow:has(.dropdown-menu.show),
+html.lgs-new-ui-pc #layoutStatusPC .lan-search-dropdown.menu-open,
+html.lgs-new-ui-pc #layoutStatusPC .lan-search-dropdown:has(.dropdown-menu.show) {
+  z-index: 1001 !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC .lan-search-dropdown-toggle,
+html.lgs-new-ui-pc #layoutStatusPC .btn-pc {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .dropdown-menu {
+  z-index: 1002 !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: auto !important;
+  top: 100% !important;
+  min-width: 200px !important;
+  max-width: min(260px, 70vw) !important;
+  max-height: 70vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-size: 12px !important;
+  padding: 6px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18) !important;
+}
+
+html.lgs-new-ui-pc #layoutStatusPC form.pc .dropdown-menu .btn {
+  width: 100% !important;
+  min-height: 28px !important;
+  font-size: 12px !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding: 4px 8px !important;
+  margin: 2px 0 !important;
+  white-space: normal !important;
+}
+
+/* отключаем вредоносные ограничения старого style_pc под новым UI */
+html.lgs-new-ui .lan-search-pc-card {
+  max-width: none !important;
+  width: 100% !important;
+  max-height: none !important;
+  position: relative !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+html.lgs-new-ui .lan-search-pc-info {
+  display: block !important;
+  max-width: none !important;
+  background: transparent !important;
+  color: var(--on-surface-variant) !important;
+  font-size: 10px !important;
+}
+
+html.lgs-new-ui .lan-search-btn {
+  height: auto !important;
+}
+
+/* =========================================================
+   all_clubs_pc — клубы / действия как UiGlassTabsBar
+   один ряд + scroll; второй блок — actions
+   ========================================================= */
+
+html.lgs-new-ui .row:has(> .js-all-clubs-pc-clubs) {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 14px !important;
+}
+
+html.lgs-new-ui .row:has(> .js-all-clubs-pc-clubs) > [class*='col-'] {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 auto !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* col — только обёртка */
+html.lgs-new-ui .js-all-clubs-pc-clubs {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* track клубов */
+html.lgs-new-ui .lgs-clubs-tabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  gap: 2px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 2px !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--on-surface) 08%, transparent) !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.lgs-new-ui .lgs-clubs-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+html.lgs-new-ui .lgs-clubs-tabs > .btn,
+html.lgs-new-ui .lgs-clubs-tabs > a.btn {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 6px 10px !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  background-image: none !important;
+  color: var(--secondary) !important;
+  font-family: var(--font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+html.lgs-new-ui .lgs-clubs-tabs > .btn:hover,
+html.lgs-new-ui .lgs-clubs-tabs > .btn:focus,
+html.lgs-new-ui .lgs-clubs-tabs > a.btn:hover,
+html.lgs-new-ui .lgs-clubs-tabs > a.btn:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui .lgs-clubs-tabs > .btn.active,
+html.lgs-new-ui .lgs-clubs-tabs > a.btn.active,
+html.lgs-new-ui .lgs-clubs-tabs > .btn.active:hover,
+html.lgs-new-ui .lgs-clubs-tabs > .btn.active:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: color-mix(in srgb, var(--on-surface) 14%, transparent) !important;
+  color: var(--on-surface) !important;
+}
+
+/* второй блок — Выбрать / диски */
+html.lgs-new-ui .lgs-clubs-actions {
+  display: inline-flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 3px !important;
+  margin: 0 0 6px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--on-surface) 07%, transparent) !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+html.lgs-new-ui .lgs-clubs-actions > .btn,
+html.lgs-new-ui .lgs-clubs-actions > a.btn,
+html.lgs-new-ui .lgs-clubs-actions #selectPC,
+html.lgs-new-ui .lgs-clubs-actions #checkDisksBtn,
+html.lgs-new-ui .lgs-clubs-actions #snapshotInfoBtn {
+  float: none !important;
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 6px 11px !important;
+  border: none !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  color: var(--secondary) !important;
+  font-family: var(--font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+html.lgs-new-ui .lgs-clubs-actions > .btn:hover,
+html.lgs-new-ui .lgs-clubs-actions > a.btn:hover,
+html.lgs-new-ui .lgs-clubs-actions #checkDisksBtn:hover,
+html.lgs-new-ui .lgs-clubs-actions #snapshotInfoBtn:hover {
+  background: var(--work-fill-hover) !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui .lgs-clubs-actions #selectPC {
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+}
+
+html.lgs-new-ui .lgs-clubs-actions #selectPC:hover {
+  background: var(--button-hover) !important;
+  color: var(--on-primary) !important;
+}
+
+html.lgs-new-ui .lgs-clubs-actions #checkDisksBtn,
+html.lgs-new-ui .lgs-clubs-actions #snapshotInfoBtn {
+  opacity: 0.9;
+}
+
+/* ПО для управления */
+html.lgs-new-ui button[data-target='#remoteControlDownloadModal'] {
+  width: auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 0 10px !important;
+  padding: 8px 14px !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--primary) !important;
+  color: var(--on-primary) !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+}
+
+/* галочка расширения — после стиля кнопки, чтобы display:none победил */
+body.lan-search-hide-remote-download button[data-target='#remoteControlDownloadModal'],
+body.lan-search-hide-remote-download [data-target='#remoteControlDownloadModal'],
+html.lgs-new-ui body.lan-search-hide-remote-download button[data-target='#remoteControlDownloadModal'] {
+  display: none !important;
+}
+
+
+html.lgs-new-ui .row:has(button[data-target='#remoteControlDownloadModal']) {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+html.lgs-new-ui .row:has(button[data-target='#remoteControlDownloadModal']) > [class*='col-'] {
+  width: auto !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  padding: 0 !important;
+}
+
+/* массовые действия — две зоны: фильтры выбора + команды */
+html.lgs-new-ui .select-actions[style*='display: block'],
+html.lgs-new-ui .select-actions[style*='display:block'],
+html.lgs-new-ui .select-actions[style*='display: flex'],
+html.lgs-new-ui .select-actions[style*='display:flex'],
+html.lgs-new-ui .select-actions.lgs-select-open {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  width: 100% !important;
+  float: none !important;
+  clear: both !important;
+  padding: 10px !important;
+  margin: 6px 0 0 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--on-surface) 07%, transparent) !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui .select-actions > div[style*='clear'] {
+  display: none !important;
+}
+
+html.lgs-new-ui .select-actions .lgs-select-filters {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 4px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+html.lgs-new-ui .select-actions .lgs-select-commands,
+html.lgs-new-ui .select-actions .mt-2.mb-2 {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  float: none !important;
+}
+
+html.lgs-new-ui .select-actions > .btn,
+html.lgs-new-ui .select-actions > a.btn,
+html.lgs-new-ui .select-actions .lgs-select-filters > .btn,
+html.lgs-new-ui .select-actions .lgs-select-filters > a.btn,
+html.lgs-new-ui .select-actions .select-action {
+  float: none !important;
+  margin: 0 !important;
+  padding: 6px 10px !important;
+  border: none !important;
+  border-radius: 7px !important;
+  box-shadow: none !important;
+  font-family: var(--font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  background: transparent !important;
+  color: var(--secondary) !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+html.lgs-new-ui .select-actions > .btn:hover,
+html.lgs-new-ui .select-actions > a.btn:hover,
+html.lgs-new-ui .select-actions .lgs-select-filters > .btn:hover,
+html.lgs-new-ui .select-actions .lgs-select-filters > a.btn:hover,
+html.lgs-new-ui .select-actions .select-action:hover {
+  background: var(--work-fill-hover) !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui .select-actions #cancelSelect {
+  color: var(--secondary) !important;
+  opacity: 0.85;
+}
+
+html.lgs-new-ui .select-actions .select-action {
+  background: color-mix(in srgb, var(--on-surface) 08%, transparent) !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui .select-actions .stopTehTime,
+html.lgs-new-ui .select-actions .btn-warning.select-action {
+  background: color-mix(in srgb, #ff9800 26%, transparent) !important;
+  color: #ffcc80 !important;
+}
+
+html.lgs-new-ui .select-actions .startTehTime,
+html.lgs-new-ui .select-actions .btn-dark.select-action {
+  background: color-mix(in srgb, #2196f3 22%, transparent) !important;
+  color: #90caf9 !important;
+}
+
+html.lgs-new-ui .select-actions .reboot-all,
+html.lgs-new-ui .select-actions .power-on,
+html.lgs-new-ui .select-actions .btn-success.select-action {
+  background: color-mix(in srgb, #4caf50 22%, transparent) !important;
+  color: #a5d6a7 !important;
+}
+
+html.lgs-new-ui .select-actions .btn-danger.select-action,
+html.lgs-new-ui .select-actions .btn-outline-danger,
+html.lgs-new-ui .select-actions .btn-blue.select-action {
+  background: color-mix(in srgb, var(--primary) 20%, transparent) !important;
+  color: #ef9a9a !important;
+}
+
+html.lgs-new-ui .select-actions .takeControlPc {
+  background: color-mix(in srgb, #6366f1 20%, transparent) !important;
+  color: #c7d2fe !important;
+}
+
+html.lgs-new-ui #massive-pc-selection-panel-allclubs,
+html.lgs-new-ui #massive-pc-selection-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 12px !important;
+  background: color-mix(in srgb, var(--on-surface) 07%, transparent) !important;
+  font-family: var(--font);
+  padding: 10px !important;
+  margin: 8px 0 0 !important;
+  width: 100% !important;
+  max-width: 320px !important;
+  box-sizing: border-box !important;
+}
+
+html.lgs-new-ui #massive-pc-selection-panel-allclubs .panel-input,
+html.lgs-new-ui #massive-pc-selection-panel .panel-input,
+html.lgs-new-ui #massive-pc-selection-panel-allclubs input,
+html.lgs-new-ui #massive-pc-selection-panel input {
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: var(--work-fill-hover) !important;
+  color: var(--on-surface) !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+}
+
+html.lgs-new-ui #massive-pc-selection-panel-allclubs > button,
+html.lgs-new-ui #massive-pc-selection-panel > button {
+  width: 100% !important;
+  margin: 0 !important;
+  flex: 0 0 auto !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-family: var(--font) !important;
+  font-weight: 600 !important;
+}
+
+html.lgs-new-ui #massive-pc-selection-panel-allclubs > div,
+html.lgs-new-ui #massive-pc-selection-panel > div {
+  display: flex !important;
+  gap: 6px !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+/* =========================================================
+   Guest panel
+   ========================================================= */
+
+html.lgs-new-ui #guestSearchContainer.lgs-guest-panel,
+html.lgs-new-ui #guestSearchContainer {
+  --lgs-guest-bg: transparent;
+  --lgs-guest-border: transparent;
+  --lgs-guest-muted: var(--secondary);
+  --lgs-guest-title: var(--on-surface);
+  --lgs-guest-tabs-bg: var(--work-fill);
+  --lgs-guest-tab-active: var(--work-fill-on-surface);
+  --lgs-guest-row-hover: var(--work-fill-hover);
+  --lgs-guest-table-head: transparent;
+  font-family: var(--font);
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--on-surface);
+  overflow: visible;
+}
+
+html.lgs-new-ui[data-theme='dark'] #guestSearchContainer {
+  --lgs-guest-tab-active: var(--work-fill-hover);
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-header {
+  border-bottom: none !important;
+  padding: 4px 0 0;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-subtitle {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-body {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+html.lgs-new-ui #guestSearchContainer #guestSearchMode:not([hidden]),
+html.lgs-new-ui #guestSearchContainer #inventMode:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+html.lgs-new-ui #guestSearchContainer #guestSearchMode[hidden],
+html.lgs-new-ui #guestSearchContainer #inventMode[hidden] {
+  display: none !important;
+}
+
+html.lgs-new-ui #guestSearchContainer #guestSearchMode .lgs-guest-searchbar,
+html.lgs-new-ui #guestSearchContainer #inventMode .lgs-guest-searchbar {
+  margin: 0 !important;
+}
+
+html.lgs-new-ui #guestSearchContainer #guestSearchMode .lgs-guest-results:not([hidden]),
+html.lgs-new-ui #guestSearchContainer #guestSearchMode .lgs-guest-empty:not([hidden]) {
+  margin-top: 2px;
+}
+
+/* guest mode tabs = UiGlassTabsBar */
+html.lgs-new-ui #guestSearchContainer .lgs-guest-tabs {
+  padding: 2px !important;
+  gap: 2px !important;
+  border-radius: 10px !important;
+  background: color-mix(in srgb, var(--on-surface) 08%, transparent) !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-tab {
+  border-radius: 8px !important;
+  padding: 6px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  color: var(--secondary) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-tab:hover {
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-tab.is-active {
+  background: color-mix(in srgb, var(--on-surface) 14%, transparent) !important;
+  color: var(--on-surface) !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .btn-primary {
+  background: var(--primary) !important;
+  border: none !important;
+  color: var(--on-primary) !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .form-control,
+html.lgs-new-ui #guestSearchContainer .input-group-text {
+  border-radius: var(--radius-sm) !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: var(--work-fill) !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-searchbar.input-group,
+html.lgs-new-ui #guestSearchContainer .lgs-guest-searchbar .input-group,
+html.lgs-new-ui #guestSearchContainer .input-group {
+  display: flex !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  flex-wrap: nowrap !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-searchbar > .input-group-text,
+html.lgs-new-ui #guestSearchContainer .lgs-guest-searchbar > .form-control,
+html.lgs-new-ui #guestSearchContainer .lgs-guest-searchbar > .btn,
+html.lgs-new-ui #guestSearchContainer .input-group > .input-group-text,
+html.lgs-new-ui #guestSearchContainer .input-group > .form-control,
+html.lgs-new-ui #guestSearchContainer .input-group > .btn {
+  margin: 0 !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-searchbar > .form-control,
+html.lgs-new-ui #guestSearchContainer .input-group > .form-control {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .lgs-guest-results {
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--work-fill) !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui #guestSearchContainer .btn-outline-success,
+html.lgs-new-ui #guestSearchContainer .btn-outline-danger,
+html.lgs-new-ui #guestSearchContainer .btn-outline-secondary,
+html.lgs-new-ui #guestSearchContainer .btn-outline-warning {
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  min-height: 28px;
+  background: var(--work-fill) !important;
+  border: none !important;
+  color: var(--on-surface) !important;
+  box-shadow: none !important;
+}
+
+/* =========================================================
+   Search widget (navbar)
+   ========================================================= */
+
+html.lgs-new-ui #js-header .row {
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+}
+
+html.lgs-new-ui .lgs-header-search-col {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  max-width: 360px !important;
+  min-width: 0 !important;
+  justify-content: flex-start !important;
+  gap: 12px;
+}
+
+html.lgs-new-ui .lgs-header-search-col .header__title {
+  display: none !important;
+}
+
+html.lgs-new-ui .lgs-header-search-col .search-widget-container {
+  width: min(100%, 360px);
+  max-width: 360px;
+}
+
+html.lgs-new-ui #js-header .js-header-controls {
+  margin-left: auto !important;
+}
+
+/* старый фронт: #mainNav — тёмный и в светлой теме (не белый surface) */
+html.lgs-new-ui #mainNav.navbar,
+html.lgs-new-ui #mainNav.navbar.bg-dark,
+html.lgs-new-ui body .navbar.navbar-dark#mainNav,
+html.lgs-new-ui html body .navbar.navbar-dark#mainNav {
+  background: #212121 !important;
+  background-color: #212121 !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  min-height: 56px !important;
+  height: auto !important;
+  padding: 10px 16px !important;
+}
+
+/* светлая тема: текст/иконки в тёмной шапке читаемые */
+html.lgs-new-ui:not([data-theme='dark']) #js-header,
+html.lgs-new-ui:not([data-theme='dark']) .layout__header,
+html.lgs-new-ui:not([data-theme='dark']) #mainNav {
+  color: #f5f5f5 !important;
+}
+
+html.lgs-new-ui:not([data-theme='dark']) #js-header a,
+html.lgs-new-ui:not([data-theme='dark']) .layout__header a,
+html.lgs-new-ui:not([data-theme='dark']) #mainNav a,
+html.lgs-new-ui:not([data-theme='dark']) #mainNav .nav-link,
+html.lgs-new-ui:not([data-theme='dark']) #js-header .header-controls,
+html.lgs-new-ui:not([data-theme='dark']) .layout__header .header-controls {
+  color: #f5f5f5 !important;
+}
+
+html.lgs-new-ui:not([data-theme='dark']) #mainNav .navbar-toggler-icon {
+  filter: invert(1) grayscale(1) brightness(1.4);
+}
+
+html.lgs-new-ui #mainNav #navbarResponsive.navbar-collapse,
+html.lgs-new-ui #mainNav #navbarResponsive {
+  display: flex !important;
+  flex-direction: row !important; /* не row-reverse — иначе контролы слева */
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  flex: 1 1 auto !important;
+  gap: 12px !important;
+  width: auto !important;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
+/* title сайта занимает полхедер — прячем в New UI */
+html.lgs-new-ui #mainNav #current_position {
+  display: none !important;
+}
+
+html.lgs-new-ui #mainNav .lgs-mainnav-search {
+  display: flex !important;
+  align-items: center !important;
+  order: 1 !important;
+  flex: 0 1 360px !important;
+  min-width: 180px !important;
+  max-width: 360px !important;
+  margin: 0 auto 0 0 !important;
+}
+
+html.lgs-new-ui #mainNav .lgs-mainnav-search .search-widget-container,
+html.lgs-new-ui #mainNav .search-widget-container {
+  width: 100% !important;
+  max-width: 360px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+html.lgs-new-ui #mainNav .header-controls {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  order: 2 !important;
+  gap: 8px 10px !important;
+  margin: 0 0 0 auto !important;
+  padding: 0 !important;
+  width: auto !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  list-style: none !important;
+}
+
+html.lgs-new-ui #mainNav .header-controls > li {
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
+html.lgs-new-ui #mainNav .navbar-toggler {
+  flex: 0 0 auto !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: var(--work-fill) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 8px 10px !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] #mainNav .navbar-toggler-icon {
+  filter: invert(1) grayscale(1) brightness(1.4);
+}
+
+html.lgs-new-ui[data-theme='dark'] .container-fluid.subscription,
+html.lgs-new-ui[data-theme='dark'] .subscription.container-fluid,
+html.lgs-new-ui[data-theme='dark'] .container-fluid.px-1,
+html.lgs-new-ui[data-theme='dark'] .container-fluid.p-lg-3,
+html.lgs-new-ui[data-theme='dark'] .container-fluid.px-1.p-lg-3,
+html.lgs-new-ui[data-theme='dark'] .content-wrapper > .container-fluid {
+  background: #171717 !important;
+  background-color: #171717 !important;
+}
+
+html.lgs-new-ui .container-fluid.subscription,
+html.lgs-new-ui #js-subscription-container {
+  padding-top: 8px !important;
+  padding-bottom: 0 !important;
+}
+
+/* subscription alert → TP (новый + старый #langameSubscriptionWrapper) */
+html.lgs-new-ui [id^='subscription-alert'],
+html.lgs-new-ui .container-fluid.subscription > .alert,
+html.lgs-new-ui #langameSubscriptionNotify,
+html.lgs-new-ui #langameSubscriptionWrapper .alert,
+html.lgs-new-ui #langameSubscriptionWrapper .alert-danger {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  gap: 12px 16px !important;
+  margin: 0 0 12px !important;
+  padding: 14px 16px !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface)) !important;
+  background-color: color-mix(in srgb, var(--primary) 18%, var(--surface)) !important;
+  color: var(--on-surface) !important;
+  box-shadow: none !important;
+  font-family: var(--font) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+html.lgs-new-ui #langameSubscriptionWrapper {
+  background: transparent !important;
+}
+
+html.lgs-new-ui [id^='subscription-alert'] .btn,
+html.lgs-new-ui [id^='subscription-alert'] .btn-danger,
+html.lgs-new-ui .container-fluid.subscription > .alert .btn,
+html.lgs-new-ui #langameSubscriptionNotify a,
+html.lgs-new-ui #langameSubscriptionWrapper .alert a {
+  margin: 0 !important;
+  padding: 8px 14px !important;
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+  font-family: var(--font) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+  text-decoration: none !important;
+}
+
+html.lgs-new-ui [id^='subscription-alert'] .btn:hover,
+html.lgs-new-ui [id^='subscription-alert'] .btn-danger:hover,
+html.lgs-new-ui .container-fluid.subscription > .alert .btn:hover,
+html.lgs-new-ui #langameSubscriptionNotify a:hover,
+html.lgs-new-ui #langameSubscriptionWrapper .alert a:hover {
+  background: var(--button-hover) !important;
+  background-color: var(--button-hover) !important;
+  color: var(--on-primary) !important;
+}
+
+html.lgs-new-ui [id^='subscription-alert'] .btn-close,
+html.lgs-new-ui .container-fluid.subscription > .alert .btn-close {
+  filter: none !important;
+  opacity: 0.55;
+  box-shadow: none !important;
+}
+
+/* блок «Предложения партнёров» целиком */
+html.lgs-new-ui .container-fluid:has(.h2.mb-2):has(.partners__banners) {
+  display: none !important;
+}
+
+html.lgs-new-ui .search-widget-container {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  z-index: 30 !important;
+  display: block !important;
+  width: 100%;
+  max-width: 420px;
+  font-family: var(--font);
+}
+
+html.lgs-new-ui .search-widget-container .search-input {
+  width: 100% !important;
+  height: 36px !important;
+  padding: 0 12px 0 36px !important;
+  border: none !important;
+  border-radius: 10px !important;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23828282' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E")
+    10px 50% / 16px 16px no-repeat,
+    var(--work-fill) !important;
+  color: var(--on-surface) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-input::placeholder {
+  color: var(--secondary) !important;
+  opacity: 1;
+}
+
+html.lgs-new-ui .search-widget-container .search-input:focus {
+  background-color: var(--work-fill-hover) !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-results {
+  position: absolute !important;
+  top: calc(100% + 6px) !important;
+  left: 0 !important;
+  width: 100% !important;
+  max-height: min(340px, 50vh) !important;
+  overflow-y: auto !important;
+  padding: 6px !important;
+  border: none !important;
+  border-radius: 12px !important;
+  background: var(--surface-container-highest) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22) !important;
+  z-index: 1000 !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-results[hidden] {
+  display: none !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-no-results {
+  padding: 14px 10px !important;
+  text-align: center;
+  color: var(--secondary) !important;
+  font-size: 12px !important;
+  font-style: normal !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-item {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100% !important;
+  margin: 0 0 2px !important;
+  padding: 8px 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: var(--on-surface) !important;
+  text-align: left !important;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-item:hover,
+html.lgs-new-ui .search-widget-container .search-result-item:focus-visible {
+  background: color-mix(in srgb, var(--on-surface) 7%, transparent) !important;
+  outline: none !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-title {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  color: var(--on-surface) !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: var(--secondary) !important;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--secondary);
+  flex-shrink: 0;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-dot.is-here,
+html.lgs-new-ui .search-widget-container .search-result-item.is-current .search-result-dot {
+  background: #1b7a3d;
+}
+
+html.lgs-new-ui .search-widget-container .search-result-mark {
+  background: color-mix(in srgb, var(--primary) 22%, transparent) !important;
+  color: inherit !important;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+html.lgs-new-ui[data-theme='dark'] .search-widget-container .search-input {
+  background-color: color-mix(in srgb, var(--on-surface) 8%, transparent) !important;
+}
+
+html.lgs-new-ui[data-theme='dark'] .search-widget-container .search-results {
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* fallback без нового UI — чтобы после снятия inline не развалилось */
+.search-widget-container {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  z-index: 10;
+  display: inline-block;
+  width: 420px;
+  max-width: calc(100vw - 240px);
+}
+
+.search-widget-container .search-input {
+  width: 100%;
+  height: 34px;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+}
+
+.search-widget-container .search-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.search-widget-container .search-results[hidden] {
+  display: none;
+}
+
+.search-widget-container .search-result-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid #eee;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.search-widget-container .search-result-item:hover {
+  background: #f5f5f5;
+}
+
+.search-widget-container .search-result-title {
+  display: block;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.search-widget-container .search-result-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+}
+
+.search-widget-container .search-result-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4a90e2;
+}
+
+.search-widget-container .search-result-dot.is-here {
+  background: #2e7d32;
+}
+
+.search-widget-container .search-no-results {
+  padding: 10px;
+  color: #666;
+  text-align: center;
+}
+
+.search-widget-container .search-result-mark {
+  background: #ffeb3b;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+/* =========================================================
+   GMS / recent tabs
+   ========================================================= */
+
+html.lgs-new-ui .gms-container {
+  font-family: var(--font);
+}
+
+html.lgs-new-ui #recentTabsContainer.lgs-tabs-panel,
+html.lgs-new-ui #recentTabsContainer {
+  --lgs-tabs-card-bg: var(--work-fill);
+  --lgs-tabs-card-border: transparent;
+  --lgs-tabs-card-hover: var(--work-fill-hover);
+  --lgs-tabs-icon-bg: var(--work-fill);
+  background: transparent !important;
+}
+
+html.lgs-new-ui #recentTabsContainer .lgs-tab-card,
+html.lgs-new-ui .lgs-tabs-card,
+html.lgs-new-ui #recentTabsContainer .card {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--work-fill) !important;
+}
+
+html.lgs-new-ui #recentTabsContainer .lgs-tab-card.has-color {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html.lgs-new-ui #recentTabsContainer .lgs-tab-card::before {
+  display: none !important;
+}

@@ -15,7 +15,7 @@ class WikiAPI {
     
     // В расширении Chrome window.location.origin возвращает chrome-extension://...
     // Поэтому используем явный URL по умолчанию
-    return 'https://lantp.ru';
+    return 'https://otdel404.langame.ru';
   }
   
   // Асинхронный метод для получения URL из активной вкладки (если нужно)

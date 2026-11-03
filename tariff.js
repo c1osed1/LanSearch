@@ -3,7 +3,15 @@
  */
 (function() {
   'use strict';
-  if (['msgtp.langame.ru', 'msgpublic.langame.ru'].includes(window.location.hostname.toLowerCase())) return;
+  {
+    const h = (window.location.hostname || '').toLowerCase();
+    if (
+      h === 'msgtp.langame.ru'
+      || h === 'msgpublic.langame.ru'
+      || h.endsWith('.msgtp.langame.ru')
+      || h.endsWith('.msgpublic.langame.ru')
+    ) return;
+  }
 
   function isTariffPage() {
     const path = window.location.pathname;

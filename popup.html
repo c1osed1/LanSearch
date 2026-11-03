@@ -1,186 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <style>
     :root {
-      --primary: #dc0000;
+      --primary: #c83232;
       --on-primary: #ffffff;
-      --secondary: #888888;
-      --on-surface: #ffffff;
+      --secondary: #8a8a8a;
+      --on-surface: #f5f5f5;
+      --on-surface-variant: #cac4d0;
       --surface: #171717;
       --surface-container: #212121;
-      --outline: #454545;
-      --outline-variant: #313131;
-      --radius-md: 12px;
+      --surface-lowest: #141414;
+      --work-fill: rgba(255, 255, 255, 0.06);
+      --work-fill-hover: rgba(255, 255, 255, 0.1);
+      --work-fill-on: #2a2a2a;
+      --outline: rgba(255, 255, 255, 0.12);
       --radius-sm: 10px;
-      --shadow-1: 0 4px 16px rgba(0,0,0,0.2);
+      --radius-md: 12px;
+      --font: 'SF Pro Display', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
     }
+
     * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--surface);
+      color: var(--on-surface);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
 
     body {
       width: 380px;
-      min-height: 320px;
-      padding: 0;
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: var(--on-surface);
-      line-height: 1.5;
-      background: #252422;
-      background-image:
-        radial-gradient(ellipse 120% 80% at 15% 20%, rgba(220, 0, 0, 0.08) 0%, transparent 50%),
-        radial-gradient(ellipse 100% 60% at 88% 75%, rgba(249, 156, 6, 0.06) 0%, transparent 48%),
-        linear-gradient(165deg, #1e1d1b 0%, #252422 40%, #2a2927 100%);
+      min-height: 360px;
     }
 
+    /* ——— Header ——— */
     .header {
       display: flex;
       align-items: center;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--outline-variant);
-      background: var(--surface);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
+      gap: 12px;
+      padding: 18px 16px 14px;
+      background: var(--surface-container);
     }
 
     .icon {
       width: 36px;
       height: 36px;
-      margin-right: 12px;
-      border-radius: var(--radius-sm);
+      border-radius: 10px;
       overflow: hidden;
-      background: var(--surface-container);
+      background: var(--work-fill);
+      flex-shrink: 0;
     }
 
     .icon img {
       width: 100%;
       height: 100%;
-      border-radius: 6px;
-    }
-
-    .title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--on-surface);
-      margin: 0;
-    }
-
-    .account-info {
-      display: none;
-    }
-
-    .account-info.visible {
       display: block;
     }
 
-    .account-section {
-      margin-bottom: 20px;
-      padding: 14px;
-      background: var(--surface);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--outline-variant);
-      box-shadow: var(--shadow-1);
-    }
-
-    .account-header {
+    .brand {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
     }
 
-    .account-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--secondary);
-      margin-bottom: 4px;
-    }
-
-    .account-username {
-      font-size: 14px;
-      font-weight: 500;
+    .title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       color: var(--on-surface);
-      margin-bottom: 12px;
+      line-height: 1.15;
     }
 
-    .logout-btn {
-      width: 100%;
-      padding: 10px 14px;
-      background: var(--primary);
-      color: var(--on-primary);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
+    .subtitle {
+      margin: 0;
+      font-size: 11px;
+      color: var(--secondary);
+      font-weight: 500;
     }
 
-    .logout-btn:hover {
-      background: #b80000;
-    }
-
+    /* ——— Auth ——— */
     .auth-section {
-      padding: 20px;
+      padding: 20px 16px;
     }
 
     .auth-form {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .auth-btn {
-      padding: 12px 18px;
+    .auth-sso-hint {
+      margin: 0 0 4px;
+      color: var(--secondary);
+      font-size: 13px;
+    }
+
+    .auth-btn,
+    .logout-btn,
+    .favorite-btn,
+    .update-btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      transition: background 120ms var(--ease), transform 100ms var(--ease), color 120ms var(--ease);
+    }
+
+    .auth-btn:active,
+    .logout-btn:active,
+    .favorite-btn:active,
+    .update-btn:active,
+    .switch:active {
+      transform: scale(0.97);
+    }
+
+    .auth-btn,
+    .logout-btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
       background: var(--primary);
       color: var(--on-primary);
-      border: none;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
+      font-size: 13px;
     }
 
-    .auth-btn:hover {
-      background: #b80000;
+    .auth-btn:hover,
+    .logout-btn:hover {
+      background: color-mix(in srgb, var(--primary) 86%, #000);
     }
 
     .auth-btn:disabled {
-      background: var(--surface-container);
+      background: var(--work-fill);
       color: var(--secondary);
       cursor: not-allowed;
-    }
-
-    .auth-error {
-      color: #dc3545;
-      font-size: 13px;
-      margin-top: -8px;
+      transform: none;
     }
 
     .auth-paws-btn {
-      padding: 8px 14px;
+      padding: 9px 12px;
       background: transparent;
       color: var(--secondary);
-      border: 1px solid var(--outline);
+      border: none;
       border-radius: var(--radius-sm);
       font-size: 12px;
+      font-family: inherit;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: background 120ms var(--ease), color 120ms var(--ease);
     }
 
     .auth-paws-btn:hover {
-      background: var(--outline-variant);
+      background: var(--work-fill);
       color: var(--on-surface);
     }
 
     .manual-auth-block {
-      margin-top: 12px;
+      margin-top: 4px;
       padding-top: 12px;
-      border-top: 1px solid var(--outline-variant);
+      border-top: 1px solid var(--outline);
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -194,250 +180,416 @@
     .manual-token-input {
       width: 100%;
       padding: 10px 12px;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 12px;
-      background: var(--surface-container);
-      border: 1px solid var(--outline-variant);
+      background: var(--work-fill);
+      border: none;
       border-radius: var(--radius-sm);
       color: var(--on-surface);
       resize: vertical;
-      box-sizing: border-box;
     }
 
-    .manual-token-input::placeholder {
-      color: var(--secondary);
+    .manual-token-input::placeholder { color: var(--secondary); }
+    .manual-token-input:focus {
+      outline: none;
+      background: var(--work-fill-hover);
     }
 
-    .auth-sso-hint {
-      font-size: 13px;
-      color: var(--secondary);
-      margin: 0 0 8px 0;
+    .auth-error {
+      color: #f87171;
+      font-size: 12px;
     }
 
+    /* ——— Tabs (GlassTabsBar) ——— */
     .tabs {
       display: flex;
-      border-bottom: 1px solid var(--outline-variant);
-      background: var(--surface);
-    }
-
-    .tab {
-      flex: 1;
-      padding: 12px 16px;
-      background: none;
-      border: none;
-      color: var(--secondary);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .tab:hover {
-      color: var(--on-surface);
-    }
-
-    .tab.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-
-    .tab-content {
-      display: none;
-      padding: 16px;
-      max-height: 500px;
-      overflow-y: auto;
-      -ms-overflow-style: none;
+      gap: 2px;
+      margin: 12px 16px 0;
+      padding: 2px;
+      border-radius: var(--radius-sm);
+      background: var(--work-fill);
+      overflow-x: auto;
       scrollbar-width: none;
     }
 
-    .tab-content::-webkit-scrollbar {
-      display: none;
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: 7px 8px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--secondary);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 120ms var(--ease), color 120ms var(--ease);
     }
 
-    .tab-content.active {
-      display: block;
+    .tab:hover { color: var(--on-surface); }
+
+    .tab.active {
+      background: color-mix(in srgb, var(--on-surface) 14%, transparent);
+      color: var(--on-surface);
     }
+
+    .tab:active { transform: scale(0.98); }
+
+    /* ——— Content ——— */
+    .tab-content {
+      display: none;
+      padding: 14px 16px 18px;
+      max-height: 520px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--work-fill-on) transparent;
+    }
+
+    .tab-content.active { display: block; }
 
     .description {
       color: var(--secondary);
-      font-size: 13px;
+      font-size: 12px;
       line-height: 1.5;
-      margin: 0 0 16px 0;
+      margin: 0 0 12px;
     }
 
-    .update-section {
-      margin-top: 14px;
-      padding: 14px;
-      background: var(--surface);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--outline-variant);
-    }
-
-    .update-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .update-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--on-surface);
-    }
-
-    .update-buttons {
-      display: flex;
-      gap: 4px;
-    }
-
-    .update-btn {
-      padding: 8px 14px;
-      background: var(--primary);
-      color: var(--on-primary);
-      border: none;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .update-btn.enabled {
-      background: #28a745;
-    }
-
-    .update-btn:hover {
-      background: #b80000;
-    }
-
-    .update-btn.enabled:hover {
-      background: #218838;
-    }
-
-    .update-btn:disabled {
-      background: var(--surface-container);
-      color: var(--secondary);
-      cursor: not-allowed;
-    }
-
-    .update-status {
-      font-size: 12px;
-      color: var(--secondary);
-      line-height: 1.4;
-    }
-
+    /* ——— Lists / cards ——— */
     .favorites-list {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
+      gap: 8px;
     }
 
     .favorite-item {
-      padding: 14px;
-      background: var(--surface);
-      border: 1px solid var(--outline-variant);
+      padding: 12px;
+      background: var(--work-fill);
+      border: none;
       border-radius: var(--radius-md);
       cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      transition: background 120ms var(--ease);
     }
 
     .favorite-item:hover {
-      border-color: var(--outline);
-      box-shadow: var(--shadow-1);
+      background: var(--work-fill-hover);
     }
 
     .favorite-item-name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--on-surface);
       word-break: break-word;
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
     .favorite-item-footer {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       margin-top: auto;
     }
 
-    .favorite-item-meta {
+    .favorite-item-meta,
+    .favorite-item-path {
       font-size: 11px;
       color: var(--secondary);
+      line-height: 1.4;
+      word-break: break-word;
     }
 
     .favorite-item-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
     .favorite-btn {
       flex: 1;
-      min-width: 70px;
-      padding: 8px 12px;
+      min-width: 0;
+      padding: 8px 10px;
+      border-radius: 8px;
       background: var(--primary);
       color: var(--on-primary);
-      border: none;
-      border-radius: var(--radius-sm);
       font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
 
     .favorite-btn:hover {
-      background: #b80000;
+      background: color-mix(in srgb, var(--primary) 86%, #000);
     }
 
     .favorite-btn.secondary {
-      background: transparent;
-      border: 1px solid var(--outline);
+      background: var(--work-fill-on);
       color: var(--on-surface);
     }
 
     .favorite-btn.secondary:hover {
-      background: var(--surface-container);
-      border-color: var(--outline);
+      background: color-mix(in srgb, var(--on-surface) 18%, transparent);
     }
 
-    .empty-favorites {
+    .empty-favorites,
+    .loading {
       text-align: center;
-      padding: 40px 20px;
+      padding: 36px 16px;
       color: var(--secondary);
+      font-size: 13px;
     }
 
     .empty-favorites-icon {
-      font-size: 48px;
+      font-size: 28px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+
+    /* ——— Search ——— */
+    .search-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
       margin-bottom: 12px;
     }
 
-    .loading {
-      text-align: center;
-      padding: 24px;
+    .search-input,
+    .category-select,
+    .script-field input[type="text"],
+    .script-field input[type="number"],
+    .script-field input[type="datetime-local"] {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--work-fill);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--on-surface);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .search-input:focus,
+    .category-select:focus,
+    .script-field input:focus {
+      outline: none;
+      background: var(--work-fill-hover);
+    }
+
+    .search-input::placeholder { color: var(--secondary); }
+
+    .category-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238a8a8a' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 3.5L11.5 6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 28px;
+    }
+
+    .category-select option {
+      background: var(--surface-container);
+      color: var(--on-surface);
+    }
+
+    .search-results-count {
+      font-size: 11px;
       color: var(--secondary);
+      margin-bottom: 8px;
+    }
+
+    /* ——— Settings ——— */
+    .account-info { display: none; }
+    .account-info.visible { display: block; }
+
+    .account-section {
+      margin-bottom: 14px;
+      padding: 14px;
+      background: var(--work-fill);
+      border-radius: var(--radius-md);
+    }
+
+    .account-title {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .account-username {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--on-surface);
+      margin-bottom: 12px;
+    }
+
+    .settings-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 14px;
+      padding: 4px;
+      background: var(--work-fill);
+      border-radius: var(--radius-md);
+    }
+
+    .setting-row,
+    .update-section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: transparent;
+      transition: background 120ms var(--ease);
+    }
+
+    .setting-row:hover,
+    .update-section:hover {
+      background: color-mix(in srgb, var(--on-surface) 04%, transparent);
+    }
+
+    .setting-copy {
+      min-width: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .setting-title,
+    .update-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--on-surface);
+    }
+
+    .setting-desc,
+    .update-status {
+      font-size: 11px;
+      color: var(--secondary);
+      line-height: 1.35;
+    }
+
+    .update-header {
+      display: contents;
+    }
+
+    .update-buttons {
+      flex-shrink: 0;
+    }
+
+    /* Switch toggles */
+    .switch,
+    .update-btn {
+      position: relative;
+      width: 40px;
+      height: 24px;
+      padding: 0;
+      border-radius: 999px;
+      background: var(--work-fill-on);
+      color: transparent;
+      font-size: 0;
+      line-height: 0;
+      flex-shrink: 0;
+      box-shadow: none;
+    }
+
+    .switch::after,
+    .update-btn::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #d4d4d4;
+      transition: transform 160ms var(--ease), background 120ms var(--ease);
+    }
+
+    .switch.enabled,
+    .update-btn.enabled {
+      background: var(--primary);
+    }
+
+    .switch.enabled::after,
+    .update-btn.enabled::after {
+      transform: translateX(16px);
+      background: #fff;
+    }
+
+    /* Theme chip (not a boolean switch) */
+    #themeToggle.update-btn {
+      width: auto;
+      min-width: 72px;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 8px;
+      background: var(--work-fill-on);
+      color: var(--on-surface);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 28px;
+    }
+
+    #themeToggle.update-btn::after { display: none; }
+
+    #themeToggle.update-btn:hover {
+      background: color-mix(in srgb, var(--on-surface) 18%, transparent);
+    }
+
+    /* Action button (check update) */
+    #checkUpdateBtn.update-btn {
+      width: auto;
+      height: 28px;
+      padding: 0 12px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 28px;
+    }
+
+    #checkUpdateBtn.update-btn::after { display: none; }
+
+    #checkUpdateBtn.update-btn:hover {
+      background: color-mix(in srgb, var(--primary) 86%, #000);
+    }
+
+    #checkUpdateBtn.update-btn:disabled {
+      background: var(--work-fill-on);
+      color: var(--secondary);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #updateSection {
+      flex-wrap: wrap;
+    }
+
+    #updateSection .update-status {
+      flex: 1 1 100%;
+      margin-top: 2px;
     }
 
     .shortcuts {
-      margin-top: 16px;
-      padding: 14px;
-      background: var(--surface);
+      margin-top: 4px;
+      padding: 12px;
+      background: var(--work-fill);
       border-radius: var(--radius-md);
-      border: 1px solid var(--outline-variant);
-      font-size: 12px;
-      color: var(--secondary);
     }
 
     .shortcuts h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
+      margin: 0 0 10px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--on-surface);
     }
@@ -446,120 +598,55 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--secondary);
     }
 
+    .shortcut:last-child { margin-bottom: 0; }
+
     .key {
-      background: var(--surface-container);
-      padding: 4px 10px;
+      background: var(--work-fill-on);
+      padding: 3px 8px;
       border-radius: 6px;
-      font-family: monospace;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
       font-size: 11px;
       color: var(--on-surface);
       font-weight: 500;
     }
 
-    .search-section {
-      padding: 0;
-    }
-
-    .search-controls {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .search-input {
-      padding: 10px 12px;
-      background: var(--surface);
-      border: 1px solid var(--outline-variant);
-      border-radius: var(--radius-sm);
-      color: var(--on-surface);
-      font-size: 14px;
-    }
-
-    .search-input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .search-input::placeholder {
-      color: var(--secondary);
-    }
-
-    .category-select {
-      padding: 10px 12px;
-      background: var(--surface);
-      border: 1px solid var(--outline-variant);
-      border-radius: var(--radius-sm);
-      color: var(--on-surface);
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    .category-select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    .category-select option {
-      background: var(--surface);
-      color: var(--on-surface);
-    }
-
-    .search-results {
-      margin-top: 16px;
-    }
-
-    .search-results-count {
+    .tagline {
+      margin: 0 0 14px;
       font-size: 12px;
       color: var(--secondary);
-      margin-bottom: 12px;
     }
 
-    /* ——— Вкладка «Скрипты» ——— */
-    #scriptsList .favorite-item {
-      cursor: default;
+    .tagline strong {
+      color: var(--on-surface);
+      font-weight: 600;
     }
 
-    #scriptsList .favorite-item:hover {
-      border-color: var(--outline-variant);
-      box-shadow: none;
-    }
-
-    .favorite-item-path {
-      font-size: 12px;
-      color: var(--secondary);
-      line-height: 1.45;
-      word-break: break-word;
-    }
+    /* ——— Scripts ——— */
+    #scriptsList .favorite-item { cursor: default; }
+    #scriptsList .favorite-item:hover { background: var(--work-fill); }
 
     .script-summary {
       font-size: 11px;
       color: var(--secondary);
       padding: 8px 10px;
-      background: var(--surface-container);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--outline-variant);
+      background: var(--work-fill-on);
+      border-radius: 8px;
       line-height: 1.4;
     }
 
     .script-settings-panel {
       padding: 12px;
       border-radius: var(--radius-sm);
-      background: var(--surface-container);
-      border: 1px solid var(--outline-variant);
+      background: var(--work-fill-on);
     }
 
-    .script-settings-panel .script-field + .script-field {
-      margin-top: 10px;
-    }
-
-    .script-settings-panel > .favorite-btn {
-      width: 100%;
-      margin-top: 12px;
-    }
+    .script-settings-panel .script-field + .script-field { margin-top: 10px; }
+    .script-settings-panel > .favorite-btn { width: 100%; margin-top: 12px; }
 
     .script-field {
       display: flex;
@@ -586,31 +673,6 @@
       color: var(--secondary);
     }
 
-    .script-field input[type="text"],
-    .script-field input[type="number"],
-    .script-field input[type="datetime-local"] {
-      width: 100%;
-      padding: 10px 12px;
-      background: var(--surface);
-      border: 1px solid var(--outline-variant);
-      border-radius: var(--radius-sm);
-      color: var(--on-surface);
-      font-size: 13px;
-      font-family: inherit;
-    }
-
-    .script-field input[type="text"]::placeholder,
-    .script-field input[type="number"]::placeholder {
-      color: var(--secondary);
-    }
-
-    .script-field input[type="text"]:focus,
-    .script-field input[type="number"]:focus,
-    .script-field input[type="datetime-local"]:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
     .script-field input[type="datetime-local"]::-webkit-calendar-picker-indicator {
       filter: invert(0.85);
       opacity: 0.7;
@@ -626,86 +688,124 @@
     }
 
     #scriptsList .favorite-item-actions .favorite-btn:first-child:not(:only-child) {
-      background: transparent;
-      border: 1px solid var(--outline);
+      background: var(--work-fill-on);
       color: var(--on-surface);
     }
 
     #scriptsList .favorite-item-actions .favorite-btn:first-child:not(:only-child):hover {
-      background: var(--surface-container);
-      border-color: var(--outline);
+      background: color-mix(in srgb, var(--on-surface) 18%, transparent);
     }
 
     #scriptsList .favorite-btn:disabled {
-      background: var(--surface-container);
+      background: var(--work-fill-on);
       color: var(--secondary);
       cursor: not-allowed;
       opacity: 0.85;
+      transform: none;
     }
 
-    #scriptsList .favorite-btn:disabled:hover {
-      background: var(--surface-container);
-    }
-    /* Каталог объектов: раскладка поверх общих стилей popup. */
     #scriptsTab > .description { display: none; }
     #scriptsList.lsc-root { display: block; }
     #scriptsList.lsc-root [hidden] { display: none !important; }
     #scriptsList button, #scriptsList input { font-family: inherit; }
-    #scriptsList button:focus-visible, #scriptsList input:focus-visible {
-      outline: 2px solid var(--primary); outline-offset: 2px;
+    #scriptsList button:focus-visible,
+    #scriptsList input:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
     }
     #scriptsList .lsc-catalog-header {
-      position: sticky; top: -16px; z-index: 2;
-      padding: 12px; margin: 0 0 12px;
-      background: var(--surface); border-radius: var(--radius-md);
+      position: sticky;
+      top: -14px;
+      z-index: 2;
+      padding: 12px;
+      margin: 0 0 12px;
+      background: var(--surface-container);
+      border-radius: var(--radius-md);
     }
-    #scriptsList .lsc-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-bottom: 12px; }
+    #scriptsList .lsc-title-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 12px;
+      margin-bottom: 12px;
+    }
     #scriptsList .lsc-title { margin: 0; font-size: 16px; }
     #scriptsList .lsc-search-row { display: flex; gap: 8px; align-items: center; }
     #scriptsList .lsc-search { width: 100%; min-width: 0; flex: 1; }
     #scriptsList .lsc-clear { flex: 0 0 auto; min-width: 0; padding: 8px; }
     #scriptsList .lsc-found { margin: 8px 0 0; }
     #scriptsList .lsc-group + .lsc-group { margin-top: 18px; }
-    #scriptsList .lsc-category { font-weight: 500; margin: 0 0 7px 2px; }
+    #scriptsList .lsc-category { font-weight: 500; margin: 0 0 7px 2px; color: var(--secondary); font-size: 12px; }
     #scriptsList .lsc-object {
-      flex-direction: row; width: 100%; align-items: center;
-      text-align: left; padding: 12px 14px; margin-top: 6px; cursor: pointer;
+      flex-direction: row;
+      width: 100%;
+      align-items: center;
+      text-align: left;
+      padding: 12px 14px;
+      margin-top: 6px;
+      cursor: pointer;
     }
-    #scriptsList .lsc-object:hover { border-color: var(--outline); box-shadow: var(--shadow-1); }
+    #scriptsList .lsc-object:hover { background: var(--work-fill-hover); }
     #scriptsList .lsc-object-copy { display: grid; gap: 3px; min-width: 0; flex: 1; }
     #scriptsList .lsc-arrow { font-size: 23px; }
     #scriptsList .lsc-back { margin-bottom: 12px; }
     #scriptsList .lsc-detail-title { font-size: 18px; margin: 0 0 16px; }
     #scriptsList .lsc-actions { flex-wrap: wrap; margin-bottom: 16px; }
     #scriptsList .lsc-action[aria-pressed="true"] {
-      background: var(--surface-container); border-color: var(--primary);
+      background: var(--work-fill-on);
+      outline: 1px solid var(--primary);
     }
     #scriptsList .lsc-description { margin: 0 0 14px; }
     #scriptsList .lsc-fields { min-width: 0; margin: 0; }
-    #scriptsList .lsc-legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    #scriptsList .lsc-legend {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
     #scriptsList .lsc-fields .script-field input { min-width: 0; }
-    #scriptsList .lsc-fields input[type="file"] { width: 100%; font-size: 12px; color: var(--on-surface); }
+    #scriptsList .lsc-fields input[type="file"] {
+      width: 100%;
+      font-size: 12px;
+      color: var(--on-surface);
+    }
     #scriptsList .lsc-fields input::file-selector-button {
-      padding: 6px 8px; margin-right: 8px; cursor: pointer;
-      background: var(--surface); color: var(--on-surface);
-      border: 1px solid var(--outline); border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      margin-right: 8px;
+      cursor: pointer;
+      background: var(--work-fill);
+      color: var(--on-surface);
+      border: none;
+      border-radius: 8px;
     }
     #scriptsList .lsc-help { margin: 12px 0 0; }
     #scriptsList .lsc-run { width: 100%; margin-top: 12px; }
-    #scriptsList .lsc-result { margin-top: 14px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 230px; overflow-y: auto; }
-    #scriptsList .lsc-error { border-color: var(--primary); }
+    #scriptsList .lsc-result {
+      margin-top: 14px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      max-height: 230px;
+      overflow-y: auto;
+    }
+    #scriptsList .lsc-error { outline: 1px solid var(--primary); }
     #scriptsList .lsc-hint { margin: 0 0 14px; }
-    #scriptsList .lsc-busy { width: 100%; margin-bottom: 12px; text-align: left; justify-content: flex-start; }
-    /* Конец раскладки каталога объектов. */
+    #scriptsList .lsc-busy {
+      width: 100%;
+      margin-bottom: 12px;
+      text-align: left;
+      justify-content: flex-start;
+    }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="header-left">
-      <div class="icon">
-        <img src="icons/logo32.png" alt="Lan-Search">
-      </div>
+    <div class="icon">
+      <img src="icons/logo32.png" alt="">
+    </div>
+    <div class="brand">
       <h1 class="title">Lan-Search</h1>
+      <p class="subtitle">LanPlus · новый UI</p>
     </div>
   </div>
 
@@ -715,7 +815,7 @@
       <button type="button" id="loginBtn" class="auth-btn">Авторизоваться через msgtp</button>
       <button type="button" id="pawsBtn" class="auth-paws-btn">У меня лапки</button>
       <div id="manualAuthBlock" class="manual-auth-block" style="display: none;">
-        <label class="manual-auth-label">Вставьте токен (msgtp >> localStorage >> token):</label>
+        <label class="manual-auth-label">Вставьте токен (msgtp → localStorage → token):</label>
         <textarea id="manualTokenInput" class="manual-token-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." rows="3"></textarea>
         <button type="button" id="manualTokenSubmit" class="auth-btn">Войти по токену</button>
       </div>
@@ -724,11 +824,11 @@
   </div>
 
   <div id="mainContent" style="display: none;">
-    <div class="tabs">
-      <button class="tab active" data-tab="favorites">Избранные</button>
-      <button class="tab" data-tab="search">Поиск</button>
-      <button class="tab" data-tab="settings">Настройки</button>
-	  <button class="tab" data-tab="scripts">Скрипты</button>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="favorites" role="tab" aria-selected="true">Избранные</button>
+      <button class="tab" data-tab="search" role="tab" aria-selected="false">Поиск</button>
+      <button class="tab" data-tab="scripts" role="tab" aria-selected="false">Скрипты</button>
+      <button class="tab" data-tab="settings" role="tab" aria-selected="false">Настройки</button>
     </div>
 
     <div id="favoritesTab" class="tab-content active">
@@ -740,11 +840,11 @@
     <div id="searchTab" class="tab-content">
       <div class="search-section">
         <div class="search-controls">
-          <input 
-            type="text" 
-            id="searchInput" 
-            class="search-input" 
-            placeholder="Поиск по названию файла или описанию..."
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Поиск по названию или описанию..."
           >
           <select id="categorySelect" class="category-select">
             <option value="">Все категории</option>
@@ -760,146 +860,144 @@
       </div>
     </div>
 
-	<div id="scriptsTab" class="tab-content">
-
-		<p class="description">
-        Пользовательские скрипты
-		</p>
-
-		<div id="scriptsList" class="favorites-list">
-
-		</div>
-
-	</div>
+    <div id="scriptsTab" class="tab-content">
+      <p class="description">Пользовательские скрипты</p>
+      <div id="scriptsList" class="favorites-list"></div>
+    </div>
 
     <div id="settingsTab" class="tab-content">
       <div id="accountInfo" class="account-info">
         <div class="account-section">
-          <div class="account-header">
-            <span class="account-title">Аккаунт</span>
-          </div>
+          <span class="account-title">Аккаунт</span>
           <div class="account-username" id="accountUsername"></div>
-          <button id="logoutBtn" class="logout-btn">Выйти</button>
+          <button id="logoutBtn" class="logout-btn" type="button">Выйти</button>
         </div>
       </div>
 
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Тема оформления</span>
+      <p class="tagline">Не просто LanSearch — <strong>LanPlus</strong>. Поиск и удобные настройки для работы на доменах LanGame.</p>
+
+      <div class="settings-group">
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Тема на сайте</span>
+            <span class="setting-desc update-status">Светлая или тёмная тема страниц</span>
+          </div>
           <div class="update-buttons">
-            <button id="themeToggle" class="update-btn">Темная</button>
+            <button id="themeToggle" class="update-btn" type="button">Темная</button>
           </div>
         </div>
-        <div class="update-status">Переключение между светлой и темной темой на сайте</div>
       </div>
 
-      <p class="description">
-        Не только добавляет поиск на доменах LanGame, но и создаёт набор удобных настроек для работы!
-      </p>
-      <span class="description">Не просто LanSearch, а LanPlus</span>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Обход модальных окон</span>
+      <div class="settings-group">
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Новый UI</span>
+            <span class="setting-desc update-status">Шапка, фон, кнопки, гости, подписка — на всех страницах</span>
+          </div>
           <div class="update-buttons">
-            <button id="modalBypassToggle" class="update-btn">Выключен</button>
+            <button id="newUiToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
           </div>
         </div>
-        <div class="update-status">Убирает модальные окна подтверждения тех старт/стоп и блокировки/разблокировки ПК</div>
+
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Новый UI · сетка ПК</span>
+            <span class="setting-desc update-status">Карточки устройств на /all_clubs_pc/</span>
+          </div>
+          <div class="update-buttons">
+            <button id="newUiAllClubsPcToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
+          </div>
+        </div>
+
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Современные стили карт ПК</span>
+            <span class="setting-desc update-status">Иные стили панели устройств</span>
+          </div>
+          <div class="update-buttons">
+            <button id="pcStylesToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
+          </div>
+        </div>
       </div>
 
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Современные стили карт ПК</span>
+      <div class="settings-group">
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Обход модальных окон</span>
+            <span class="setting-desc update-status">Без подтверждений тех/блок на ПК</span>
+          </div>
           <div class="update-buttons">
-            <button id="pcStylesToggle" class="update-btn">Выключен</button>
+            <button id="modalBypassToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
           </div>
         </div>
-        <div class="update-status">Применяет иные стили для панели устройств</div>
+
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Оптимизация таблиц</span>
+            <span class="setting-desc update-status">Короче названия колонок</span>
+          </div>
+          <div class="update-buttons">
+            <button id="tableOptimizationToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
+          </div>
+        </div>
+
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Скрыть чекбоксы ПК</span>
+            <span class="setting-desc update-status">«Посадка» и «Бронь»</span>
+          </div>
+          <div class="update-buttons">
+            <button id="hideCheckboxesToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
+          </div>
+        </div>
+
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Скрыть комментарии ПК</span>
+            <span class="setting-desc update-status">Поля комментариев на карточках</span>
+          </div>
+          <div class="update-buttons">
+            <button id="hideCommentsToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
+          </div>
+        </div>
+
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Скрыть «ПО для управления»</span>
+            <span class="setting-desc update-status">Кнопка скачивания remote control</span>
+          </div>
+          <div class="update-buttons">
+            <button id="hideRemoteDownloadToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
+          </div>
+        </div>
       </div>
 
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Оптимизация таблиц</span>
+      <div class="settings-group">
+        <div class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Собственный WebSocket</span>
+            <span class="setting-desc update-status">Своё соединение · тех/разлок</span>
+          </div>
           <div class="update-buttons">
-            <button id="tableOptimizationToggle" class="update-btn">Выключен</button>
+            <button id="customWebSocketToggle" class="update-btn switch" type="button" role="switch" aria-checked="false">Выключен</button>
           </div>
         </div>
-        <div class="update-status">Сокращает названия колонок в таблицах для экономии места</div>
       </div>
 
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Скрыть чекбоксы ПК</span>
+      <div class="settings-group">
+        <div id="updateSection" class="setting-row update-section">
+          <div class="setting-copy">
+            <span class="setting-title update-title">Обновления</span>
+            <div id="updateStatus" class="setting-desc update-status"></div>
+          </div>
           <div class="update-buttons">
-            <button id="hideCheckboxesToggle" class="update-btn">Выключен</button>
+            <button id="checkUpdateBtn" class="update-btn" type="button">Проверить</button>
           </div>
         </div>
-        <div class="update-status">Скрывает чекбоксы "Посадка" и "Бронь" на карточках ПК для экономии места</div>
-      </div>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Скрыть комментарии ПК</span>
-          <div class="update-buttons">
-            <button id="hideCommentsToggle" class="update-btn">Выключен</button>
-          </div>
-        </div>
-        <div class="update-status">Скрывает поля комментариев на карточках ПК для экономии места</div>
-      </div>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Информация по домену</span>
-          <div class="update-buttons">
-            <button id="domainInfoToggle" class="update-btn">Выключен</button>
-          </div>
-        </div>
-        <div class="update-status">Отображает информацию о домене через API k-connect.ru</div>
-      </div>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Собственное сокет подключение</span>
-          <div class="update-buttons">
-            <button id="customWebSocketToggle" class="update-btn">Выключен</button>
-          </div>
-        </div>
-        <div class="update-status">Создает собственное WebSocket соединение для работы расширения, отображенние тех/разлок режимов</div>
-      </div>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Игнорирование энергосбережения</span>
-          <div class="update-buttons">
-            <button id="energySavingIgnoreToggle" class="update-btn">Выключен</button>
-          </div>
-        </div>
-        <div class="update-status">Добавляет кнопку "Игнорирование энерго" в дроп-меню ПК для отключения энергосбережения монитора и ПК</div>
-      </div>
-
-      <div class="update-section">
-        <div class="update-header">
-          <span class="update-title">Обновляторы3000</span>
-          <div class="update-buttons">
-            <button id="updaters3000Toggle" class="update-btn">Выключен</button>
-          </div>
-        </div>
-        <div class="update-status">СТЕРОИДЫ: Объединяет функционал кнопки "Управлять" с запросом на игнорирование энергосбережения</div>
-      </div>
-
-      <div id="updateSection" class="update-section">
-        <div class="update-header">
-          <span class="update-title">Обновления</span>
-          <div class="update-buttons">
-            <button id="checkUpdateBtn" class="update-btn">Проверить</button>
-          </div>
-        </div>
-        <div id="updateStatus" class="update-status"></div>
       </div>
 
       <div class="shortcuts">
-        <h4>Горячие клавиши:</h4>
+        <h4>Горячие клавиши</h4>
         <div class="shortcut">
           <span>Фокус на поиск</span>
           <span class="key">/</span>
