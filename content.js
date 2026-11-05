@@ -50,6 +50,228 @@
     }
   }
 
+  const AMOLED_STYLE_ID = 'lgs-amoled-force';
+  const AMOLED_CSS = `
+html.lgs-amoled {
+  --bg-color: #000000 !important;
+  --bg-secondary: #000000 !important;
+  --bg-tertiary: #050505 !important;
+  --surface: #000000 !important;
+  --surface-solid: #000000 !important;
+  --surface-container-highest: #000000 !important;
+  --surface-container-lowest: #000000 !important;
+  --work-fill-on-surface: #000000 !important;
+  --border-color: #141414 !important;
+}
+html.lgs-amoled,
+html.lgs-amoled body,
+html.lgs-amoled #page-top,
+html.lgs-amoled .content-wrapper,
+html.lgs-amoled .main-content,
+html.lgs-amoled .container-fluid,
+html.lgs-amoled .container-fluid.px-1,
+html.lgs-amoled .container-fluid.p-lg-3,
+html.lgs-amoled .container-fluid.px-1.p-lg-3,
+html.lgs-amoled .content-wrapper > .container-fluid,
+html.lgs-amoled .layout,
+html.lgs-amoled .layout__content,
+html.lgs-amoled .layout__body,
+html.lgs-amoled .layout__main,
+html.lgs-amoled .layout__wrapper,
+html.lgs-amoled .page-content,
+html.lgs-amoled .wrapper,
+html.lgs-amoled .page-wrapper,
+html.lgs-amoled .navbar,
+html.lgs-amoled .navbar.bg-dark,
+html.lgs-amoled .navbar-dark,
+html.lgs-amoled .navbar-sidenav,
+html.lgs-amoled .navbar-brand,
+html.lgs-amoled #mainNav,
+html.lgs-amoled #mainNav.navbar,
+html.lgs-amoled #mainNav.navbar.bg-dark,
+html.lgs-amoled #js-header,
+html.lgs-amoled #js-header.header,
+html.lgs-amoled .layout__header,
+html.lgs-amoled #js-header .container-fluid,
+html.lgs-amoled .header .container-fluid,
+html.lgs-amoled html .bg-dark,
+html.lgs-amoled body .bg-dark,
+html.lgs-amoled ul#globalMenuAccordion,
+html.lgs-amoled #globalMenuAccordion,
+html.lgs-amoled #globalMenuAccordion.navbar-nav,
+html.lgs-amoled #globalMenuAccordion.navbar-sidenav,
+html.lgs-amoled html body .navbar.navbar-dark > .navbar-brand,
+html.lgs-amoled body .navbar.navbar-dark > .navbar-brand,
+html.lgs-amoled #mainNav.navbar.navbar-dark > .navbar-brand,
+html.lgs-amoled #mainNav > .navbar-brand,
+html.lgs-amoled .card,
+html.lgs-amoled .card-header,
+html.lgs-amoled .card-body,
+html.lgs-amoled .modal-content,
+html.lgs-amoled .modal-header,
+html.lgs-amoled .modal-footer,
+html.lgs-amoled .modal-body,
+html.lgs-amoled .dropdown-menu,
+html.lgs-amoled .form-control,
+html.lgs-amoled .input-group-text,
+html.lgs-amoled .list-group-item,
+html.lgs-amoled .table,
+html.lgs-amoled .footer,
+html.lgs-amoled #layoutStatusPC form.pc,
+html.lgs-amoled .lan-search-pc-card,
+html.lgs-amoled .lgs-clubs-tabs,
+html.lgs-amoled .lgs-clubs-actions,
+html.lgs-amoled .select-actions .lgs-select-filters,
+html.lgs-amoled .select-actions .lgs-select-commands,
+html.lgs-amoled .search-widget-container,
+html.lgs-amoled .search-widget-container .search-input,
+html.lgs-amoled .search-widget-container .search-results,
+html.lgs-amoled #recentTabsContainer .lgs-tab-card,
+html.lgs-amoled #recentTabsContainer .card,
+html.lgs-amoled #guestSearchContainer .form-control,
+html.lgs-amoled #massive-pc-selection-panel-allclubs,
+html.lgs-amoled #massive-pc-selection-panel {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+html.lgs-amoled .navbar-nav .nav-link.selected,
+html.lgs-amoled .navbar-sidenav .nav-link.selected,
+html.lgs-amoled .navbar-sidenav .nav-link.active,
+html.lgs-amoled .btn-dark,
+html.lgs-amoled .btn-secondary {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+}
+`.trim();
+
+  function syncAmoledForceStyle(on) {
+    let el = document.getElementById(AMOLED_STYLE_ID);
+    if (!on) {
+      if (el) el.remove();
+      return;
+    }
+    if (!el) {
+      el = document.createElement('style');
+      el.id = AMOLED_STYLE_ID;
+      (document.head || document.documentElement).appendChild(el);
+    }
+    if (el.textContent !== AMOLED_CSS) el.textContent = AMOLED_CSS;
+    // всегда в конце head — перекрыть theme.css / сайт
+    if (el.parentNode) el.parentNode.appendChild(el);
+  }
+
+  function forceAmoledInlineSurfaces() {
+    const root = document.documentElement;
+    [
+      '--bg-color', '--bg-secondary', '--bg-tertiary',
+      '--surface', '--surface-solid',
+      '--surface-container-highest', '--surface-container-lowest',
+      '--work-fill-on-surface'
+    ].forEach((k) => root.style.setProperty(k, '#000000', 'important'));
+
+    document.querySelectorAll(
+      '.content-wrapper, .container-fluid, .main-content, #page-top, body'
+    ).forEach((node) => {
+      if (!node || !node.style) return;
+      // recent-tabs ставит var(--bg-color); при битом каскаде форсим чёрный
+      const bg = (node.getAttribute('style') || '');
+      if (bg.includes('background') || node.classList.contains('container-fluid') || node.classList.contains('content-wrapper')) {
+        node.style.setProperty('background-color', '#000000', 'important');
+        node.style.setProperty('background', '#000000', 'important');
+      }
+    });
+  }
+
+  function clearAmoledInlineSurfaces() {
+    const root = document.documentElement;
+    [
+      '--bg-color', '--bg-secondary', '--bg-tertiary',
+      '--surface', '--surface-solid',
+      '--surface-container-highest', '--surface-container-lowest',
+      '--work-fill-on-surface'
+    ].forEach((k) => root.style.removeProperty(k));
+
+    document.querySelectorAll(
+      '.content-wrapper, .container-fluid, .main-content, #page-top, body'
+    ).forEach((node) => {
+      if (!node || !node.style) return;
+      node.style.removeProperty('background');
+      node.style.removeProperty('background-color');
+    });
+  }
+
+  // /reservation/: сайт пишет белый inline на .item-title / .row — zone-цвета не трогаем
+  let reservationWhiteObserver = null;
+  function isNearWhiteCssColor(value) {
+    if (!value) return false;
+    const m = String(value).match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (!m) return /^#(?:fff|ffffff|f5f5f5)$/i.test(String(value).trim());
+    const r = +m[1], g = +m[2], b = +m[3];
+    return r > 240 && g > 240 && b > 240;
+  }
+  function fixReservationWhiteInlines() {
+    if (!(location.pathname || '').includes('/reservation/')) return;
+    const darkLike = document.documentElement.getAttribute('data-theme') === 'dark'
+      || document.documentElement.classList.contains('lgs-amoled');
+    if (!darkLike) return;
+    const amoled = document.documentElement.classList.contains('lgs-amoled');
+    const titleBg = amoled ? '#000000' : '#1c1e20';
+    const rowBg = amoled ? '#0a0a0a' : '#222428';
+    document.querySelectorAll('.schedule_wrapper .item-title').forEach((el) => {
+      if (!isNearWhiteCssColor(el.style.backgroundColor)) return;
+      el.style.setProperty('background-color', titleBg, 'important');
+      el.style.setProperty('color', '#f5f5f5', 'important');
+    });
+    document.querySelectorAll('.schedule_wrapper .schedule .rows .row').forEach((el) => {
+      if (!isNearWhiteCssColor(el.style.backgroundColor)) return;
+      el.style.setProperty('background-color', rowBg, 'important');
+    });
+  }
+  function ensureReservationWhiteObserver() {
+    if (!(location.pathname || '').includes('/reservation/')) return;
+    if (reservationWhiteObserver) return;
+    const root = document.body || document.documentElement;
+    reservationWhiteObserver = new MutationObserver(() => {
+      try { fixReservationWhiteInlines(); } catch (_) {}
+    });
+    reservationWhiteObserver.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
+    fixReservationWhiteInlines();
+  }
+
+  // amoled = тёмная палитра + класс чистого чёрного
+  function paintDocumentTheme(theme) {
+    const t = (theme === 'amoled' || theme === 'light' || theme === 'dark') ? theme : 'dark';
+    const attr = t === 'amoled' ? 'dark' : t;
+    document.documentElement.setAttribute('data-theme', attr);
+    document.documentElement.classList.toggle('lgs-amoled', t === 'amoled');
+
+    // сайт (/reservation/ и др.) слушает body.dark_theme / light_theme
+    const syncBodyThemeClass = () => {
+      if (!document.body) return false;
+      const darkLike = t === 'dark' || t === 'amoled';
+      document.body.classList.toggle('dark_theme', darkLike);
+      document.body.classList.toggle('light_theme', !darkLike);
+      return true;
+    };
+    if (!syncBodyThemeClass()) {
+      document.addEventListener('DOMContentLoaded', syncBodyThemeClass, { once: true });
+    }
+
+    syncAmoledForceStyle(t === 'amoled');
+    if (t === 'amoled') forceAmoledInlineSurfaces();
+    else clearAmoledInlineSurfaces();
+    try {
+      ensureReservationWhiteObserver();
+      fixReservationWhiteInlines();
+    } catch (_) {}
+    return t;
+  }
+
 
   setDomainAttribute();
 
@@ -66,10 +288,9 @@
       document.head.appendChild(themeLink);
 
       try {
-        const savedTheme = localStorage.getItem('lanSearchTheme') || 'dark';
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        paintDocumentTheme(localStorage.getItem('lanSearchTheme') || 'dark');
       } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'dark');
+        paintDocumentTheme('dark');
       }
 
       // класс нового UI ставит new-ui-boot.js на document_start; CSS — через manifest
@@ -278,19 +499,17 @@
   function applyThemeToPage() {
 
     try {
-      const theme = localStorage.getItem('lanSearchTheme') || 'dark';
-      document.documentElement.setAttribute('data-theme', theme);
+      paintDocumentTheme(localStorage.getItem('lanSearchTheme') || 'dark');
     } catch (e) {
-
-      document.documentElement.setAttribute('data-theme', 'dark');
+      paintDocumentTheme('dark');
     }
     
 
     getCurrentTheme((theme) => {
-      document.documentElement.setAttribute('data-theme', theme);
+      const t = paintDocumentTheme(theme);
 
       try {
-        localStorage.setItem('lanSearchTheme', theme);
+        localStorage.setItem('lanSearchTheme', t);
       } catch (e) {
 
       }
@@ -365,7 +584,7 @@
   function applyThemeToNewElements() {
 
     getCurrentTheme((theme) => {
-      document.documentElement.setAttribute('data-theme', theme);
+      paintDocumentTheme(theme);
     });
   }
 
@@ -2793,8 +3012,9 @@
       chrome.storage.onChanged.addListener(function(changes, namespace) {
         if (namespace === 'sync' && changes.theme) {
           const newTheme = changes.theme.newValue || 'dark';
-          currentTheme = newTheme; 
-          document.documentElement.setAttribute('data-theme', newTheme);
+          currentTheme = newTheme;
+          paintDocumentTheme(newTheme);
+          try { localStorage.setItem('lanSearchTheme', newTheme); } catch (_) {}
 
           setTimeout(() => {
             applyThemeToNewElements();
@@ -2810,11 +3030,15 @@
   setInterval(function() {
     const htmlElement = document.documentElement;
     const currentThemeAttr = htmlElement.getAttribute('data-theme');
-    
+    const wantAmoled = currentTheme === 'amoled';
+    const wantDarkAttr = currentTheme === 'dark' || wantAmoled;
 
-    if (currentTheme === 'dark' && currentThemeAttr !== 'dark') {
-
-      htmlElement.setAttribute('data-theme', 'dark');
+    if (wantDarkAttr && currentThemeAttr !== 'dark') {
+      paintDocumentTheme(currentTheme);
+    } else if (wantAmoled && !htmlElement.classList.contains('lgs-amoled')) {
+      htmlElement.classList.add('lgs-amoled');
+    } else if (!wantAmoled && htmlElement.classList.contains('lgs-amoled') && currentTheme !== 'amoled') {
+      htmlElement.classList.remove('lgs-amoled');
     }
   }, 1000); 
 
@@ -6419,23 +6643,44 @@
     const visible = panel.style.display && panel.style.display !== 'none';
     panel.classList.toggle('lgs-select-open', !!visible);
 
-    if (panel.dataset.lgsSelectReady === '1') return;
+    const filterIds = new Set([
+      'cancelSelect', 'selectAllPC', 'selectAllFreePC', 'selectAllInTech', 'selectAllInUnlock'
+    ]);
+
+    // уже размечали, но фильтры ещё лежат снаружи обёрток — доберём
+    if (panel.dataset.lgsSelectReady === '1') {
+      const filters = panel.querySelector(':scope > .lgs-select-filters') || (() => {
+        const el = document.createElement('div');
+        el.className = 'lgs-select-filters';
+        panel.insertBefore(el, panel.firstChild);
+        return el;
+      })();
+      const commands = panel.querySelector(':scope > .lgs-select-commands');
+      [...panel.children].forEach((child) => {
+        if (child === filters || child === commands) return;
+        if (child.tagName === 'DIV' && (child.getAttribute('style') || '').includes('clear')) {
+          child.remove();
+          return;
+        }
+        if (child.matches('a.btn, button.btn, .btn') && filterIds.has(child.id)) {
+          filters.appendChild(child);
+        }
+      });
+      return;
+    }
 
     const filters = document.createElement('div');
     filters.className = 'lgs-select-filters';
     const commands = document.createElement('div');
     commands.className = 'lgs-select-commands';
 
-    const filterIds = new Set([
-      'cancelSelect', 'selectAllPC', 'selectAllFreePC', 'selectAllInTech', 'selectAllInUnlock'
-    ]);
-
     [...panel.children].forEach((child) => {
       if (child.tagName === 'DIV' && (child.getAttribute('style') || '').includes('clear')) {
         child.remove();
         return;
       }
-      if (child.classList.contains('mt-2') || child.classList.contains('mb-2')) {
+      // только обёртка .mt-2.mb-2 — у самих ссылок тоже бывает mb-2, их нельзя remove()
+      if (child.tagName === 'DIV' && (child.classList.contains('mt-2') || child.classList.contains('mb-2'))) {
         [...child.children].forEach((btn) => commands.appendChild(btn));
         child.remove();
         return;

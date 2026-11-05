@@ -632,22 +632,52 @@ html[data-theme="dark"] .content-wrapper a {
   -webkit-text-fill-color: var(--text-color) !important;
 }
 
-/* Стили для скроллбаров - только в основном контенте */
-[data-theme="dark"] .content-wrapper ::-webkit-scrollbar {
-  width: 12px;
+/* минималистичные скроллбары — глобально (не белые толстые) */
+html[data-theme="dark"],
+html[data-theme="dark"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }
 
-[data-theme="dark"] .content-wrapper ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+html[data-theme="dark"]::-webkit-scrollbar,
+html[data-theme="dark"] *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-[data-theme="dark"] .content-wrapper ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 6px;
+html[data-theme="dark"]::-webkit-scrollbar-track,
+html[data-theme="dark"] *::-webkit-scrollbar-track,
+html[data-theme="dark"]::-webkit-scrollbar-corner,
+html[data-theme="dark"] *::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
-[data-theme="dark"] .content-wrapper ::-webkit-scrollbar-thumb:hover {
-  background: var(--bg-tertiary);
+html[data-theme="dark"]::-webkit-scrollbar-thumb,
+html[data-theme="dark"] *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+html[data-theme="dark"]::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] *::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+html.lgs-amoled,
+html.lgs-amoled * {
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+
+html.lgs-amoled::-webkit-scrollbar-thumb,
+html.lgs-amoled *::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+html.lgs-amoled::-webkit-scrollbar-thumb:hover,
+html.lgs-amoled *::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 /* Стили для выделения текста - только в основном контенте */
@@ -1776,4 +1806,426 @@ footer{
 }
 .btn-outline-info{
   background-color: #17a2b85b;
+}
+
+/* ——— /reservation/ — вкладки клубов (у сайта нет dark_theme для них) ——— */
+html[data-theme="dark"] body .club_booking_list li button,
+html[data-theme="dark"] body .club_booking_list button {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] body .club_booking_list li button:hover:enabled,
+html[data-theme="dark"] body .club_booking_list button:hover:enabled {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] body .club_booking_list li button.active,
+html[data-theme="dark"] body .club_booking_list button.active {
+  background-color: var(--button-bg) !important;
+  color: #ffffff !important;
+}
+
+html.lgs-amoled body .club_booking_list li button:not(.active),
+html.lgs-amoled body .club_booking_list button:not(.active) {
+  background-color: #0a0a0a !important;
+  color: #f5f5f5 !important;
+}
+
+html.lgs-amoled body .club_booking_list li button.active,
+html.lgs-amoled body .club_booking_list button.active {
+  background-color: var(--button-bg, #c83232) !important;
+  color: #ffffff !important;
+}
+
+html.lgs-amoled .booking_content_wrapper,
+html.lgs-amoled .booking_content_wrapper .content::before,
+html.lgs-amoled .booking_content_wrapper .content::after,
+html.lgs-amoled .schedule_wrapper .schedule_column .schedule_inner_wrapper .days_line,
+html.lgs-amoled .schedule_wrapper .schedule_column .schedule_inner_wrapper .time_line,
+html.lgs-amoled .react-modal,
+html.lgs-amoled .bottom_wrapper .reserv_interval .reserv_interval__control,
+html.lgs-amoled .bottom_wrapper .reserv_interval .reserv_interval__menu * {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+html.lgs-amoled .top_date_wrapper .date_nav_wrapper .short_navigate {
+  background: #0a0a0a !important;
+  color: #f5f5f5 !important;
+}
+
+/* левая колонка PC/TV + ряды сетки — сайт пишет white inline */
+html[data-theme="dark"] .schedule_wrapper .item_title_column,
+html[data-theme="dark"] body.dark_theme .schedule_wrapper .item_title_column {
+  background: var(--bg-secondary) !important;
+  background-color: var(--bg-secondary) !important;
+}
+
+/* белый inline у .item-title / .row глушит JS (zone-цвета не трогаем) */
+html[data-theme="dark"] .schedule_wrapper .item_title_column .item-title::before {
+  background: transparent !important;
+}
+
+html.lgs-amoled .schedule_wrapper .item_title_column {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+/* карточки броней — сайт всегда rgba(255,255,255,.9), dark_theme нет */
+html[data-theme="dark"] .schedule_item,
+html[data-theme="dark"] body.dark_theme .schedule_item {
+  background-color: rgba(22, 24, 26, 0.95) !important;
+  background-image: linear-gradient(
+    rgba(var(--rgb-numbers), 0.28),
+    rgba(var(--rgb-numbers), 0.28)
+  ) !important;
+  color: #f0f0f0 !important;
+}
+
+html[data-theme="dark"] .schedule_item:hover,
+html[data-theme="dark"] .schedule_item:focus,
+html[data-theme="dark"] body.dark_theme .schedule_item:hover,
+html[data-theme="dark"] body.dark_theme .schedule_item:focus {
+  background-color: rgba(32, 34, 38, 1) !important;
+  background-image: linear-gradient(
+    rgba(var(--rgb-numbers), 0.35),
+    rgba(var(--rgb-numbers), 0.35)
+  ) !important;
+}
+
+html[data-theme="dark"] .schedule_item .user_name,
+html[data-theme="dark"] .schedule_item .booking_confirmed,
+html[data-theme="dark"] .schedule_item .date_info {
+  color: #f2f2f2 !important;
+}
+
+html[data-theme="dark"] .schedule_item .user_phone,
+html[data-theme="dark"] .schedule_item .comment_info {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+html[data-theme="dark"] .schedule_item .item_info_icon img {
+  filter: invert(1) brightness(1.1);
+  opacity: 0.85;
+}
+
+html.lgs-amoled .schedule_item {
+  background-color: rgba(0, 0, 0, 0.92) !important;
+  background-image: linear-gradient(
+    rgba(var(--rgb-numbers), 0.32),
+    rgba(var(--rgb-numbers), 0.32)
+  ) !important;
+}
+
+html.lgs-amoled .schedule_item:hover,
+html.lgs-amoled .schedule_item:focus {
+  background-color: rgba(12, 12, 12, 1) !important;
+}
+
+/* ——— guests_log_balance + DataTables 2 + form-select ——— */
+html[data-theme="dark"] {
+  --dt-bg-primary: var(--bg-secondary) !important;
+  --dt-bg-secondary: var(--bg-color) !important;
+  --dt-bg-stripe: var(--bg-tertiary) !important;
+  --dt-bg-hover: var(--bg-tertiary) !important;
+  --dt-header-bg: var(--bg-secondary) !important;
+  --dt-text-color: var(--text-color) !important;
+  --dt-text-muted: var(--text-secondary) !important;
+  --dt-border-color: var(--border-color) !important;
+  --dt-current-page-color: #ffffff !important;
+}
+
+html[data-theme="dark"] .content-wrapper .form-select,
+html[data-theme="dark"] .content-wrapper select.form-select,
+html[data-theme="dark"] .content-wrapper select.dt-input {
+  background-color: var(--bg-secondary) !important;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23cccccc' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.75rem center !important;
+  background-size: 16px 12px !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper .form-select:focus,
+html[data-theme="dark"] .content-wrapper select.form-select:focus {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--button-bg) !important;
+  color: var(--text-color) !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="dark"] .content-wrapper .form-select option,
+html[data-theme="dark"] .content-wrapper select.form-select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-color);
+}
+
+html[data-theme="dark"] .content-wrapper .alert-info {
+  background-color: color-mix(in srgb, #17a2b8 16%, var(--bg-color)) !important;
+  border-color: color-mix(in srgb, #17a2b8 32%, transparent) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .guests-log-balance__legend {
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .guests-log-balance__legend--withdraw {
+  background-color: color-mix(in srgb, #7f1d1d 60%, #111) !important;
+  color: #ffcdd2 !important;
+}
+
+html[data-theme="dark"] .guests-log-balance__legend--refill {
+  background-color: color-mix(in srgb, #1b5e20 60%, #111) !important;
+  color: #c8e6c9 !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container,
+html[data-theme="dark"] .content-wrapper .dt-container.dt-empty-footer,
+html[data-theme="dark"] .content-wrapper #js-guests-log-balance-table_wrapper {
+  background: var(--bg-color) !important;
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container .dt-search label,
+html[data-theme="dark"] .content-wrapper .dt-container .dt-length label,
+html[data-theme="dark"] .content-wrapper .dt-container .dt-info {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container .dt-search input,
+html[data-theme="dark"] .content-wrapper .dt-container .dt-input,
+html[data-theme="dark"] .content-wrapper .dt-container select.dt-input {
+  background: var(--bg-secondary) !important;
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container .dt-paging .dt-paging-button {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container .dt-paging .dt-paging-button:hover {
+  background: var(--bg-tertiary) !important;
+  color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container .dt-paging .dt-paging-button.current {
+  background: var(--button-bg) !important;
+  border-color: var(--button-bg) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .content-wrapper .dt-container .dt-paging .dt-paging-button.disabled,
+html[data-theme="dark"] .content-wrapper .dt-container .dt-paging .dt-paging-button.disabled:hover {
+  background: var(--bg-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+
+html[data-theme="dark"] .content-wrapper table.dataTable thead,
+html[data-theme="dark"] .content-wrapper table.dataTable thead th,
+html[data-theme="dark"] .content-wrapper table.dataTable thead td,
+html[data-theme="dark"] .content-wrapper #js-guests-log-balance-table thead th {
+  background: var(--bg-secondary) !important;
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper table.dataTable tbody,
+html[data-theme="dark"] .content-wrapper table.dataTable tbody td {
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+html[data-theme="dark"] .content-wrapper table.dataTable tbody tr:not([class*='guests-log-balance__tr--']) td {
+  background: var(--bg-color) !important;
+}
+
+/* цветные строки лога — тёмный tint (таблица вне .content-wrapper) */
+html[data-theme="dark"] #js-guests-log-balance-table tbody tr.guests-log-balance__tr--refill > td,
+html[data-theme="dark"] tr.guests-log-balance__tr--refill > td {
+  background-color: #102418 !important;
+  color: #dcedc8 !important;
+}
+
+html[data-theme="dark"] #js-guests-log-balance-table tbody tr.guests-log-balance__tr--withdraw > td,
+html[data-theme="dark"] tr.guests-log-balance__tr--withdraw > td {
+  background-color: #2a1012 !important;
+  color: #ffcdd2 !important;
+}
+
+html[data-theme="dark"] #js-guests-log-balance-table tbody tr.guests-log-balance__tr--refill > td:nth-child(4),
+html[data-theme="dark"] tr.guests-log-balance__tr--refill > td:nth-child(4) {
+  background-color: #16351f !important;
+}
+
+html[data-theme="dark"] #js-guests-log-balance-table tbody tr.guests-log-balance__tr--withdraw > td:nth-child(4),
+html[data-theme="dark"] tr.guests-log-balance__tr--withdraw > td:nth-child(4) {
+  background-color: #3b1518 !important;
+}
+
+html[data-theme="dark"] #js-guests-log-balance-table tbody tr.guests-log-balance__tr--refill > td *,
+html[data-theme="dark"] tr.guests-log-balance__tr--refill > td * {
+  color: #dcedc8 !important;
+}
+
+html[data-theme="dark"] #js-guests-log-balance-table tbody tr.guests-log-balance__tr--withdraw > td *,
+html[data-theme="dark"] tr.guests-log-balance__tr--withdraw > td * {
+  color: #ffcdd2 !important;
+}
+
+html.lgs-amoled #js-guests-log-balance-table tbody tr.guests-log-balance__tr--refill > td,
+html.lgs-amoled tr.guests-log-balance__tr--refill > td {
+  background-color: #0c1c12 !important;
+  color: #dcedc8 !important;
+}
+
+html.lgs-amoled #js-guests-log-balance-table tbody tr.guests-log-balance__tr--withdraw > td,
+html.lgs-amoled tr.guests-log-balance__tr--withdraw > td {
+  background-color: #1f0c0e !important;
+  color: #ffcdd2 !important;
+}
+
+html.lgs-amoled #js-guests-log-balance-table tbody tr.guests-log-balance__tr--refill > td:nth-child(4),
+html.lgs-amoled tr.guests-log-balance__tr--refill > td:nth-child(4) {
+  background-color: #12301a !important;
+}
+
+html.lgs-amoled #js-guests-log-balance-table tbody tr.guests-log-balance__tr--withdraw > td:nth-child(4),
+html.lgs-amoled tr.guests-log-balance__tr--withdraw > td:nth-child(4) {
+  background-color: #321014 !important;
+}
+
+/* ——— AMOLED: чистый чёрный поверх тёмной темы ——— */
+html.lgs-amoled {
+  --bg-color: #000000 !important;
+  --bg-secondary: #000000 !important;
+  --bg-tertiary: #050505 !important;
+  --border-color: #141414 !important;
+}
+
+html.lgs-amoled,
+html.lgs-amoled body,
+html.lgs-amoled html,
+html.lgs-amoled .content-wrapper,
+html.lgs-amoled .main-content,
+html.lgs-amoled .container-fluid,
+html.lgs-amoled .container,
+html.lgs-amoled .wrapper,
+html.lgs-amoled .page-wrapper,
+html.lgs-amoled .app-wrapper,
+html.lgs-amoled .main,
+html.lgs-amoled .content,
+html.lgs-amoled .section,
+html.lgs-amoled .layout,
+html.lgs-amoled .layout__content,
+html.lgs-amoled .layout__body,
+html.lgs-amoled .layout__main,
+html.lgs-amoled .layout__wrapper,
+html.lgs-amoled .page-content,
+html.lgs-amoled .sidebar,
+html.lgs-amoled .sidebar-wrapper,
+html.lgs-amoled .sidenav,
+html.lgs-amoled .navbar-sidenav,
+html.lgs-amoled .navbar-brand,
+html.lgs-amoled .nav-wrapper,
+html.lgs-amoled .menu-wrapper,
+html.lgs-amoled .fixed-nav,
+html.lgs-amoled #page-top,
+html.lgs-amoled .content-wrapper > .container-fluid,
+html.lgs-amoled .px-1,
+html.lgs-amoled .p-lg-3 {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+html.lgs-amoled #js-header,
+html.lgs-amoled #js-header.header,
+html.lgs-amoled .layout__header,
+html.lgs-amoled #js-header .container-fluid,
+html.lgs-amoled .header .container-fluid,
+html.lgs-amoled .header,
+html.lgs-amoled .header-wrapper,
+html.lgs-amoled #mainNav,
+html.lgs-amoled #mainNav.navbar,
+html.lgs-amoled #mainNav.navbar.bg-dark,
+html.lgs-amoled .navbar,
+html.lgs-amoled .navbar.bg-dark,
+html.lgs-amoled .navbar-dark,
+html.lgs-amoled .bg-dark,
+html.lgs-amoled .card,
+html.lgs-amoled .card-header,
+html.lgs-amoled .card-body,
+html.lgs-amoled .card-footer,
+html.lgs-amoled .modal-content,
+html.lgs-amoled .modal-header,
+html.lgs-amoled .modal-footer,
+html.lgs-amoled .modal-body,
+html.lgs-amoled .dropdown-menu,
+html.lgs-amoled .list-group-item,
+html.lgs-amoled .table,
+html.lgs-amoled .table td,
+html.lgs-amoled .table th,
+html.lgs-amoled .form-control,
+html.lgs-amoled .custom-select,
+html.lgs-amoled select.form-control,
+html.lgs-amoled .input-group-text,
+html.lgs-amoled .panel,
+html.lgs-amoled .block,
+html.lgs-amoled .box,
+html.lgs-amoled .footer,
+html.lgs-amoled .footer-wrapper {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+/* bootstrap / сайтовые серые плашки */
+html.lgs-amoled .bg-secondary,
+html.lgs-amoled .bg-light,
+html.lgs-amoled .bg-white,
+html.lgs-amoled .bg-gray,
+html.lgs-amoled .bg-grey {
+  background: #000000 !important;
+  background-color: #000000 !important;
+}
+
+html.lgs-amoled .navbar-nav .nav-link.selected,
+html.lgs-amoled .navbar-sidenav .nav-link.active,
+html.lgs-amoled .navbar-sidenav .nav-link:hover {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+}
+
+html.lgs-amoled .btn-dark,
+html.lgs-amoled .btn-secondary {
+  background: #0a0a0a !important;
+  background-color: #0a0a0a !important;
+  border-color: #1a1a1a !important;
+}
+
+/* перекрываем site new_admin !important (#262626) */
+html.lgs-amoled html .bg-dark,
+html.lgs-amoled body .bg-dark,
+html.lgs-amoled .bg-dark.bg-dark,
+html.lgs-amoled ul#globalMenuAccordion,
+html.lgs-amoled #globalMenuAccordion,
+html.lgs-amoled #globalMenuAccordion.navbar-nav,
+html.lgs-amoled #globalMenuAccordion.navbar-sidenav,
+html.lgs-amoled html body .navbar.navbar-dark > .navbar-brand,
+html.lgs-amoled body .navbar.navbar-dark > .navbar-brand,
+html.lgs-amoled .navbar.navbar-dark > .navbar-brand,
+html.lgs-amoled #mainNav > .navbar-brand {
+  background: #000000 !important;
+  background-color: #000000 !important;
 }

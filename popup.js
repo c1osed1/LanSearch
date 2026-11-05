@@ -1065,14 +1065,16 @@ async function initScripts() {
   }
   
   function setThemeButton(theme) {
-    if (themeToggle) {
-      themeToggle.textContent = theme === 'dark' ? 'Темная' : 'Светлая';
-      themeToggle.title = theme === 'dark' ? 'Переключить на светлую тему' : 'Переключить на темную тему';
-    }
+    if (!themeToggle) return;
+    const label = theme === 'amoled' ? 'AMOLED' : theme === 'light' ? 'Светлая' : 'Тёмная';
+    themeToggle.textContent = label;
+    themeToggle.title = 'Сменить тему: светлая → тёмная → AMOLED';
   }
   
   function toggleTheme() {
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    const order = ['light', 'dark', 'amoled'];
+    const idx = order.indexOf(currentTheme);
+    const newTheme = order[(idx < 0 ? 1 : idx + 1) % order.length];
     
     currentTheme = newTheme;
     setThemeButton(newTheme);
@@ -1092,8 +1094,14 @@ async function initScripts() {
               chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 func: (theme) => {
-                  if (document.documentElement) {
-                    document.documentElement.setAttribute('data-theme', theme);
+                  if (!document.documentElement) return;
+                  const attr = theme === 'amoled' ? 'dark' : theme;
+                  const darkLike = theme === 'dark' || theme === 'amoled';
+                  document.documentElement.setAttribute('data-theme', attr);
+                  document.documentElement.classList.toggle('lgs-amoled', theme === 'amoled');
+                  if (document.body) {
+                    document.body.classList.toggle('dark_theme', darkLike);
+                    document.body.classList.toggle('light_theme', !darkLike);
                   }
                   try {
                     localStorage.setItem('lanSearchTheme', theme);

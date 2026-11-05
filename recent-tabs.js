@@ -1178,19 +1178,20 @@ function applyThemeToPage() {
 // Функция для применения темы к новым элементам
 function applyThemeToNewElements() {
   getCurrentTheme((theme) => {
-    if (theme === 'dark') {
+    if (theme === 'dark' || theme === 'amoled') {
       // Применяем темную тему ко всем элементам, которые могут быть добавлены динамически
       const elementsToStyle = document.querySelectorAll(`
         .content-wrapper, .main-content, .container-fluid, .container,
         .wrapper, .page-wrapper, .app-wrapper, .main, .content, .section,
         .panel, .block, .box, .sidebar-wrapper, .nav-wrapper, .menu-wrapper,
         .footer, .footer-wrapper, .header, .header-wrapper,
-        .card, .card-header, .form-control, .btn-light,
+        .card, .card-header, .form-control, .form-select, .btn-light,
         .navbar, .dropdown-menu, .modal-content, .modal-header, .modal-footer,
-        .table, .list-group-item, .alert-light, .badge-light,
+        .table, .list-group-item, .alert-light, .badge-light, .alert-info,
         .progress, .page-link, .tooltip-inner, .popover, .popover-header,
-        .popover-body, select.form-control, .form-check-input,
+        .popover-body, select.form-control, select.form-select, .form-check-input,
         textarea.form-control, .bg-light, .bg-white, .text-dark, .text-muted,
+        .dt-container, .dt-input, .dt-paging-button,
         .border, .langame-content, .langame-wrapper, .cls-content, .cls-wrapper,
         .px-1, .p-lg-3, .container-fluid.px-1, .container-fluid.p-lg-3, .container-fluid.px-1.p-lg-3,
         #dataTable thead tr th>div, table.table thead tr th>div, table.dataTable thead tr th>div,
@@ -1214,9 +1215,13 @@ function applyThemeToNewElements() {
               element.classList.contains('p-lg-3')) {
             // container-fluid в шапке — тот же цвет, иначе полоски
             const inHeader = element.closest('#js-header, .header, .header-wrapper, .layout__header');
-            element.style.backgroundColor = inHeader
-              ? 'var(--bg-secondary)'
-              : 'var(--bg-color)';
+            const amoled = document.documentElement.classList.contains('lgs-amoled');
+            element.style.backgroundColor = amoled
+              ? '#000000'
+              : (inHeader ? 'var(--bg-secondary)' : 'var(--bg-color)');
+            if (amoled) {
+              element.style.setProperty('background-color', '#000000', 'important');
+            }
           }
         
         if (element.classList.contains('panel') ||
@@ -1238,8 +1243,31 @@ function applyThemeToNewElements() {
           element.style.borderColor = 'var(--border-color)';
         }
         
-        if (element.classList.contains('form-control')) {
+        if (element.classList.contains('form-control') || element.classList.contains('form-select') || element.tagName === 'SELECT') {
           element.style.backgroundColor = 'var(--bg-secondary)';
+          element.style.borderColor = 'var(--border-color)';
+          element.style.color = 'var(--text-color)';
+        }
+
+        if (element.classList.contains('alert-info')) {
+          element.style.backgroundColor = 'color-mix(in srgb, #17a2b8 18%, var(--bg-color))';
+          element.style.borderColor = 'color-mix(in srgb, #17a2b8 35%, transparent)';
+          element.style.color = 'var(--text-color)';
+        }
+
+        if (element.classList.contains('dt-container')) {
+          element.style.backgroundColor = 'var(--bg-secondary)';
+          element.style.color = 'var(--text-color)';
+        }
+
+        if (element.classList.contains('dt-input')) {
+          element.style.backgroundColor = 'var(--bg-color)';
+          element.style.borderColor = 'var(--border-color)';
+          element.style.color = 'var(--text-color)';
+        }
+
+        if (element.classList.contains('dt-paging-button')) {
+          element.style.backgroundColor = 'var(--bg-color)';
           element.style.borderColor = 'var(--border-color)';
           element.style.color = 'var(--text-color)';
         }
@@ -1269,14 +1297,26 @@ function applyThemeToNewElements() {
             element.style.color = 'var(--text-color)';
           }
 
-          // Стили для ячеек таблиц (td)
+          // Стили для ячеек таблиц (td) — не затираем цветные строки лога баланса
           if (element.tagName === 'TD' && 
               (element.closest('#dataTable tbody tr') || 
                element.closest('table.table tbody tr') || 
                element.closest('table.dataTable tbody tr'))) {
-            element.style.backgroundColor = 'var(--bg-color)';
-            element.style.borderColor = 'var(--border-color)';
-            element.style.color = 'var(--text-color)';
+            const row = element.parentElement;
+            if (row && (
+              row.classList.contains('guests-log-balance__tr--refill') ||
+              row.classList.contains('guests-log-balance__tr--withdraw')
+            )) {
+              // не затираем tint сайта inline-фоном
+              element.style.removeProperty('background-color');
+              element.style.removeProperty('background');
+              element.style.color = 'var(--text-color)';
+              element.style.borderColor = 'var(--border-color)';
+            } else {
+              element.style.backgroundColor = 'var(--bg-color)';
+              element.style.borderColor = 'var(--border-color)';
+              element.style.color = 'var(--text-color)';
+            }
           }
       });
     }
