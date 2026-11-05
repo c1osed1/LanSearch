@@ -160,6 +160,39 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
 });
 
+// /all_clubs_pc/: нативный обход bsConfirm — locale.skipOneConfirm (MAIN world)
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!message || message.type !== 'lgsSetSkipOneConfirm') return;
+  const tabId = sender.tab && sender.tab.id;
+  if (!tabId) {
+    sendResponse({ ok: false });
+    return false;
+  }
+  const enabled = !!message.enabled;
+  chrome.scripting.executeScript({
+    target: { tabId },
+    world: 'MAIN',
+    args: [enabled],
+    func: (en) => {
+      const apply = () => {
+        try {
+          if (window.locale) window.locale.skipOneConfirm = !!en;
+        } catch (_) {}
+      };
+      apply();
+      if (en) {
+        if (!window.__lgsSkipConfirmTimer) {
+          window.__lgsSkipConfirmTimer = setInterval(apply, 1500);
+        }
+      } else if (window.__lgsSkipConfirmTimer) {
+        clearInterval(window.__lgsSkipConfirmTimer);
+        window.__lgsSkipConfirmTimer = null;
+      }
+    }
+  }).then(() => sendResponse({ ok: true })).catch(() => sendResponse({ ok: false }));
+  return true;
+});
+
 // Проверяем обновления при запуске расширения 
 checkForUpdates();
 

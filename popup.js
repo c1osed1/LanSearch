@@ -452,27 +452,36 @@ async function initScripts() {
   let modalBypassEnabled = false;
   
   function initModalBypass() {
+    const apply = (enabled) => {
+      modalBypassEnabled = !!enabled;
+      setModalBypassState(modalBypassEnabled);
+      try {
+        localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
+      } catch (_) {}
+    };
+
     try {
-      const localBypass = localStorage.getItem('lanSearchModalBypass');
-      if (localBypass !== null) {
-        modalBypassEnabled = localBypass === 'true';
-        setModalBypassState(modalBypassEnabled);
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        apply(localStorage.getItem('lanSearchModalBypass') === 'true');
         return;
       }
-      
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-        chrome.storage.sync.get(['modalBypass'], function(result) {
-          modalBypassEnabled = result.modalBypass || false;
-          setModalBypassState(modalBypassEnabled);
-          localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
+
+      chrome.storage.local.get(['modalBypass'], function(localResult) {
+        if (!chrome.runtime.lastError && localResult && localResult.modalBypass !== undefined) {
+          apply(localResult.modalBypass);
+          return;
+        }
+        chrome.storage.sync.get(['modalBypass'], function(syncResult) {
+          if (!chrome.runtime.lastError && syncResult && syncResult.modalBypass !== undefined) {
+            apply(syncResult.modalBypass);
+            try { chrome.storage.local.set({ modalBypass: !!syncResult.modalBypass }); } catch (_) {}
+            return;
+          }
+          apply(localStorage.getItem('lanSearchModalBypass') === 'true');
         });
-      } else {
-        modalBypassEnabled = false;
-        setModalBypassState(false);
-      }
+      });
     } catch (e) {
-      modalBypassEnabled = false;
-      setModalBypassState(false);
+      apply(false);
     }
   }
 
@@ -480,26 +489,46 @@ async function initScripts() {
     setSwitchState(modalBypassToggle, enabled);
   }
 
+  function syncModalBypassToActiveTab() {
+    chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+      if (!tabs[0] || isLanSearchExcludedUrl(tabs[0].url)) return;
+      chrome.scripting.executeScript({
+        target: { tabId: tabs[0].id },
+        world: 'ISOLATED',
+        func: () => {
+          if (window.lanSearchSyncModalBypass) window.lanSearchSyncModalBypass();
+        }
+      }).catch(() => {});
+    });
+  }
+
   function toggleModalBypass() {
     modalBypassEnabled = !modalBypassEnabled;
     setModalBypassState(modalBypassEnabled);
-    localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
-    
-    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-      chrome.storage.sync.set({ modalBypass: modalBypassEnabled }, function() {
-        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
-          if (tabs[0] && !isLanSearchExcludedUrl(tabs[0].url)) {
-            chrome.scripting.executeScript({
-              target: { tabId: tabs[0].id },
-              func: () => {
-                if (window.lanSearchSyncModalBypass) {
-                  window.lanSearchSyncModalBypass();
-                }
-              }
-            }).catch(() => {});
-          }
-        });
-      });
+    try {
+      localStorage.setItem('lanSearchModalBypass', modalBypassEnabled.toString());
+    } catch (_) {}
+
+    const payload = { modalBypass: modalBypassEnabled };
+    const afterStore = () => syncModalBypassToActiveTab();
+
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      let pending = 0;
+      const done = () => {
+        pending -= 1;
+        if (pending <= 0) afterStore();
+      };
+      try {
+        pending += 1;
+        chrome.storage.local.set(payload, done);
+      } catch (_) {}
+      try {
+        pending += 1;
+        chrome.storage.sync.set(payload, done);
+      } catch (_) {}
+      if (pending === 0) afterStore();
+    } else {
+      afterStore();
     }
   }
 

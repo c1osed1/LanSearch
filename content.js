@@ -1217,14 +1217,26 @@ html.lgs-amoled .btn-secondary {
   window.initFavoritesDragDrop = initFavoritesDragDrop;
   
 
+  function applyPageSkipOneConfirm(enabled) {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'lgsSetSkipOneConfirm', enabled: !!enabled }, () => {
+          void chrome.runtime.lastError;
+        });
+      }
+    } catch (_) {}
+  }
+
+  function applyModalBypassState(enabled) {
+    applyPageSkipOneConfirm(enabled);
+    if (enabled) replaceButtonsWithDivs();
+    else restoreDivsToButtons();
+  }
+
   window.lanSearchSyncModalBypass = function() {
     clearModalBypassCache();
     getModalBypassSetting(function(enabled) {
-      if (enabled) {
-        replaceButtonsWithDivs();
-      } else {
-        restoreDivsToButtons();
-      }
+      applyModalBypassState(enabled);
     });
   };
 
@@ -3091,86 +3103,102 @@ html.lgs-amoled .btn-secondary {
 
   function getModalBypassSetting(callback) {
     const now = Date.now();
-    
 
     if (modalBypassCache !== null && (now - modalBypassCacheTime) < CACHE_DURATION) {
       callback(modalBypassCache);
       return;
     }
-    
+
+    const finish = (enabled) => {
+      const on = !!enabled;
+      modalBypassCache = on;
+      modalBypassCacheTime = Date.now();
+      try {
+        localStorage.setItem('lanSearchModalBypass', on.toString());
+      } catch (_) {}
+      callback(on);
+    };
+
     try {
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        finish(localStorage.getItem('lanSearchModalBypass') === 'true');
+        return;
+      }
 
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-        chrome.storage.sync.get(['modalBypass'], function(result) {
-          try {
-            const enabled = result.modalBypass || false;
-            
-
-            modalBypassCache = enabled;
-            modalBypassCacheTime = now;
-            
-
-            try {
-              localStorage.setItem('lanSearchModalBypass', enabled.toString());
-            } catch (e) {
-
+      // local надёжнее sync после ребута; sync — запасной источник
+      const readLocal = (cb) => {
+        try {
+          chrome.storage.local.get(['modalBypass'], (r) => {
+            if (chrome.runtime.lastError) {
+              cb(undefined);
+              return;
             }
-            
-            callback(enabled);
-          } catch (e) {
+            cb(r && r.modalBypass);
+          });
+        } catch (_) {
+          cb(undefined);
+        }
+      };
+      const readSync = (cb) => {
+        try {
+          chrome.storage.sync.get(['modalBypass'], (r) => {
+            if (chrome.runtime.lastError) {
+              cb(undefined);
+              return;
+            }
+            cb(r && r.modalBypass);
+          });
+        } catch (_) {
+          cb(undefined);
+        }
+      };
 
-            const localBypass = localStorage.getItem('lanSearchModalBypass');
-            const enabled = localBypass === 'true';
-            
-
-            modalBypassCache = enabled;
-            modalBypassCacheTime = now;
-            
-            callback(enabled);
+      readLocal((localVal) => {
+        if (localVal !== undefined) {
+          finish(localVal);
+          try { chrome.storage.sync.set({ modalBypass: !!localVal }); } catch (_) {}
+          return;
+        }
+        readSync((syncVal) => {
+          if (syncVal !== undefined) {
+            finish(syncVal);
+            try { chrome.storage.local.set({ modalBypass: !!syncVal }); } catch (_) {}
+            return;
+          }
+          let pageLocal = false;
+          try {
+            pageLocal = localStorage.getItem('lanSearchModalBypass') === 'true';
+          } catch (_) {}
+          finish(pageLocal);
+          if (pageLocal) {
+            try {
+              chrome.storage.local.set({ modalBypass: true });
+              chrome.storage.sync.set({ modalBypass: true });
+            } catch (_) {}
           }
         });
-      } else {
-
-        const localBypass = localStorage.getItem('lanSearchModalBypass');
-        const enabled = localBypass === 'true';
-        
-
-        modalBypassCache = enabled;
-        modalBypassCacheTime = now;
-        
-        callback(enabled);
-      }
+      });
     } catch (e) {
-      modalBypassCache = false;
-      modalBypassCacheTime = now;
-      
-      callback(false);
+      finish(false);
     }
   }
-  
 
   function clearModalBypassCache() {
     modalBypassCache = null;
     modalBypassCacheTime = 0;
   }
 
-  
   function setModalBypassSetting(enabled) {
     try {
-
-      localStorage.setItem('lanSearchModalBypass', enabled.toString());
-      
-
-      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.sync) {
-        chrome.storage.sync.set({ modalBypass: enabled }, function() {
-        });
+      const on = !!enabled;
+      localStorage.setItem('lanSearchModalBypass', on.toString());
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        try { chrome.storage.local.set({ modalBypass: on }); } catch (_) {}
+        try { chrome.storage.sync.set({ modalBypass: on }); } catch (_) {}
       }
-      
-
-      modalBypassCache = enabled;
+      modalBypassCache = on;
       modalBypassCacheTime = Date.now();
-      
-
+      applyModalBypassState(on);
       if (window.lanSearchProcessButtons) {
         window.lanSearchProcessButtons();
       }
@@ -3588,50 +3616,54 @@ html.lgs-amoled .btn-secondary {
 
   function initModalBypass() {
     if (!shouldAutoActivate()) return;
-    
 
     let processingButtons = false;
-    
+
     function processButtons() {
       if (processingButtons) return;
       processingButtons = true;
-      
+
       getModalBypassSetting(function(bypassEnabled) {
-        if (bypassEnabled) {
-          replaceButtonsWithDivs();
-        } else {
-          restoreDivsToButtons();
+        try {
+          applyModalBypassState(bypassEnabled);
+        } catch (e) {
+          console.warn('Lan-Search: modal bypass apply failed', e);
+        } finally {
+          processingButtons = false;
         }
-        processingButtons = false;
       });
     }
-    
 
     window.lanSearchProcessButtons = processButtons;
-    
 
     processButtons();
-    
+    // ПК-карточки часто дорисовываются после document_end
+    setTimeout(processButtons, 800);
+    setTimeout(processButtons, 2000);
+    setTimeout(processButtons, 5000);
 
     let observerTimeout;
     const observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
+      let relevant = false;
+      for (const mutation of mutations) {
         if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-          clearTimeout(observerTimeout);
-          observerTimeout = setTimeout(processButtons, 500);
+          relevant = true;
+          break;
         }
-      });
+      }
+      if (!relevant) return;
+      clearTimeout(observerTimeout);
+      observerTimeout = setTimeout(processButtons, 400);
     });
-    
+
     observer.observe(document.body, {
       childList: true,
       subtree: true
     });
-    
 
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
       chrome.storage.onChanged.addListener(function(changes, namespace) {
-        if (namespace === 'sync' && changes.modalBypass) {
+        if ((namespace === 'sync' || namespace === 'local') && changes.modalBypass) {
           clearModalBypassCache();
           processButtons();
         }
@@ -3639,197 +3671,118 @@ html.lgs-amoled .btn-secondary {
     }
     
 
+    const MODAL_BYPASS_COMMANDS = [
+      'startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC',
+      'Lock', 'UnLock', 'LockPS', 'UnLockPS'
+    ];
+
+    function isModalBypassEnabledSync() {
+      if (modalBypassCache !== null) return !!modalBypassCache;
+      try {
+        return localStorage.getItem('lanSearchModalBypass') === 'true';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function commandSuccessMessage(command) {
+      switch (command) {
+        case 'startTehTime': return 'Тех.Старт выполнен успешно!';
+        case 'stopTehTime': return 'Тех.Стоп выполнен успешно!';
+        case 'rebootPC': return 'Перезагрузка ПК выполнена успешно!';
+        case 'shutdownPC': return 'Выключение ПК выполнено успешно!';
+        case 'Lock':
+        case 'LockPS': return 'ПК заблокирован успешно!';
+        case 'UnLock':
+        case 'UnLockPS': return 'ПК разблокирован успешно!';
+        default: return 'Команда выполнена успешно!';
+      }
+    }
+
+    function commandErrorTitle(command, kind) {
+      const net = kind === 'network';
+      switch (command) {
+        case 'startTehTime': return net ? 'Ошибка сети при Тех.Старте' : 'Ошибка Тех.Старта';
+        case 'stopTehTime': return net ? 'Ошибка сети при Тех.Стопе' : 'Ошибка Тех.Стопа';
+        case 'rebootPC': return net ? 'Ошибка сети при перезагрузке ПК' : 'Ошибка перезагрузки ПК';
+        case 'shutdownPC': return net ? 'Ошибка сети при выключении ПК' : 'Ошибка выключения ПК';
+        case 'Lock':
+        case 'LockPS': return net ? 'Ошибка сети при блокировке ПК' : 'Ошибка блокировки ПК';
+        case 'UnLock':
+        case 'UnLockPS': return net ? 'Ошибка сети при разблокировке ПК' : 'Ошибка разблокировки ПК';
+        default: return net ? 'Ошибка сети' : 'Ошибка выполнения команды';
+      }
+    }
+
+    function flashCommandEl(el, ok) {
+      const originalBg = el.style.backgroundColor;
+      const originalColor = el.style.color;
+      el.style.backgroundColor = ok ? '#28a745' : '#dc3545';
+      el.style.color = 'white';
+      setTimeout(() => {
+        el.style.backgroundColor = originalBg;
+        el.style.color = originalColor;
+      }, 1000);
+    }
+
+    // capture + sync stop: сайт вешает $(document).on('click', '.action') → модалка
     document.addEventListener('click', function(event) {
-      const target = event.target;
-      
+      const target = event.target && event.target.closest
+        ? event.target.closest('[data-lan-search-replaced="true"]')
+        : null;
+      if (!target) return;
 
       const dataType = target.getAttribute('data-type');
-      const supportedCommands = ['startTehTime', 'stopTehTime', 'rebootPC', 'shutdownPC', 'Lock', 'UnLock', 'LockPS', 'UnLockPS'];
-      
-      if (target.tagName === 'DIV' && supportedCommands.includes(dataType) && target.hasAttribute('data-lan-search-replaced')) {
-        if (isInsideReleForm(target)) {
-          return;
-        }
-        
-        getModalBypassSetting(function(bypassEnabled) {
-          if (bypassEnabled) {
-            
+      if (!MODAL_BYPASS_COMMANDS.includes(dataType)) return;
+      if (isInsideReleForm(target)) return;
+      if (!isModalBypassEnabledSync()) return;
 
-            
-            const dataType = target.getAttribute('data-type');
-            const clickId = dataType + '_' + Date.now();
-            
-            
-            if (processedClicks.has(clickId)) {
-              return;
-            }
-            
-            
-            processedClicks.add(clickId);
-            
+      // критично: до async и до jQuery .action
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
 
-            setTimeout(() => {
-              processedClicks.delete(clickId);
-            }, 3000);
-            
+      const clickId = dataType + '_' + Math.floor(Date.now() / 500);
+      if (processedClicks.has(clickId)) return;
+      processedClicks.add(clickId);
+      setTimeout(() => processedClicks.delete(clickId), 3000);
 
-            const params = extractButtonParamsFromDiv(target);
-            if (params) {
-              
+      const params = extractButtonParamsFromDiv(target);
+      if (!params) return;
 
-              const originalText = target.textContent;
-              target.textContent = 'Выполняется...';
-              target.style.pointerEvents = 'none';
-              
-
-              sendDirectCommand(params.uuid, params.command, params.whoSend)
-                .then(response => response.json())
-                .then(data => {
-                  
-
-                  target.textContent = originalText;
-                  target.style.pointerEvents = '';
-                  
-
-                  if (data.status === true) {
-                    
-                    let successMessage = 'Команда выполнена успешно!';
-                    switch (params.command) {
-                      case 'startTehTime':
-                        successMessage = 'Тех.Старт выполнен успешно!';
-                        break;
-                      case 'stopTehTime':
-                        successMessage = 'Тех.Стоп выполнен успешно!';
-                        break;
-                      case 'rebootPC':
-                        successMessage = 'Перезагрузка ПК выполнена успешно!';
-                        break;
-                      case 'shutdownPC':
-                        successMessage = 'Выключение ПК выполнено успешно!';
-                        break;
-                      case 'Lock':
-                        successMessage = 'ПК заблокирован успешно!';
-                        break;
-                      case 'UnLock':
-                        successMessage = 'ПК разблокирован успешно!';
-                        break;
-                      case 'LockPS':
-                        successMessage = 'ПК заблокирован успешно!';
-                        break;
-                      case 'UnLockPS':
-                        successMessage = 'ПК разблокирован успешно!';
-                        break;
-                    }
-                    showNotification(successMessage, 'success', 2000);
-                    
-
-                    const originalBg = target.style.backgroundColor;
-                    const originalColor = target.style.color;
-                    target.style.backgroundColor = '#28a745';
-                    target.style.color = 'white';
-                    setTimeout(() => {
-                      target.style.backgroundColor = originalBg;
-                      target.style.color = originalColor;
-                    }, 1000);
-                  } else {
-                    
-                    const errorMessage = data.textStatus || 'Неизвестная ошибка';
-                    console.warn('Lan-Search: Сообщение от API:', errorMessage);
-                    
-                    let errorTitle = 'Ошибка выполнения команды';
-                    switch (params.command) {
-                      case 'startTehTime':
-                        errorTitle = 'Ошибка Тех.Старта';
-                        break;
-                      case 'stopTehTime':
-                        errorTitle = 'Ошибка Тех.Стопа';
-                        break;
-                      case 'rebootPC':
-                        errorTitle = 'Ошибка перезагрузки ПК';
-                        break;
-                      case 'shutdownPC':
-                        errorTitle = 'Ошибка выключения ПК';
-                        break;
-                      case 'Lock':
-                        errorTitle = 'Ошибка блокировки ПК';
-                        break;
-                      case 'UnLock':
-                        errorTitle = 'Ошибка разблокировки ПК';
-                        break;
-                      case 'LockPS':
-                        errorTitle = 'Ошибка блокировки ПК';
-                        break;
-                      case 'UnLockPS':
-                        errorTitle = 'Ошибка разблокировки ПК';
-                        break;
-                    }
-                    
-                    showNotification(`${errorTitle}: ${errorMessage}`, 'error', 5000);
-                    
-
-                    const originalBg = target.style.backgroundColor;
-                    const originalColor = target.style.color;
-                    target.style.backgroundColor = '#dc3545';
-                    target.style.color = 'white';
-                    setTimeout(() => {
-                      target.style.backgroundColor = originalBg;
-                      target.style.color = originalColor;
-                    }, 1000);
-                  }
-                })
-                .catch(error => {
-                  console.warn('Lan-Search: Ошибка выполнения команды', error);
-                  
-
-                  target.textContent = originalText;
-                  target.style.pointerEvents = '';
-                  
-
-                  
-                  let errorTitle = 'Ошибка сети';
-                  switch (params.command) {
-                    case 'startTehTime':
-                      errorTitle = 'Ошибка сети при Тех.Старте';
-                      break;
-                    case 'stopTehTime':
-                      errorTitle = 'Ошибка сети при Тех.Стопе';
-                      break;
-                    case 'rebootPC':
-                      errorTitle = 'Ошибка сети при перезагрузке ПК';
-                      break;
-                    case 'shutdownPC':
-                      errorTitle = 'Ошибка сети при выключении ПК';
-                      break;
-                    case 'Lock':
-                      errorTitle = 'Ошибка сети при блокировке ПК';
-                      break;
-                    case 'UnLock':
-                      errorTitle = 'Ошибка сети при разблокировке ПК';
-                      break;
-                    case 'LockPS':
-                      errorTitle = 'Ошибка сети при блокировке ПК';
-                      break;
-                    case 'UnLockPS':
-                      errorTitle = 'Ошибка сети при разблокировке ПК';
-                      break;
-                  }
-                  
-                  showNotification(`${errorTitle}: ${error.message}`, 'error', 4000);
-                  
-
-                  const originalBg = target.style.backgroundColor;
-                  const originalColor = target.style.color;
-                  target.style.backgroundColor = '#dc3545';
-                  target.style.color = 'white';
-                  setTimeout(() => {
-                    target.style.backgroundColor = originalBg;
-                    target.style.color = originalColor;
-                  }, 1000);
-                });
-            }
-          }
-        });
+      const hadIcon = !!target.querySelector('.lgs-ico');
+      const originalHTML = target.innerHTML;
+      const originalText = target.textContent;
+      if (!hadIcon) {
+        target.textContent = 'Выполняется...';
       }
+      target.style.pointerEvents = 'none';
+
+      sendDirectCommand(params.uuid, params.command, params.whoSend)
+        .then(response => response.json())
+        .then(data => {
+          if (hadIcon) target.innerHTML = originalHTML;
+          else target.textContent = originalText;
+          target.style.pointerEvents = '';
+
+          if (data.status === true) {
+            showNotification(commandSuccessMessage(params.command), 'success', 2000);
+            flashCommandEl(target, true);
+          } else {
+            const errorMessage = data.textStatus || 'Неизвестная ошибка';
+            console.warn('Lan-Search: Сообщение от API:', errorMessage);
+            showNotification(`${commandErrorTitle(params.command)}: ${errorMessage}`, 'error', 5000);
+            flashCommandEl(target, false);
+          }
+        })
+        .catch(error => {
+          console.warn('Lan-Search: Ошибка выполнения команды', error);
+          if (hadIcon) target.innerHTML = originalHTML;
+          else target.textContent = originalText;
+          target.style.pointerEvents = '';
+          showNotification(`${commandErrorTitle(params.command, 'network')}: ${error.message}`, 'error', 4000);
+          flashCommandEl(target, false);
+        });
     }, true);
   }
 
