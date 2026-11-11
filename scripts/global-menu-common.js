@@ -47,10 +47,54 @@
         return result;
     }
     async function load() {
-        // Fetch saved values, independent of DataTables filters and unsaved page edits.
-        const response = await window.LanSearchScripts.request('/global_menu/', { cache: 'no-store' });
-        const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
-        return parse(doc);
+        // The page now renders both tables via master_api; read the JSON directly.
+        const U = window.LanSearchScripts;
+        async function list(path) {
+            const items = [];
+            for (let page = 1; page <= 100; page++) {
+                const json = await U.masterApi(`${path}?page=${page}&onpage=100`);
+                const batch = Array.isArray(json.items) ? json.items : null;
+                if (!batch) throw new Error(`Неожиданный формат ответа ${path}`);
+                items.push(...batch);
+                const last = Number(json.pagination?.last_page);
+                if (!batch.length || (Number.isFinite(last) && page >= last)) return items;
+            }
+            throw new Error(`Превышено ограничение числа страниц ${path}`);
+        }
+        const [menuItems, rulesItems] = await Promise.all([list('/global_menu/table'), list('/global_menu/rules')]);
+        // Role names come from role_options; menu rows carry bare role IDs, so build a shared dictionary.
+        const dictionary = new Map();
+        for (const item of [...rulesItems, ...menuItems]) for (const option of item.role_options || []) {
+            const name = String(option.name ?? '').trim();
+            if (name) dictionary.set(Number(option.id), name);
+        }
+        const rolesFor = item => {
+            const options = item.role_options?.length ? item.role_options
+                : [...dictionary.entries()].map(([id, name]) => ({ id, name }));
+            const selected = new Set((item.roles || []).map(Number));
+            const roles = options.map(option => ({
+                name: String(option.name ?? '').trim(), value: String(option.id), selected: selected.has(Number(option.id))
+            }));
+            if (roles.some(role => !role.name || !/^\d+$/.test(role.value))) throw new Error(`Некорректные роли: ${item.name}`);
+            const roleIndex = group(roles, role => normalize(role.name));
+            if ([...roleIndex.values()].some(items => items.length > 1)) throw new Error(`Повторяющиеся названия ролей: ${item.name}`);
+            return roles;
+        };
+        const result = [
+            ...menuItems.map(item => ({ section: 'menu', id: String(item.id), name: String(item.name ?? '').trim(),
+                parentId: item.parent_id ? String(item.parent_id) : '', parentName: String(item.parent_name ?? '').trim(), roles: rolesFor(item) })),
+            ...rulesItems.map(item => ({ section: 'other', id: String(item.id), name: String(item.name ?? '').trim(),
+                parentId: '', parentName: '', roles: rolesFor(item) }))
+        ];
+        if (!result.length) throw new Error('master_api вернул пустые списки прав. Проверьте доступ к /global_menu/.');
+        const keys = new Set();
+        for (const row of result) {
+            if (!/^\d+$/.test(row.id) || !row.name) throw new Error('Неожиданная запись прав доступа в ответе master_api');
+            const key = row.section + ':' + row.id;
+            if (keys.has(key)) throw new Error(`Повторяющийся ID права: ${key}`);
+            keys.add(key);
+        }
+        return result;
     }
     const toCSV = rows => [headers, ...rows.map(row => [row.section, row.id, row.name, row.parentName,
         JSON.stringify(row.roles.filter(role => role.selected).map(role => role.name))])];
@@ -102,23 +146,11 @@
         }
         return planned;
     }
-    function form(entry) {
-        const body = new FormData();
-        if (entry.item.section === 'menu') {
-            body.append('parent_id', entry.item.parentId);
-            body.append('name', entry.item.name);
-            body.append('roles_mask', entry.values.join(','));
-        } else body.append('rule_mask', entry.values.join(','));
-        return body;
-    }
     async function save(entry) {
-        const command = entry.item.section === 'menu' ? 'update' : 'updateAnother';
-        const response = await window.LanSearchScripts.request('/global_menu/crud.php?' + new URLSearchParams({ command, id: entry.item.id }), {
-            method: 'POST', body: form(entry), headers: { 'x-requested-with': 'XMLHttpRequest', accept: 'application/json' }
+        // New UI writes role IDs as a JSON array; name and parent stay untouched.
+        await window.LanSearchScripts.masterApi(`/global_menu/${encodeURIComponent(entry.item.id)}/update`, {
+            method: 'POST', body: { roles: entry.values.map(value => Number(value)) }
         });
-        let data;
-        try { data = await response.json(); } catch { throw new Error('Сервер вернул ответ, который не является JSON'); }
-        if (data?.status !== 'ok') throw new Error(String(data?.textStatus || data?.statusText || 'Сервер не подтвердил сохранение прав'));
     }
-    window.LanSearchGlobalMenu = { normalize, parse, load, toCSV, readCSV, plan, form, save };
+    window.LanSearchGlobalMenu = { normalize, parse, load, toCSV, readCSV, plan, save };
 })();

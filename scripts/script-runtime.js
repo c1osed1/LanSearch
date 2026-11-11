@@ -114,6 +114,96 @@
             (data.error && data.error !== false))) throw new Error('Сервер сообщил об ошибке операции');
         return data;
     }
+    async function masterApi(path, { method = 'GET', body } = {}) {
+        if (isCancelled()) throw new Error('Остановлено пользователем');
+        const readMeta = source => ({
+            token: source.querySelector('meta[name="MASTER_TOKEN"]')?.content || '',
+            base: source.querySelector('meta[name="MASTER_API_URL"]')?.content || ''
+        });
+        let { token, base } = readMeta(document);
+        if (!token || !base) {
+            // The club pages carry the meta tags; fetch one when the current page lacks them.
+            const response = await request('/products_list/', { cache: 'no-store' });
+            const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+            ({ token, base } = readMeta(doc));
+        }
+        if (!token) token = localStorage.token_master_api || localStorage.token ||
+            document.cookie.match(/(?:^|;\s*)token_master_api=([^;]+)/)?.[1] || document.cookie.match(/(?:^|;\s*)token=([^;]+)/)?.[1] || '';
+        if (!token) throw new Error('Не найден токен master_api. Откройте страницу товаров клуба и повторите.');
+        if (!base) base = new URL('/master_api/', location.href).href;
+        const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
+        const response = await fetch(base.replace(/\/+$/, '') + path, {
+            method, credentials: 'include',
+            headers: {
+                Authorization: 'Bearer ' + token,
+                Language: document.querySelector('meta[name="language"]')?.content || 'ru',
+                ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {})
+            },
+            body: body !== undefined ? (isForm ? body : JSON.stringify(body)) : undefined
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${path}`);
+        const json = await response.json().catch(() => null);
+        if (!json || typeof json !== 'object') throw new Error('master_api вернул не-JSON ответ');
+        if (json.error_code) throw new Error(json.error_message || `Ошибка master_api (код ${json.error_code})`);
+        return json;
+    }
+    async function clubProducts(clubId) {
+        const items = [];
+        for (let page = 1; page <= 1000; page++) {
+            const json = await masterApi(`/products/configuration/club/${encodeURIComponent(clubId)}/list?` +
+                new URLSearchParams({ page: String(page), onpage: '50', order_by: 'sort', order_dir: 'asc', for_export: '0' }));
+            const batch = Array.isArray(json.items) ? json.items : null;
+            if (!batch) throw new Error('Неожиданный формат списка товаров master_api');
+            items.push(...batch);
+            const last = Number(json.pagination?.last_page);
+            if (!batch.length || (Number.isFinite(last) && page >= last)) return items;
+        }
+        throw new Error('Превышено ограничение числа страниц товаров');
+    }
+    function listDialog({ title = 'Список', message = '', headers = [], rows = [], filename = '' }) {
+        // Non-blocking modal with a scrollable table; the page keeps working underneath.
+        const host = document.createElement('div');
+        host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:block';
+        const shadow = host.attachShadow({ mode: 'open' });
+        const node = (tag, text, cls) => {
+            const el = document.createElement(tag);
+            if (text !== undefined) el.textContent = text;
+            if (cls) el.className = cls;
+            return el;
+        };
+        const style = node('style');
+        style.textContent = ':host{color-scheme:dark}*{box-sizing:border-box}.overlay{position:absolute;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;padding:16px;font:14px/1.45 system-ui;color:#eee}.panel{background:#212121;border:1px solid #555;border-radius:12px;width:760px;max-width:100%;max-height:85vh;display:flex;flex-direction:column;padding:20px}h2{font-size:18px;margin:0 0 8px}p{margin:0 0 12px;color:#bbb}.list{overflow:auto;min-height:0}table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:7px 10px;border:1px solid #555;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{position:sticky;top:0;background:#303030}tr:nth-child(even) td{background:#262626}.actions{display:flex;gap:10px;justify-content:flex-end;padding-top:14px}button{padding:9px 14px;font:inherit;color:#eee;background:#333;border:1px solid #777;border-radius:6px;cursor:pointer}button:focus-visible{outline:2px solid white;outline-offset:2px}';
+        const overlay = node('div', undefined, 'overlay');
+        const panel = node('section', undefined, 'panel');
+        panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-modal', 'true'); panel.setAttribute('aria-label', title);
+        panel.append(node('h2', title));
+        if (message) panel.append(node('p', message));
+        const list = node('div', undefined, 'list'), table = node('table');
+        const head = node('thead'), body = node('tbody'), heading = node('tr');
+        for (const value of headers) heading.append(node('th', value));
+        head.append(heading);
+        for (const row of rows) {
+            const tr = node('tr');
+            for (const value of row) tr.append(node('td', String(value)));
+            body.append(tr);
+        }
+        table.append(head, body); list.append(table); panel.append(list);
+        const actions = node('div', undefined, 'actions');
+        const close = node('button', 'Закрыть'); close.type = 'button';
+        const previous = document.activeElement;
+        const dismiss = () => { host.remove(); previous?.focus?.(); };
+        if (filename) {
+            const download = node('button', 'Скачать CSV'); download.type = 'button';
+            download.addEventListener('click', () => downloadCSV([headers, ...rows], filename));
+            actions.append(download);
+        }
+        close.addEventListener('click', dismiss);
+        panel.addEventListener('keydown', event => {
+            if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); dismiss(); }
+        });
+        actions.append(close); panel.append(actions);
+        overlay.append(panel); shadow.append(style, overlay); document.documentElement.append(host); close.focus();
+    }
     const htmlText = html => {
         const doc = new DOMParser().parseFromString(String(html ?? ''), 'text/html');
         return doc.body.textContent.trim();
@@ -134,27 +224,21 @@
         return index;
     };
     async function products() {
-        const result = []; const seen = new Set(); const perPage = 50;
-        for (let page = 0; page < 10000; page++) {
-            const params = new URLSearchParams({ draw: String(page + 1), start: String(page * perPage), length: String(perPage), 'search[value]': '', 'search[regex]': 'false', _: String(Date.now()) });
-            for (let i = 0; i < 8; i++) {
-                for (const [key, value] of Object.entries({ data: i, name: '', searchable: 'true', orderable: 'false', 'search][value': '', 'search][regex': 'false' })) {
-                    params.append(`columns[${i}][${key}]`, String(value));
-                }
+        const result = [];
+        for (let page = 1; page <= 10000; page++) {
+            const json = await masterApi('/products/list?' + new URLSearchParams({ page: String(page), onpage: '100', order_by: 'name', order_dir: 'asc', for_export: '0' }));
+            const batch = Array.isArray(json.items) ? json.items : null;
+            if (!batch) throw new Error('Неожиданный формат списка товаров');
+            for (const item of batch) {
+                result.push({
+                    id: String(item.id ?? ''),
+                    name: String(item.name ?? '').trim(),
+                    description: String(item.description ?? '').trim(),
+                    image: item.image_url || ''
+                });
             }
-            const response = await request('/products/server_processing.php?' + params);
-            const json = await response.json();
-            if (!Array.isArray(json.data)) throw new Error('Неожиданный формат списка товаров');
-            if (!json.data.length) return result;
-            const signature = JSON.stringify(json.data);
-            if (seen.has(signature)) throw new Error('Сервер повторяет страницу товаров; выгрузка остановлена');
-            seen.add(signature);
-            for (const row of json.data) {
-                const doc = new DOMParser().parseFromString(String(row['3'] || ''), 'text/html');
-                result.push({ id: row.DT_RowAttr?.['data-id'], name: htmlText(row['1']), description: htmlText(row['2']), image: doc.querySelector('img')?.getAttribute('src') || '' });
-            }
-            const total = Number(json.recordsFiltered ?? json.recordsTotal);
-            if (Number.isFinite(total) && result.length >= total) return result;
+            const last = Number(json.pagination?.last_page);
+            if (!batch.length || (Number.isFinite(last) && page >= last)) return result;
         }
         throw new Error('Превышено ограничение числа страниц товаров');
     }
@@ -201,6 +285,6 @@
             } finally { if (state === current) state = null; }
             return result;
         },
-        stop, wait, notify, parseCSV, records, csv, download, downloadCSV, request, api, htmlText, number, uniqueIndex, products
+        stop, wait, notify, parseCSV, records, csv, download, downloadCSV, request, api, masterApi, clubProducts, listDialog, htmlText, number, uniqueIndex, products
     };
 })();

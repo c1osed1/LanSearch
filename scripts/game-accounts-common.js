@@ -27,8 +27,36 @@
         return { rows, types };
     }
     async function load() {
-        const response = await window.LanSearchScripts.request('/acc_steam/', { cache: 'no-store' });
-        return parse(new DOMParser().parseFromString(await response.text(), 'text/html'));
+        // Accounts and the type dictionary moved to master_api; for_export=1 includes passwords.
+        const U = window.LanSearchScripts;
+        async function accounts() {
+            const items = [];
+            for (let page = 1; page <= 1000; page++) {
+                const json = await U.masterApi(`/launcher-accounts/table?` + new URLSearchParams({ page: String(page), onpage: '100', for_export: '1' }));
+                const batch = Array.isArray(json.items) ? json.items : null;
+                if (!batch) throw new Error('Неожиданный формат списка игровых аккаунтов');
+                items.push(...batch);
+                const last = Number(json.pagination?.last_page);
+                if (!batch.length || (Number.isFinite(last) && page >= last)) return items;
+            }
+            throw new Error('Превышено ограничение числа страниц игровых аккаунтов');
+        }
+        const [typesJson, list] = await Promise.all([U.masterApi('/launcher-types?visible=0&enabled=1'), accounts()]);
+        const types = (Array.isArray(typesJson.items) ? typesJson.items : [])
+            .map(item => ({ value: String(item.key ?? ''), label: String(item.name ?? item.key ?? '').trim() }))
+            .filter(item => item.value && item.label);
+        if (!types.length) throw new Error('master_api вернул пустой справочник типов аккаунтов');
+        const rows = list.map(raw => {
+            const item = { id: String(raw.id ?? '') };
+            if (!/^\d+$/.test(item.id)) throw new Error('Некорректный ID в списке аккаунтов');
+            for (const name of ['login', 'mail', 'password']) item[name] = String(raw[name] ?? '');
+            for (const name of flags) item[name] = raw[name] === true;
+            item.type = String(raw.type ?? '');
+            if (!types.some(type => type.value === item.type)) throw new Error(`Неизвестный тип аккаунта в записи ${item.id}`);
+            return item;
+        });
+        if (new Set(rows.map(row => row.id)).size !== rows.length) throw new Error('В списке повторяются ID аккаунтов');
+        return { rows, types };
     }
     function readCSV(text) {
         const rows = window.LanSearchScripts.records(text, headers.filter(name => name !== 'id'));
@@ -48,33 +76,22 @@
         });
     }
     const toCSV = rows => [headers, ...rows.map(row => headers.map(name => row[name]))];
-    function form(row, command, id, staging = false) {
-        const body = new URLSearchParams({ command, login: row.login, mail: row.mail, password: row.password });
-        if (command === 'insert') body.set('type', row.type);
-        else body.set('id', id);
-        // Unchecked HTML checkboxes are omitted by jQuery.serialize().
-        if (!staging && row.admin_enabled) body.set('admin_enabled', 'on');
-        if (!staging && row.lk_enabled) body.set('lk_enabled', 'on');
-        if (command === 'update' && row.output_is_disabled) body.set('output_is_disabled', '1');
-        return body;
+    function bodyFor(row) {
+        return { login: row.login, mail: row.mail, password: row.password, type: row.type,
+            admin_enabled: !!row.admin_enabled, lk_enabled: !!row.lk_enabled };
     }
-    async function post(body) {
-        const command = body.get('command');
-        let response;
-        try {
-            response = await window.LanSearchScripts.request('/acc_steam/crud.php', {
-                method: 'POST', credentials: 'include',
-                referrer: new URL('/acc_steam/', location.href).href,
-                headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                    'x-requested-with': 'XMLHttpRequest', accept: 'application/json, text/javascript, */*; q=0.01' },
-                body: body.toString()
-            });
-        } catch { throw new Error(`Ошибка запроса ${command}. Результат операции не подтверждён.`); }
-        let data;
-        try { data = await response.json(); } catch { throw new Error(`Команда ${command}: сервер вернул ответ не в формате JSON`); }
-        // Never put response text in reports: a server may echo credentials.
-        if (data?.status !== 'ok' && data?.status !== true) throw new Error(`Сервер не подтвердил команду ${command}`);
+    async function create(row) {
+        await window.LanSearchScripts.masterApi('/launcher-accounts', { method: 'POST', body: bodyFor(row) });
+    }
+    async function update(row, id) {
+        await window.LanSearchScripts.masterApi(`/launcher-accounts/${encodeURIComponent(id)}`, { method: 'POST', body: bodyFor(row) });
+    }
+    async function setDisabled(id, disabled) {
+        // The UI toggles "Отключён" via a dedicated endpoint, separately from create/update.
+        await window.LanSearchScripts.masterApi(`/launcher-accounts/${encodeURIComponent(id)}/output-disabled`, {
+            method: 'POST', body: { flag: !!disabled }
+        });
     }
     const same = (a, b) => ['login', 'mail', 'password', 'type', ...flags].every(name => a[name] === b[name]);
-    window.LanSearchGameAccounts = { headers, flags, key, parse, load, readCSV, toCSV, form, post, same };
+    window.LanSearchGameAccounts = { headers, flags, key, parse, load, readCSV, toCSV, create, update, setDisabled, same };
 })();

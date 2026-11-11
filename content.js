@@ -1275,6 +1275,9 @@ html.lgs-amoled .btn-secondary {
           <button type="button" id="modeSearchBtn" class="lgs-guest-tab is-active" role="tab" aria-selected="true">
             Поиск гостей
           </button>
+          <button type="button" id="modeBulkBtn" class="lgs-guest-tab" role="tab" aria-selected="false">
+            Массовый баланс
+          </button>
           <button type="button" id="modeInventBtn" class="lgs-guest-tab" role="tab" aria-selected="false">
             ${LGS_ICONS.cubes} Инвентаризация
           </button>
@@ -1314,6 +1317,61 @@ html.lgs-amoled .btn-secondary {
             ${LGS_ICONS.userSlash}
             <span>Гости не найдены</span>
           </div>
+        </div>
+
+        <div id="bulkBalanceMode" hidden>
+          <p class="lgs-guest-hint">Загрузите Excel/CSV с колонками телефона и сумм — скрипт сам определит «Телефон», «Баланс», «Бонусный баланс».</p>
+          <div class="lgs-bulk-toolbar">
+            <label class="lgs-bulk-file btn btn-outline-secondary">
+              Выбрать файл
+              <input type="file" id="bulkBalanceFile" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden />
+            </label>
+            <span id="bulkBalanceFileName" class="lgs-bulk-file-name">Файл не выбран</span>
+          </div>
+
+          <div class="lgs-bulk-controls">
+            <div class="lgs-bulk-field">
+              <div class="lgs-bulk-label">Действие</div>
+              <div class="lgs-bulk-radios">
+                <label class="lgs-bulk-radio"><input type="radio" name="bulkBalanceAction" value="add" checked /> Пополнить</label>
+                <label class="lgs-bulk-radio"><input type="radio" name="bulkBalanceAction" value="sub" /> Списать</label>
+              </div>
+            </div>
+            <div class="lgs-bulk-field">
+              <div class="lgs-bulk-label">Что менять</div>
+              <div class="lgs-bulk-checks">
+                <label class="lgs-bulk-check"><input type="checkbox" id="bulkApplyBalance" checked /> Баланс</label>
+                <label class="lgs-bulk-check"><input type="checkbox" id="bulkApplyBonus" checked /> Бонусный баланс</label>
+              </div>
+            </div>
+          </div>
+
+          <div id="bulkBalanceMeta" class="lgs-bulk-meta" hidden></div>
+          <div id="bulkBalancePreview" class="lgs-guest-results" hidden>
+            <div class="table-responsive">
+              <table class="table table-hover lgs-guest-table mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Телефон</th>
+                    <th>Баланс</th>
+                    <th>Бонусы</th>
+                  </tr>
+                </thead>
+                <tbody id="bulkBalancePreviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="lgs-bulk-actions">
+            <button type="button" id="bulkBalanceStartBtn" class="btn btn-primary" disabled>Запустить</button>
+            <button type="button" id="bulkBalanceStopBtn" class="btn btn-outline-secondary" hidden>Стоп</button>
+          </div>
+          <div id="bulkBalanceProgress" class="lgs-bulk-progress" hidden>
+            <div class="lgs-bulk-progress-bar"><span id="bulkBalanceProgressFill"></span></div>
+            <div id="bulkBalanceProgressText" class="lgs-bulk-progress-text"></div>
+          </div>
+          <div id="bulkBalanceLog" class="lgs-bulk-log" hidden></div>
         </div>
 
         <div id="inventMode" hidden>
@@ -1507,9 +1565,10 @@ html.lgs-amoled .btn-secondary {
     return data;
   }
 
-  async function searchGuests(query) {
+  async function searchGuests(query, options = {}) {
+    const silent = !!options.silent;
     if (!query || query.trim().length < 3) {
-      showNotification('Введите минимум 3 символа для поиска', 'warning');
+      if (!silent) showNotification('Введите минимум 3 символа для поиска', 'warning');
       return;
     }
 
@@ -1526,6 +1585,7 @@ html.lgs-amoled .btn-secondary {
       return data;
     } catch (error) {
       console.error('Ошибка при поиске гостей:', error);
+      if (silent) throw error;
       if (error?.data?.error_code === 9) {
         showNotification('Ошибка авторизации. Войдите заново', 'error');
       } else {
@@ -1892,28 +1952,31 @@ html.lgs-amoled .btn-secondary {
 
   function switchMode(mode) {
     const guestSearchMode = document.getElementById('guestSearchMode');
+    const bulkBalanceMode = document.getElementById('bulkBalanceMode');
     const inventMode = document.getElementById('inventMode');
     const modeTitle = document.getElementById('modeTitle');
     const modeSearchBtn = document.getElementById('modeSearchBtn');
+    const modeBulkBtn = document.getElementById('modeBulkBtn');
     const modeInventBtn = document.getElementById('modeInventBtn');
 
-    if (mode === 'search') {
-      setHidden(guestSearchMode, false);
-      setHidden(inventMode, true);
-      if (modeTitle) modeTitle.textContent = 'Поиск гостей';
-      modeSearchBtn?.classList.add('is-active');
-      modeInventBtn?.classList.remove('is-active');
-      modeSearchBtn?.setAttribute('aria-selected', 'true');
-      modeInventBtn?.setAttribute('aria-selected', 'false');
-    } else if (mode === 'invent') {
-      setHidden(guestSearchMode, true);
-      setHidden(inventMode, false);
-      if (modeTitle) modeTitle.textContent = 'Инвентаризация';
-      modeSearchBtn?.classList.remove('is-active');
-      modeInventBtn?.classList.add('is-active');
-      modeSearchBtn?.setAttribute('aria-selected', 'false');
-      modeInventBtn?.setAttribute('aria-selected', 'true');
+    const setTab = (btn, on) => {
+      btn?.classList.toggle('is-active', on);
+      btn?.setAttribute('aria-selected', on ? 'true' : 'false');
+    };
 
+    setHidden(guestSearchMode, mode !== 'search');
+    setHidden(bulkBalanceMode, mode !== 'bulk');
+    setHidden(inventMode, mode !== 'invent');
+    setTab(modeSearchBtn, mode === 'search');
+    setTab(modeBulkBtn, mode === 'bulk');
+    setTab(modeInventBtn, mode === 'invent');
+
+    if (mode === 'search') {
+      if (modeTitle) modeTitle.textContent = 'Поиск гостей';
+    } else if (mode === 'bulk') {
+      if (modeTitle) modeTitle.textContent = 'Массовый баланс';
+    } else if (mode === 'invent') {
+      if (modeTitle) modeTitle.textContent = 'Инвентаризация';
       setHidden(document.getElementById('inventClubsSelection'), false);
       setHidden(document.getElementById('inventProductsSection'), true);
 
@@ -2075,15 +2138,22 @@ html.lgs-amoled .btn-secondary {
 
     // Обработчики переключения режимов
     const modeSearchBtn = document.getElementById('modeSearchBtn');
+    const modeBulkBtn = document.getElementById('modeBulkBtn');
     const modeInventBtn = document.getElementById('modeInventBtn');
     
     if (modeSearchBtn) {
       modeSearchBtn.addEventListener('click', () => switchMode('search'));
     }
+
+    if (modeBulkBtn) {
+      modeBulkBtn.addEventListener('click', () => switchMode('bulk'));
+    }
     
     if (modeInventBtn) {
       modeInventBtn.addEventListener('click', () => switchMode('invent'));
     }
+
+    wireBulkBalanceUi();
 
     // Обработчики для режима поиска гостей
     const searchInput = document.getElementById('guestSearchInput');
@@ -2569,6 +2639,303 @@ html.lgs-amoled .btn-secondary {
     return masterApiRequest(`/guests/${guestId}/balance`, {
       method: 'POST',
       body: { type, sum }
+    });
+  }
+
+  let bulkBalanceRows = [];
+  let bulkBalanceAbort = false;
+
+  async function ensureXlsxLib() {
+    if (globalThis.XLSX) return globalThis.XLSX;
+    throw new Error('Парсер Excel не загружен (xlsx.mini.min.js)');
+  }
+
+  function normalizeGuestPhone(value) {
+    const digits = String(value ?? '').replace(/\D/g, '');
+    if (digits.length === 11 && (digits.startsWith('7') || digits.startsWith('8'))) {
+      return digits.slice(1);
+    }
+    return digits;
+  }
+
+  function phonesMatch(a, b) {
+    const na = normalizeGuestPhone(a);
+    const nb = normalizeGuestPhone(b);
+    if (!na || !nb) return false;
+    return na === nb || na.endsWith(nb) || nb.endsWith(na);
+  }
+
+  function detectBulkColumns(headers) {
+    const norm = (h) => String(h ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
+    let phone = -1;
+    let balance = -1;
+    let bonus = -1;
+    headers.forEach((h, i) => {
+      const n = norm(h);
+      if (phone < 0 && /(телефон|phone|тел\.?|mobile|мобил)/.test(n)) phone = i;
+      else if (bonus < 0 && /бонус/.test(n)) bonus = i;
+      else if (balance < 0 && /(баланс|balance|сумма|amount|money)/.test(n)) balance = i;
+    });
+    if (phone < 0) phone = 0;
+    if (balance < 0 && headers.length > 1) balance = 1;
+    if (bonus < 0 && headers.length > 2) bonus = 2;
+    return { phone, balance, bonus };
+  }
+
+  function parseBulkAmount(value) {
+    if (value == null || value === '') return 0;
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    const raw = String(value).trim().replace(/\s/g, '').replace(',', '.');
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function parseCsvText(text) {
+    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r\n|\n|\r/).filter((l) => l.trim() !== '');
+    return lines.map((line) => {
+      const cells = [];
+      let cur = '';
+      let q = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (q && line[i + 1] === '"') { cur += '"'; i++; }
+          else q = !q;
+        } else if ((ch === ',' || ch === ';' || ch === '\t') && !q) {
+          cells.push(cur);
+          cur = '';
+        } else cur += ch;
+      }
+      cells.push(cur);
+      return cells;
+    });
+  }
+
+  async function parseBulkBalanceFile(file) {
+    const name = (file.name || '').toLowerCase();
+    if (name.endsWith('.csv') || file.type === 'text/csv') {
+      const text = await file.text();
+      return parseCsvText(text);
+    }
+    const XLSX = await ensureXlsxLib();
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const sheetName = wb.SheetNames[0];
+    if (!sheetName) throw new Error('В файле нет листов');
+    const sheet = wb.Sheets[sheetName];
+    return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: true });
+  }
+
+  function buildBulkRowsFromMatrix(matrix) {
+    if (!matrix || !matrix.length) throw new Error('Файл пустой');
+    const headers = (matrix[0] || []).map((h) => String(h ?? '').trim());
+    const cols = detectBulkColumns(headers);
+    const rows = [];
+    for (let i = 1; i < matrix.length; i++) {
+      const row = matrix[i] || [];
+      const phoneRaw = row[cols.phone];
+      const phone = normalizeGuestPhone(phoneRaw);
+      if (!phone) continue;
+      const balance = cols.balance >= 0 ? Math.abs(parseBulkAmount(row[cols.balance])) : 0;
+      const bonus = cols.bonus >= 0 ? Math.abs(parseBulkAmount(row[cols.bonus])) : 0;
+      if (balance === 0 && bonus === 0) continue;
+      rows.push({
+        line: i + 1,
+        phone,
+        phoneDisplay: String(phoneRaw ?? phone),
+        balance,
+        bonus
+      });
+    }
+    return { headers, cols, rows };
+  }
+
+  function renderBulkBalancePreview(parsed) {
+    const meta = document.getElementById('bulkBalanceMeta');
+    const preview = document.getElementById('bulkBalancePreview');
+    const body = document.getElementById('bulkBalancePreviewBody');
+    const startBtn = document.getElementById('bulkBalanceStartBtn');
+    if (!meta || !preview || !body) return;
+
+    const { headers, cols, rows } = parsed;
+    bulkBalanceRows = rows;
+
+    const sumBalance = rows.reduce((s, r) => s + r.balance, 0);
+    const sumBonus = rows.reduce((s, r) => s + r.bonus, 0);
+    meta.hidden = false;
+    meta.innerHTML = `
+      <div>Колонки: телефон = <b>${escapeHtml(headers[cols.phone] || cols.phone)}</b>,
+      баланс = <b>${escapeHtml(headers[cols.balance] || '—')}</b>,
+      бонусы = <b>${escapeHtml(headers[cols.bonus] || '—')}</b></div>
+      <div>Строк: <b>${rows.length}</b> · сумма баланса: <b>${sumBalance.toLocaleString('ru-RU')}</b> · сумма бонусов: <b>${sumBonus.toLocaleString('ru-RU')}</b></div>
+    `;
+
+    body.innerHTML = '';
+    rows.slice(0, 30).forEach((r, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${escapeHtml(r.phoneDisplay)}</td>
+        <td>${escapeHtml(r.balance)}</td>
+        <td>${escapeHtml(r.bonus)}</td>
+      `;
+      body.appendChild(tr);
+    });
+    if (rows.length > 30) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="4" class="lgs-bulk-more">… и ещё ${rows.length - 30}</td>`;
+      body.appendChild(tr);
+    }
+
+    setHidden(preview, false);
+    if (startBtn) startBtn.disabled = rows.length === 0;
+  }
+
+  async function findGuestIdByPhone(phone) {
+    const variants = [phone];
+    if (phone.length === 10) {
+      variants.push('7' + phone, '8' + phone, '+7' + phone);
+    }
+    for (const q of variants) {
+      let data;
+      try {
+        data = await searchGuests(q, { silent: true });
+      } catch (_) {
+        continue;
+      }
+      const items = Array.isArray(data?.items) ? data.items : [];
+      const hit = items.find((g) => phonesMatch(g.phone, phone));
+      if (hit?.guest_id != null) return String(hit.guest_id);
+      if (items.length === 1 && items[0]?.guest_id != null) return String(items[0].guest_id);
+    }
+    return null;
+  }
+
+  function appendBulkLog(text, kind = '') {
+    const log = document.getElementById('bulkBalanceLog');
+    if (!log) return;
+    log.hidden = false;
+    const line = document.createElement('div');
+    if (kind) line.className = 'is-' + kind;
+    line.textContent = text;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function runBulkBalance() {
+    const action = document.querySelector('input[name="bulkBalanceAction"]:checked')?.value || 'add';
+    const applyBalance = !!document.getElementById('bulkApplyBalance')?.checked;
+    const applyBonus = !!document.getElementById('bulkApplyBonus')?.checked;
+    if (!applyBalance && !applyBonus) {
+      showNotification('Выберите баланс и/или бонусы', 'warning');
+      return;
+    }
+    if (!bulkBalanceRows.length) {
+      showNotification('Сначала загрузите файл', 'warning');
+      return;
+    }
+
+    bulkBalanceAbort = false;
+    const startBtn = document.getElementById('bulkBalanceStartBtn');
+    const stopBtn = document.getElementById('bulkBalanceStopBtn');
+    const progress = document.getElementById('bulkBalanceProgress');
+    const fill = document.getElementById('bulkBalanceProgressFill');
+    const progressText = document.getElementById('bulkBalanceProgressText');
+    const log = document.getElementById('bulkBalanceLog');
+    if (log) { log.hidden = false; log.innerHTML = ''; }
+    if (progress) progress.hidden = false;
+    if (startBtn) startBtn.disabled = true;
+    if (stopBtn) { stopBtn.hidden = false; stopBtn.disabled = false; }
+
+    let ok = 0;
+    let fail = 0;
+    let skip = 0;
+    const sign = action === 'sub' ? -1 : 1;
+    const total = bulkBalanceRows.length;
+
+    for (let i = 0; i < total; i++) {
+      if (bulkBalanceAbort) {
+        appendBulkLog('Остановлено пользователем', 'warn');
+        break;
+      }
+      const row = bulkBalanceRows[i];
+      const pct = Math.round(((i) / total) * 100);
+      if (fill) fill.style.width = pct + '%';
+      if (progressText) {
+        progressText.textContent = `${i + 1}/${total} · ${row.phoneDisplay} · ок ${ok} · ошибок ${fail}`;
+      }
+
+      try {
+        const guestId = await findGuestIdByPhone(row.phone);
+        if (!guestId) {
+          skip += 1;
+          fail += 1;
+          appendBulkLog(`${row.phoneDisplay}: гость не найден`, 'error');
+        } else {
+          if (applyBalance && row.balance > 0) {
+            await postGuestBalance(guestId, 'balance', sign * row.balance);
+          }
+          if (applyBonus && row.bonus > 0) {
+            await postGuestBalance(guestId, 'bonus_balance', sign * row.bonus);
+          }
+          ok += 1;
+          appendBulkLog(
+            `${row.phoneDisplay}: ${action === 'sub' ? 'списано' : 'пополнено'}` +
+            `${applyBalance && row.balance ? ` баланс ${row.balance}` : ''}` +
+            `${applyBonus && row.bonus ? ` бонусы ${row.bonus}` : ''}`,
+            'ok'
+          );
+        }
+      } catch (err) {
+        fail += 1;
+        appendBulkLog(`${row.phoneDisplay}: ${err?.message || 'ошибка'}`, 'error');
+      }
+
+      await new Promise((r) => setTimeout(r, 120));
+    }
+
+    if (fill) fill.style.width = '100%';
+    if (progressText) {
+      progressText.textContent = `Готово: ок ${ok}, ошибок ${fail}` +
+        (bulkBalanceAbort ? ' (остановлено)' : '');
+    }
+    if (startBtn) startBtn.disabled = false;
+    if (stopBtn) stopBtn.hidden = true;
+    showNotification(
+      `Массовый баланс: успешно ${ok}, ошибок ${fail}`,
+      fail ? 'warning' : 'success',
+      5000
+    );
+  }
+
+  function wireBulkBalanceUi() {
+    const fileInput = document.getElementById('bulkBalanceFile');
+    const fileName = document.getElementById('bulkBalanceFileName');
+    const startBtn = document.getElementById('bulkBalanceStartBtn');
+    const stopBtn = document.getElementById('bulkBalanceStopBtn');
+    if (!fileInput) return;
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      if (fileName) fileName.textContent = file.name;
+      if (startBtn) startBtn.disabled = true;
+      try {
+        const matrix = await parseBulkBalanceFile(file);
+        const parsed = buildBulkRowsFromMatrix(matrix);
+        renderBulkBalancePreview(parsed);
+        showNotification(`Загружено строк: ${parsed.rows.length}`, 'success', 2500);
+      } catch (err) {
+        bulkBalanceRows = [];
+        console.error(err);
+        showNotification(err?.message || 'Не удалось прочитать файл', 'error');
+      }
+    });
+
+    startBtn?.addEventListener('click', () => { void runBulkBalance(); });
+    stopBtn?.addEventListener('click', () => {
+      bulkBalanceAbort = true;
+      stopBtn.disabled = true;
     });
   }
 

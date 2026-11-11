@@ -1,0 +1,39 @@
+/* Scoped to the script status panel. USER origin keeps site themes from
+   overriding button contrast; visibility and event handlers remain intact. */
+#lansearch-script-status :is(button, [role="button"], input[type="button"], input[type="submit"]) {
+    box-sizing: border-box !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    padding: 4px 10px !important;
+    margin: 6px 0 0 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    background: #f1f5f9 !important;
+    color: #111827 !important;
+    -webkit-text-fill-color: #111827 !important;
+    font: 600 14px/20px Arial, sans-serif !important;
+    text-shadow: none !important;
+    text-decoration: none !important;
+    text-transform: none !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+    vertical-align: middle !important;
+}
+
+#lansearch-script-status :is(button, [role="button"], input[type="button"], input[type="submit"]):hover {
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+}
+
+#lansearch-script-status :is(button, [role="button"], input[type="button"], input[type="submit"]):focus-visible {
+    outline: 2px solid #7dd3fc !important;
+    outline-offset: 2px !important;
+}
+
+#lansearch-script-status :is(button, [role="button"], input[type="button"], input[type="submit"]):is(:disabled, [aria-disabled="true"]) {
+    background: #cbd5e1 !important;
+    border-color: #94a3b8 !important;
+    color: #475569 !important;
+    -webkit-text-fill-color: #475569 !important;
+    cursor: not-allowed !important;
+}

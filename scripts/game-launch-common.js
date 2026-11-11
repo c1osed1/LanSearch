@@ -31,8 +31,38 @@
         return maps;
     }
     async function catalog() {
-        const response = await window.LanSearchScripts.request('/games_accounts_config/', { cache: 'no-store' });
-        return parseCatalog(new DOMParser().parseFromString(await response.text(), 'text/html'));
+        // Dictionaries moved to master_api; the HTML page no longer carries selectOptionsMap.
+        const U = window.LanSearchScripts;
+        async function items(path) {
+            const result = [];
+            for (let page = 1; page <= 1000; page++) {
+                const json = await U.masterApi(path + (path.includes('?') ? '&' : '?') + `page=${page}&onpage=100`);
+                const batch = Array.isArray(json.items) ? json.items : null;
+                if (!batch) throw new Error(`Неожиданный формат справочника ${path}`);
+                result.push(...batch);
+                const last = Number(json.pagination?.last_page);
+                if (!batch.length || !Number.isFinite(last) || page >= last) return result;
+            }
+            throw new Error(`Превышено ограничение страниц справочника ${path}`);
+        }
+        const [games, types, accounts] = await Promise.all([items('/games/'), items('/launcher-types/'), items('/launcher-accounts/')]);
+        const map = (list, keyOf, nameOf, label) => {
+            const result = {};
+            for (const item of list) {
+                const key = String(keyOf(item) ?? ''), name = String(nameOf(item) ?? '').trim();
+                if (!key || !name) throw new Error(`Некорректная запись справочника ${label}`);
+                result[key] = name;
+            }
+            if (!Object.keys(result).length) throw new Error(`Пустой справочник ${label}`);
+            return result;
+        };
+        const accountsMap = map(accounts, item => item.id, item => item.login, 'игровые аккаунты');
+        const maps = {
+            game_id: map(games, item => item.id, item => item.name, 'игры'),
+            launcher_type: map(types, item => item.key, item => item.name, 'типы лаунчеров')
+        };
+        for (const slot of slots) maps[slot + '_id'] = { ...accountsMap };
+        return maps;
     }
     function cell(html) {
         const doc = new DOMParser().parseFromString(String(html ?? ''), 'text/html');

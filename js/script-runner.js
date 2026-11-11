@@ -56,6 +56,7 @@ class ScriptRunner {
         const id = crypto.randomUUID();
         let acquired = false;
         try {
+            await chrome.scripting.insertCSS({ target, files: ['css/script-status-controls.css'], origin: 'USER' });
             const installed = await inject({ files: ['scripts/script-runtime.js'] });
             if (installed[0]?.documentId) target = { tabId: tab.id, documentIds: [installed[0].documentId] };
             const initial = await inject({
@@ -97,6 +98,12 @@ class ScriptRunner {
             }
             if (['export-game-launch', 'import-game-launch'].includes(script.id)) {
                 await inject({ files: ['scripts/game-launch-common.js'] });
+            }
+            if (['export-productlistfull', 'import-productlistfull'].includes(script.id)) {
+                await inject({ files: ['scripts/accounting-mapping-common.js'] });
+            }
+            if (['export-blacklist', 'import-blacklist', 'export-guest-notifications', 'import-guest-notifications'].includes(script.id)) {
+                await inject({ files: ['scripts/guest-transfer-common.js'] });
             }
             // The last expression of each script is a Promise. Chrome waits for completion.
             const results = await inject({ files: [script.file] });
