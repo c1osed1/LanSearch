@@ -2852,12 +2852,39 @@ html.lgs-amoled .btn-secondary {
     let skip = 0;
     const sign = action === 'sub' ? -1 : 1;
     const total = bulkBalanceRows.length;
+    const BATCH_SIZE = 30;
+    const BATCH_PAUSE_MS = 15000;
+
+    async function sleepMs(ms) {
+      const step = 250;
+      let left = ms;
+      while (left > 0) {
+        if (bulkBalanceAbort) return;
+        const chunk = Math.min(step, left);
+        await new Promise((r) => setTimeout(r, chunk));
+        left -= chunk;
+      }
+    }
 
     for (let i = 0; i < total; i++) {
       if (bulkBalanceAbort) {
         appendBulkLog('Остановлено пользователем', 'warn');
         break;
       }
+
+      // каждые 30 строк — пауза 15 сек (не перед первой)
+      if (i > 0 && i % BATCH_SIZE === 0) {
+        appendBulkLog(`КД 15 сек после ${i} строк…`, 'warn');
+        if (progressText) {
+          progressText.textContent = `Пауза 15 сек · ${i}/${total} · ок ${ok} · ошибок ${fail}`;
+        }
+        await sleepMs(BATCH_PAUSE_MS);
+        if (bulkBalanceAbort) {
+          appendBulkLog('Остановлено пользователем', 'warn');
+          break;
+        }
+      }
+
       const row = bulkBalanceRows[i];
       const pct = Math.round(((i) / total) * 100);
       if (fill) fill.style.width = pct + '%';
@@ -2891,7 +2918,7 @@ html.lgs-amoled .btn-secondary {
         appendBulkLog(`${row.phoneDisplay}: ${err?.message || 'ошибка'}`, 'error');
       }
 
-      await new Promise((r) => setTimeout(r, 120));
+      await sleepMs(120);
     }
 
     if (fill) fill.style.width = '100%';
