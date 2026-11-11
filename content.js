@@ -1275,7 +1275,7 @@ html.lgs-amoled .btn-secondary {
           <button type="button" id="modeSearchBtn" class="lgs-guest-tab is-active" role="tab" aria-selected="true">
             Поиск гостей
           </button>
-          <button type="button" id="modeBulkBtn" class="lgs-guest-tab" role="tab" aria-selected="false">
+          <button type="button" id="modeBulkBtn" class="lgs-guest-tab" role="tab" aria-selected="false" hidden>
             Массовый баланс
           </button>
           <button type="button" id="modeInventBtn" class="lgs-guest-tab" role="tab" aria-selected="false">
@@ -2142,7 +2142,14 @@ html.lgs-amoled .btn-secondary {
     const modeInventBtn = document.getElementById('modeInventBtn');
     
     if (modeSearchBtn) {
-      modeSearchBtn.addEventListener('click', () => switchMode('search'));
+      let searchTabHits = 0;
+      modeSearchBtn.addEventListener('click', () => {
+        switchMode('search');
+        searchTabHits += 1;
+        if (searchTabHits >= 5 && modeBulkBtn) {
+          modeBulkBtn.hidden = false;
+        }
+      });
     }
 
     if (modeBulkBtn) {
