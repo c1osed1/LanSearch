@@ -1227,9 +1227,16 @@ html.lgs-amoled .btn-secondary {
     } catch (_) {}
   }
 
+  // Массовые действия сайта (controlPC1.js) ищут в карточках именно button[data-type=...]:
+  // пока открыта панель выбора, кнопки нельзя подменять на div — иначе bsAlertNoPc().
+  function isSitePcSelectionActive() {
+    const panel = document.querySelector('.select-actions');
+    return !!panel && getComputedStyle(panel).display !== 'none';
+  }
+
   function applyModalBypassState(enabled) {
     applyPageSkipOneConfirm(enabled);
-    if (enabled) replaceButtonsWithDivs();
+    if (enabled && !isSitePcSelectionActive()) replaceButtonsWithDivs();
     else restoreDivsToButtons();
   }
 
@@ -1611,45 +1618,10 @@ html.lgs-amoled .btn-secondary {
 
   async function loadClubsForInvent() {
     try {
-      // Загружаем страницу инвентаризации для получения списка клубов
-      const response = await fetch('/products_invent/', {
-        method: 'GET',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Ищем select с клубами - может быть в разных местах
-      let clubsSelect = doc.querySelector('select[name="club_id"]');
-      if (!clubsSelect) {
-        // Пробуем найти в модальном окне создания тикета
-        clubsSelect = doc.querySelector('#createTickedWindow select[name="club_id"]');
-      }
-      
-      if (!clubsSelect) {
-        showNotification('Не удалось найти список клубов', 'error');
-        return null;
-      }
-
-      const clubs = [];
-      const options = clubsSelect.querySelectorAll('option');
-      
-      options.forEach(option => {
-        const value = option.value;
-        const text = option.textContent.trim();
-        if (value && value !== '0' && text) {
-          clubs.push({
-            id: value,
-            name: text
-          });
-        }
-      });
+      const data = await masterApiRequest('/clubs/active');
+      const clubs = (data.items || [])
+        .filter(club => club && club.id != null)
+        .map(club => ({ id: String(club.id), name: String(club.name || `Клуб ${club.id}`).trim() }));
 
       return clubs.length > 0 ? clubs : null;
     } catch (error) {
@@ -1703,68 +1675,29 @@ html.lgs-amoled .btn-secondary {
         return null;
       }
 
-      // Загружаем страницу инвентаризации для выбранного клуба
-      const response = await fetch(`/products_invent/?club_id=${clubId}`, {
-        method: 'GET',
-        credentials: 'include'
+      const data = await masterApiRequest(`/products/sku/${encodeURIComponent(clubId)}`, {
+        query: { source_type: 'ordering' }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Ищем таблицу с продуктами по ID
-      const table = doc.querySelector('#dataTableIncome tbody');
-      
-      if (!table) {
-        showNotification('Не удалось найти таблицу продуктов', 'warning');
-        return null;
-      }
 
       const products = [];
-      const rows = table.querySelectorAll('tr');
-      
-      rows.forEach((row) => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length >= 7) {
-          // Извлекаем данные из строки таблицы
-          // Структура: Клуб, Сортировка, Наименование, Группа, art_numbers (скрыто), Цена закупки, Текущий остаток, Фактический остаток (input)
-          
-          // Название продукта - 3-я колонка (индекс 2)
-          const productName = cells[2] ? cells[2].textContent.trim() : '';
-          
-          // Цена закупки - 6-я колонка (индекс 5)
-          const price = cells[5] ? cells[5].textContent.trim() : '0';
-          
-          // Текущий остаток - 7-я колонка (индекс 6)
-          const currentCount = cells[6] ? cells[6].textContent.trim() : '0';
-          
-          // Фактический остаток - input в 8-й колонке (индекс 7)
-          const countInput = cells[7] ? cells[7].querySelector('input[name*="count"]') : null;
-          
-          if (countInput) {
-            // Извлекаем product_id из name атрибута: count[1093] -> 1093
-            const nameMatch = countInput.getAttribute('name').match(/count\[(\d+)\]/);
-            if (nameMatch && nameMatch[1] && productName) {
-              const productId = nameMatch[1];
-              products.push({
-                id: productId,
-                name: productName,
-                currentCount: currentCount,
-                price: price,
-                clubId: clubId
-              });
-            }
-          }
-        }
+      (data.items || []).forEach(group => {
+        (group.sku || []).forEach(product => {
+          if (product?.id == null || !product.name) return;
+          products.push({
+            id: String(product.id),
+            name: String(product.name).trim(),
+            sort: Number(product.sort || 0),
+            currentCount: product.remaining_stock ?? 0,
+            price: product.purchase_price ?? 0,
+            clubId: clubId
+          });
+        });
       });
+      products.sort((a, b) => b.sort - a.sort);
 
       if (products.length === 0) {
-        showNotification('Не удалось извлечь данные о продуктах', 'warning');
+        showNotification('В клубе нет товаров для инвентаризации', 'warning');
+        displayInventProducts([]);
         return null;
       }
 
@@ -1811,9 +1744,9 @@ html.lgs-amoled .btn-secondary {
     products.forEach(product => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${product.id}</td>
-        <td>${product.name}</td>
-        <td class="current-count-cell" data-product-id="${product.id}">${product.currentCount || '0'}</td>
+        <td>${escapeHtml(product.id)}</td>
+        <td>${escapeHtml(product.name)}</td>
+        <td class="current-count-cell" data-product-id="${escapeHtml(product.id)}">${escapeHtml(product.currentCount || '0')}</td>
         <td>
           <input type="text" 
                  class="form-control form-control-sm invent-count" 
@@ -1866,76 +1799,39 @@ html.lgs-amoled .btn-secondary {
         return;
       }
 
-      const countInputs = document.querySelectorAll('.invent-count');
-      
-      const inventData = {};
-      const productUpdates = {}; // Сохраняем данные для обновления текущего остатка
-      let hasData = false;
-
-      countInputs.forEach(input => {
-        const productId = input.getAttribute('data-product-id');
-        const count = input.value.trim();
-        
-        if (count && count !== '' && count !== '0') {
-          inventData[`count[${productId}]`] = count + '__';
-          productUpdates[productId] = count; // Сохраняем для обновления
-          hasData = true;
-        }
+      const products = [];
+      document.querySelectorAll('.invent-count').forEach(input => {
+        const productId = Number(input.getAttribute('data-product-id'));
+        const raw = input.value.replace(/_/g, '').trim();
+        if (!productId || raw === '') return;
+        const count = Number(raw.replace(',', '.'));
+        if (!Number.isFinite(count)) return;
+        products.push({ product_id: productId, count: Math.abs(count) });
       });
 
-      if (!hasData) {
+      if (products.length === 0) {
         showNotification('Укажите хотя бы одно количество для сохранения', 'warning');
         return;
       }
 
-      const formData = new URLSearchParams();
-      formData.append('command', 'invent');
-      formData.append('club_id', clubId);
-      
-      Object.keys(inventData).forEach(key => {
-        formData.append(key, inventData[key]);
-      });
-
-      const response = await fetch('/products_invent/crud.php', {
+      await masterApiRequest('/products/inventory', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-          'X-Requested-With': 'XMLHttpRequest',
-          'Accept': 'application/json, text/javascript, */*; q=0.01'
-        },
-        credentials: 'include',
-        body: formData.toString()
+        body: { club_id: Number(clubId), products }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      showNotification('Инвентаризация успешно сохранена', 'success');
 
-      const result = await response.json();
-      
-      if (result.status === 'ok') {
-        showNotification('Инвентаризация успешно сохранена', 'success');
-        
-        // Обновляем текущий остаток на значение из фактического остатка
-        Object.keys(productUpdates).forEach(productId => {
-          const currentCountCell = document.querySelector(`.current-count-cell[data-product-id="${productId}"]`);
-          const countInput = document.querySelector(`.invent-count[data-product-id="${productId}"]`);
-          
-          if (currentCountCell && countInput) {
-            const newCount = countInput.value.trim();
-            if (newCount) {
-              currentCountCell.textContent = newCount;
-              // Очищаем поле ввода
-              countInput.value = '';
-            }
-          }
-        });
-      } else {
-        showNotification('Ошибка при сохранении: ' + (result.textStatus || 'Неизвестная ошибка'), 'error');
-      }
+      products.forEach(({ product_id, count }) => {
+        const currentCountCell = document.querySelector(`.current-count-cell[data-product-id="${product_id}"]`);
+        const countInput = document.querySelector(`.invent-count[data-product-id="${product_id}"]`);
+        if (currentCountCell) currentCountCell.textContent = count;
+        if (countInput) countInput.value = '';
+        const cached = allInventProducts.find(p => Number(p.id) === product_id);
+        if (cached) cached.currentCount = count;
+      });
     } catch (error) {
       console.error('Ошибка при сохранении инвентаризации:', error);
-      showNotification('Ошибка при сохранении инвентаризации', 'error');
+      showNotification('Ошибка при сохранении инвентаризации: ' + error.message, 'error');
     }
   }
 
@@ -1980,11 +1876,7 @@ html.lgs-amoled .btn-secondary {
       setHidden(document.getElementById('inventClubsSelection'), false);
       setHidden(document.getElementById('inventProductsSection'), true);
 
-      loadClubsForInvent().then(clubs => {
-        if (clubs) {
-          displayClubsForInvent(clubs);
-        }
-      });
+      loadClubsForInvent().then(clubs => displayClubsForInvent(clubs));
     }
   }
 
@@ -4215,6 +4107,7 @@ html.lgs-amoled .btn-secondary {
           showMassiveSelectionPanelForAllClubs();
           setTimeout(() => {
             try { enhanceSelectActionsPanel(); } catch (_) {}
+            watchSiteSelectionPanel();
           }, 0);
         }
       }
@@ -4226,55 +4119,30 @@ html.lgs-amoled .btn-secondary {
           hideMassiveSelectionPanelForAllClubs();
         }
       }
-      
-      // Обработка кнопок выбора в панели
-      if (event.target && event.target.id === 'selectAllPC') {
-        setTimeout(() => {
-          exitSelectionMode();
-          if (window.location.pathname.includes('/all_clubs_pc/')) {
-            hideMassiveSelectionPanelForAllClubs();
-          }
-        }, 300);
-      }
-      
-      if (event.target && event.target.id === 'selectAllFreePC') {
-        setTimeout(() => {
-          exitSelectionMode();
-          if (window.location.pathname.includes('/all_clubs_pc/')) {
-            hideMassiveSelectionPanelForAllClubs();
-          }
-        }, 300);
-      }
-      
-      if (event.target && event.target.id === 'selectAllInTech') {
-        setTimeout(() => {
-          exitSelectionMode();
-          if (window.location.pathname.includes('/all_clubs_pc/')) {
-            hideMassiveSelectionPanelForAllClubs();
-          }
-        }, 300);
-      }
-      
-      if (event.target && event.target.id === 'selectAllInUnlock') {
-        setTimeout(() => {
-          exitSelectionMode();
-          if (window.location.pathname.includes('/all_clubs_pc/')) {
-            hideMassiveSelectionPanelForAllClubs();
-          }
-        }, 300);
-      }
-      
-      // Обработка action кнопок в панели выбора
-      if (event.target && event.target.classList.contains('select-action')) {
-        setTimeout(() => {
-          exitSelectionMode();
-          if (window.location.pathname.includes('/all_clubs_pc/')) {
-            hideMassiveSelectionPanelForAllClubs();
-          }
-        }, 300);
-      }
-      
     });
+
+    // Сайт сам закрывает выбор через $('#cancelSelect').click() после массового действия;
+    // на <a> jQuery не вызывает нативный click, поэтому следим за видимостью панели.
+    function watchSiteSelectionPanel() {
+      const panel = document.querySelector('.select-actions');
+      if (!panel || panel.dataset.lgsSelectWatch === '1') return;
+      panel.dataset.lgsSelectWatch = '1';
+
+      let wasActive = isSitePcSelectionActive();
+      new MutationObserver(() => {
+        const active = isSitePcSelectionActive();
+        if (active === wasActive) return;
+        wasActive = active;
+
+        if (!active && selectionMode) {
+          exitSelectionMode();
+          if (window.location.pathname.includes('/all_clubs_pc/')) {
+            hideMassiveSelectionPanelForAllClubs();
+          }
+        }
+        if (window.lanSearchProcessButtons) window.lanSearchProcessButtons();
+      }).observe(panel, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
 
     
     document.addEventListener('click', function(event) {
